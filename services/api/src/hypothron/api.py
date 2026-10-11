@@ -7,24 +7,31 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import uuid4
 
+import httpx
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import delete, select, text
+from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from hypothron.db import SessionRecord
+from hypothron.driver import InvestigationDriver
+from hypothron.investigations import mount_routes
+from hypothron.ledger import Ledger
 from hypothron.limits import BodyLimit
+from hypothron.retention import purge_expired
 
 
 class EmptyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-def create_app(*, database_url: str) -> FastAPI:
+def create_app(
+    *, database_url: str, provider_transport: httpx.AsyncBaseTransport | None = None
+) -> FastAPI:
     engine = create_async_engine(database_url, pool_size=3, max_overflow=0)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
 
@@ -57,7 +64,7 @@ def create_app(*, database_url: str) -> FastAPI:
             async with sessions() as db:
                 revision = await db.scalar(text("SELECT version_num FROM alembic_version"))
                 await db.execute(select(SessionRecord.id).limit(1))
-            if revision != "0001":
+            if revision != "0002":
                 raise ValueError("migration mismatch")
         except (SQLAlchemyError, ValueError):
             return JSONResponse(status_code=503, content={"database": "unavailable"})
@@ -72,9 +79,7 @@ def create_app(*, database_url: str) -> FastAPI:
             expires_at=datetime.now(UTC) + timedelta(hours=24),
         )
         async with sessions.begin() as db:
-            await db.execute(
-                delete(SessionRecord).where(SessionRecord.expires_at < datetime.now(UTC))
-            )
+            await purge_expired(db)
             db.add(session)
         return {"id": session.id, "token": token}
 
@@ -96,6 +101,9 @@ def create_app(*, database_url: str) -> FastAPI:
             raise HTTPException(401, detail="UNAUTHORIZED")
         return {"id": row.id}
 
+    ledger = Ledger(sessions)
+    driver = InvestigationDriver(database_url, ledger)
+    mount_routes(app, ledger, driver, current_session, provider_transport)
     return app
 
 

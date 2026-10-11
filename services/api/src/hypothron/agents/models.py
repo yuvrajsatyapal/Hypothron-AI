@@ -124,3 +124,14 @@ class EvidenceInput(StrictModel):
 
 class Clarification(StrictModel):
     answer: Annotated[str, Field(min_length=1, max_length=1000)]
+
+
+class ExecutionJob(StrictModel):
+    kind: Literal["execution"]
+    id: Annotated[str, Field(min_length=1, max_length=64)]
+    hypothesis_id: Annotated[str, Field(pattern=r"^h[1-6]$")] = Field(alias="hypothesisId")
+    plan: MetricPlan
+    depends_on: Annotated[
+        list[Annotated[str, Field(min_length=1, max_length=64)]], Field(max_length=6)
+    ] = Field(alias="dependsOn")
+    reason: Short

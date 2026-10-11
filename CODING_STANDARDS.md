@@ -18,4 +18,4 @@ Use explicit API wire schemas rather than heuristic recursive case conversion. R
 
 Observe Red → Green → Refactor. Expected numerical values are hand-derived, not computed by the production helper under test. Test real engines in browsers, real PostgreSQL for DB claims, and deterministic provider doubles only at external LLM boundaries. Every permission/ownership/size/egress control needs a negative case. Record skipped/unavailable checks distinctly from passes. Run full suites at phase exit; builds do not certify security.
 
-No live provider key required for automated tests. CI must fail on absent mandatory test services, not quietly skip them. Dependency upgrades are locked and justified. No commits, publishing, purchases, external deployment or PRs in this authorized run.
+No live provider key required for automated tests. CI must fail on absent mandatory test services, not quietly skip them. Dependency upgrades are locked and justified. Tested-task local conventional commits on existing main are authorized. Publishing, purchases, external deployment, pushes, history rewriting and PRs require separate authorization.

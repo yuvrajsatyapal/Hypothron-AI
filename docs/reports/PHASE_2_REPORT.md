@@ -1,6 +1,6 @@
 # Phase 2 — durable bounded investigation
 
-Updated: 2026-10-12. **In progress, not complete.** T2.1 provider transport is complete; T2.2 conditional graph module is implemented/tested with Gate3.5 ACCEPT. T2.3 durable ownership/checkpoints/jobs and T2.4 UI/API/SSE integration remain pending. No Phase2 completion/deep-dive gate is claimed.
+Updated: 2026-10-12. **In progress, not complete.** T2.1 provider transport is complete; T2.2 conditional graph module is implemented/tested with Gate3.5 ACCEPT. T2.3 durable ownership/checkpoints/jobs is reviewed complete; T2.4 workspace/SSE integration remains in progress. No Phase2 completion/deep-dive gate is claimed.
 
 ## Implemented behavior and code map
 
@@ -22,6 +22,18 @@ Primary API references used during implementation: [LangGraph interrupts](https:
 
 ## Commit ledger and next work
 
-T1 foundation:29b4b6c05a9f04fb6f01b6877f698e78f8347949. T2.1:4465520085dabd6d126f23e9c1632cf1793cc372. T2.2 hash recorded after reviewed task commit. Next:T2.3 real PostgreSQL saver/ledger/lease/recovery and T2.4 UI/provider consent/SSE integration. No automatic provider retry on uncertain billing. No raw data/key persistence. Continue without another approval; external release remains unauthorized.
+T1 foundation:29b4b6c05a9f04fb6f01b6877f698e78f8347949. T2.1:4465520085dabd6d126f23e9c1632cf1793cc372. T2.2:4b72afc1c800407832cade07587a45a1447f66f2. Next:T2.3 real PostgreSQL saver/ledger/lease/recovery and T2.4 UI/provider consent/SSE integration. No automatic provider retry on uncertain billing. No raw data/key persistence. Continue without another approval; external release remains unauthorized.
 
 Final T2.2 check:42backend tests pass (11workflow+26provider+5realPostgreSQL), Ruff and mypy10source files pass. Reviewer independently reran11workflow tests and accepted the scoped module. Citation validation currently checks existence, not every free-text numeric claim; Phase3 must strengthen it. The compiled graph closes over its ephemeral provider/key: production must construct/discard it per segment, never cache credential-bearing graph instances. Durable reservation/ownership/fencing/recovery remain T2.3 gates.
+
+## T2.3 durable foundation evidence (2026-10-12)
+
+Migration0002 installs the native saver schema through Alembic and metadata-only run/job/attempt/event tables. SQLAlchemy transactions row-lock runs before reservation, acceptance and lease mutations. Creation explicitly flushes the parent before its event. Attempts are durably reserved before transport, completed strict replies cached by role/context digest/ordinal, and unfinished reservations fail with BILLING_UNKNOWN without retry. Both graph and ledger enforce12 calls/6jobs. ExecutionJob rejects extra fields.
+
+FencedPostgresSaver scopes reads/listing/writes to its leased run; unrestricted listing/cross-run before cursors/deletion are denied. Live epochs and terminal checks fence writes. Cancellation invalidates the epoch; an identical previously accepted result still receives its ACK, while new terminal results are denied. Driver reconstructs adapters/savers per request, disables tracing and applies a60s whole-segment deadline with separately bounded5s cleanup. Native connections/statements/locks have5s limits; the process-local2-slot semaphore is not a deployment-global quota.
+
+Crash injections prove the same checkpointed job is inserted after a missed ledger write, accepted evidence resumes a fresh driver, and interruption after reservation produces billing uncertainty without another inference. Expiry sweep locks parents, removes checkpoint writes/blobs/checkpoints, then cascades business metadata. It runs on session creation; a scheduled hosted sweep/backup policy remains Phase5. Completed-state inspection checks owner/expiry before an exact-thread read and cannot invoke inference.
+
+Red runs exposed missing modules, event-before-parent insertion, missing independent job cap, cross-run native reads, terminal mutation and orphan native retention. Each reproduced issue now has a passing regression. Latest full run:61backend tests passed in2.54s; subsequently two added API negative/SSE tests also pass (63 total pending next full run). Ruff/mypy16 modules pass. Gate3.5 ACCEPT; reviewer independently37provider/workflow tests pass, reviewer local TCP unavailable for PostgreSQL. Parent realDB evidence is explicit. API tests use real Gemini wire construction with MockTransport, never live inference.
+
+Read ledger→checkpoints→driver→retention and their tests to study transaction boundaries, fencing vs leases, interrupt node restart, cached side effects vs exactly-once billing, and recovery across separate checkpoint/business commits. Comprehensive Phase2 teaching/diagrams remain mandatory before phase exit.

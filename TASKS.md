@@ -15,7 +15,7 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 
 - [x] T2.1 Genuine OpenRouter/Gemini transport adapters; structured validation/error/secret tests. Independent prework only; no inference route or live compatibility claim.
 - [x] T2.2 Typed conditional LangGraph roles and budgeted follow-up/clarification tests; module Gate3.5 ACCEPT.
-- [ ] T2.3 PostgreSQL checkpoints, immutable jobs/results/events, lease fencing and crash recovery tests.
+- [x] T2.3 PostgreSQL checkpoints, immutable jobs/results/events, lease fencing and crash recovery tests.
 - [ ] T2.4 UI/API/SSE end-to-end investigations and phase report.
 
 ## Phase 3
@@ -50,3 +50,5 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 - 2026-10-12: Final available rerun passes 75 tests (26 web/script unit + 31 backend + 18 real-browser); lint/type/format checks pass. T1.5 remains open; continue from CURRENT_PHASE.md with the existing authorization, not a new approval gate.
 
 - 2026-10-12 continuation supersedes earlier blockers/Git restrictions: tested-task local commits exclusively main authorized; ADR-015 explicitly scopes Phase1 to measured desktop and defers mobile/public targets. T1.5 closes with 27 unit +31 backend +18 real-browser tests, production build/type/lint/format, engineering ACCEPT, deep dive and two validated diagrams. Earlier “mobile required before advancement” entries are historical, not current gates. T2.2 is next.
+
+- 2026-10-12: T2.3 fenced native checkpoints/ledgers/driver/expiry cleanup pass Gate3.5 ACCEPT. T2.4 routes have mocked-provider/realDB coverage; workspace integration and Phase2 learning/diagram gates remain pending.

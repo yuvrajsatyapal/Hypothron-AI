@@ -73,6 +73,7 @@ def build_workflow(
         if state["calls"] >= 12:
             raise RoleFailure("BUDGET_EXHAUSTED")
         context = {
+            "callOrdinal": state["calls"] + 1,
             "question": state["request"]["question"],
             "datasets": state["request"]["datasets"],
             "clarificationAnswers": state["answers"],
