@@ -15,6 +15,7 @@ interface Snapshot {
   bytes: Uint8Array;
   plan: MetricPlan;
   result: ExecutionResult;
+  lookup?: Uint8Array;
 }
 export function Investigation({
   primary,
@@ -23,7 +24,11 @@ export function Investigation({
   cancelLocal,
 }: {
   primary: Snapshot;
-  execute: (plan: MetricPlan, bytes: Uint8Array) => Promise<ExecutionResult>;
+  execute: (
+    plan: MetricPlan,
+    bytes: Uint8Array,
+    lookup?: { bytes: Uint8Array; approvedRelationship: true },
+  ) => Promise<ExecutionResult>;
   onBusy: (busy: boolean) => void;
   cancelLocal: () => void;
 }) {
@@ -142,7 +147,13 @@ export function Investigation({
       );
       if (!snapshot) throw new Error("SNAPSHOT_UNAVAILABLE");
       setMessage("Executing approved investigation job locally…");
-      const result = await execute(job.plan, snapshot.bytes);
+      const result = await execute(
+        job.plan,
+        snapshot.bytes,
+        snapshot.lookup
+          ? { bytes: snapshot.lookup, approvedRelationship: true }
+          : undefined,
+      );
       if (signal.aborted) throw new Error("CANCELLED");
       await apiJSON(
         `/v1/investigations/${id}/results`,
@@ -152,6 +163,7 @@ export function Investigation({
           datasetHash: result.datasetHash,
           sql: result.sql,
           python: result.python,
+          ...(result.diagnostics ? { diagnostics: result.diagnostics } : {}),
         },
         signal,
       );
@@ -238,6 +250,8 @@ export function Investigation({
       } else {
         if (!consent) throw new Error("CONSENT_REQUIRED");
         snapshots.current = [primary];
+        if (primary.plan.relationship && extra.length)
+          throw new Error("UNAPPROVED_PLAN");
         for (const file of extra) {
           if (file.size > 10 * 1024 * 1024) throw new Error("INPUT_LIMIT");
           controller.signal.throwIfAborted();
@@ -333,7 +347,8 @@ export function Investigation({
       <h2>Hypothesis-driven investigation</h2>
       <p>
         Approved metric: {primary.plan.amountColumn}, [{primary.plan.start},{" "}
-        {primary.plan.end}), USD / UTC. Raw CSV bytes remain local.
+        {primary.plan.end}), {primary.plan.currency} / {primary.plan.timezone} /
+        v{primary.plan.version}. Raw CSV bytes remain local.
       </p>
       <label>
         Investigation question
@@ -350,7 +365,7 @@ export function Investigation({
           type="file"
           multiple
           accept=".csv,text/csv"
-          disabled={busy}
+          disabled={busy || !!primary.plan.relationship}
           onChange={(e) => {
             const files = Array.from(e.target.files || []);
             if (files.length > 2) {
@@ -362,7 +377,7 @@ export function Investigation({
       </label>
       <p>
         {extra.map((f) => f.name).join(", ") ||
-          "Primary dataset only. Extra datasets use the displayed approved metric."}
+          "Primary dataset only. Extra datasets use the displayed approved metric; derived join contracts use only the original source and approved lookup."}
       </p>
       <label htmlFor="investigation-provider">LLM provider</label>
       <select
@@ -471,8 +486,9 @@ export function Investigation({
       {state?.evidence.map((e) => (
         <p key={e.jobId}>
           Hypothesis {e.hypothesisId} · {e.jobId}:{" "}
-          {e.sql.minorUnits ?? "undefined"} cents · {e.verification} ·{" "}
-          {e.provenance}
+          {e.sql.minorUnits ?? "undefined"}{" "}
+          {primary.plan.currency === "JPY" ? "yen" : "minor units"} ·{" "}
+          {e.verification} · {e.provenance}
         </p>
       ))}
       {state?.report && (

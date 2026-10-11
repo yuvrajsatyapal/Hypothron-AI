@@ -90,3 +90,48 @@ it("bounds a stalled API request instead of retaining credentials indefinitely",
     globalThis.fetch = original;
   }
 });
+
+it("rejects false verified v2 grain agreement and accepts honest disputed semantics", () => {
+  const advanced = {
+    ...plan,
+    version: 2,
+    grainKeys: ["order_id"],
+    relationship: null,
+  } as const;
+  const counts = {
+    populationRows: 3,
+    periodRows: 3,
+    nullAmounts: 0,
+    grainUniqueRows: 2,
+    joinUniqueRows: 3,
+  };
+  const evidence = {
+    jobId: "e",
+    datasetHash: plan.datasetHash,
+    sql: { minorUnits: "3033", count: 3 },
+    python: { minorUnits: "3033", count: 3 },
+    verification: "DISPUTED",
+    provenance: "CLIENT_REPORTED",
+    hypothesisId: "h1",
+    classification: "GRAIN_VIOLATION",
+    contractHash: "b".repeat(64),
+    metricVersion: 2,
+    currency: "USD",
+    dependsOn: [],
+    diagnostics: { contract: advanced, sql: counts, python: counts },
+  };
+  expect(
+    validateInvestigationState({ status: "COMPLETE", evidence: [evidence] }, [
+      advanced as unknown as import("../lib/execution").MetricPlan,
+    ]).evidence[0].verification,
+  ).toBe("DISPUTED");
+  expect(() =>
+    validateInvestigationState(
+      {
+        status: "COMPLETE",
+        evidence: [{ ...evidence, verification: "VERIFIED" }],
+      },
+      [advanced as unknown as import("../lib/execution").MetricPlan],
+    ),
+  ).toThrow();
+});

@@ -52,3 +52,12 @@ Not implemented: persistent replay/export/import/Dexie, Parquet/multi-dataset an
 | docs/learning/PHASE_2_DEEP_DIVE.md / docs/diagrams/phase-2-*.html | Actual Phase2 architecture, transaction/recovery teaching and interview preparation |
 | packages/contracts/openapi-v1.json / scripts/export-api-contracts.py | Generated implemented API schema with drift check; TS runtime bindings remain explicit |
 | scripts/check-diagrams.mjs | Actual Chrome font/bounds/local-scroll validation for teaching diagrams |
+
+| Path | Phase 3 responsibility |
+|---|---|
+| apps/executor/src/advanced.ts / contracts.ts | V2 exact currency/offset/grain/relationship compiler and independently generated Pandas diagnostics; v1 compatibility |
+| apps/web/components/metricApproval.ts / app/page.tsx | Explicit versioned metric and derived lookup approval; original local snapshot replay |
+| apps/web/lib/verification.ts | Semantic diagnostic verdict at browser presentation boundary |
+| services/api/src/hypothron/verification.py | Canonical immutable contract identity, exact comparison and deterministic contradiction classes |
+| services/api/tests/test_verification.py | Semantic incompatibility/null/grain/numerical fixtures, two-correction bound and native recovery/cancel tests |
+| tests/e2e/advanced-verification.spec.ts | Actual DuckDB-WASM/Pyodide v2 exact values, joins and adversarial rejection |

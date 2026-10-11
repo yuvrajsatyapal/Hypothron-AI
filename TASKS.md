@@ -20,7 +20,7 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 
 ## Phase 3
 
-- [ ] T3.1 Join/period/null/currency verification, bounded correction and evidence lineage.
+- [x] T3.1 Join/period/null/currency verification, bounded correction and evidence lineage.
 - [ ] T3.2 Accessible structured charts/reports, orphan citation rejection and ambiguity/causality tests.
 - [ ] T3.3 Ten golden questions and adverse fixtures; phase report.
 
@@ -54,3 +54,5 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 - 2026-10-12: T2.3 fenced native checkpoints/ledgers/driver/expiry cleanup pass Gate3.5 ACCEPT. T2.4 routes have mocked-provider/realDB coverage; workspace integration and Phase2 learning/diagram gates remain pending.
 
 - 2026-10-12 latest scope supersedes continuous advancement: finish Phase2, then stop beforePhase3. Final integrated validation passes65backend/30unit/19browser plus targeted delayed-cancel regression. Deep dive/three implemented diagrams and OpenAPI drift checks exist. Final engineering and design reviews ACCEPT; T2.4 and Phase2 close. Stop beforePhase3. Tested integration hash is recorded in the phase report.
+
+- 2026-10-12 Phase3 supersedes prior stop: T3.1 v2 exact metrics/genuine approved lookup joins/diagnostics/immutable contracts/two corrections pass backend79, scoped unit61, real v2 Chrome16fixtures and engineering ACCEPT; later Phase3 report/evaluation gates pending.

@@ -1,3 +1,4 @@
+import { sqlDiagnostics } from "./advanced";
 import { loadPyodide } from "pyodide";
 import { installAssetReader } from "./assets";
 import * as duckdb from "@duckdb/duckdb-wasm";
@@ -5,11 +6,13 @@ import type { PyodideInterface } from "pyodide";
 import {
   compileSQL,
   contentHash,
-  PYTHON_SOURCE,
+  pythonSource,
   validatePlan,
   preflightCSV,
+  csvExpansionEstimate,
   validateExecutionResult,
   type NumericResult,
+  type EngineDiagnostics,
   type ExecutionResult,
 } from "./contracts";
 const scope = self as unknown as DedicatedWorkerGlobalScope;
@@ -23,6 +26,8 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
       id?: unknown;
       plan?: unknown;
       bytes?: unknown;
+      lookupBytes?: unknown;
+      approvedRelationship?: unknown;
       assets?: Record<string, ArrayBuffer>;
     };
     if (
@@ -35,10 +40,38 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
     installAssetReader(request.assets);
     const plan = validatePlan(request.plan);
     const bytes = request.bytes;
+    const relationship = plan.version === 2 ? plan.relationship : null;
+    if (
+      relationship &&
+      (!(request.lookupBytes instanceof Uint8Array) ||
+        request.approvedRelationship !== true)
+    )
+      throw new Error("RELATIONSHIP_APPROVAL_REQUIRED");
+    if (
+      !relationship &&
+      (request.lookupBytes !== undefined ||
+        request.approvedRelationship !== undefined)
+    )
+      throw new Error("INVALID_JOB");
+    let lookupCSV = "";
+    if (relationship) {
+      const lookupBytes = request.lookupBytes as Uint8Array;
+      if ((await contentHash(lookupBytes)) !== relationship.datasetHash)
+        throw new Error("DATASET_HASH_MISMATCH");
+      if (bytes.length + lookupBytes.length > 10 * 1024 * 1024)
+        throw new Error("INPUT_LIMIT");
+      lookupCSV = preflightCSV(lookupBytes);
+    }
     const started = performance.now();
     if ((await contentHash(bytes)) !== plan.datasetHash)
       throw new Error("DATASET_HASH_MISMATCH");
     const csv = preflightCSV(bytes);
+    if (
+      csvExpansionEstimate(csv) +
+        (relationship ? csvExpansionEstimate(lookupCSV) : 0) >
+      128 * 1024 * 1024
+    )
+      throw new Error("EXPANDED_INPUT_LIMIT");
     nestedWorker = new Worker("/duckdb-worker.js");
     const duckdbBytes = request.assets["duckdb-eh.wasm"];
     nestedWorker.postMessage(
@@ -63,6 +96,15 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
     await conn.query(
       "CREATE TABLE orders AS SELECT * FROM read_csv('input.csv', all_varchar=true, header=true, auto_detect=true)",
     );
+    if (relationship) {
+      await db.registerFileBuffer(
+        "lookup.csv",
+        request.lookupBytes as Uint8Array,
+      );
+      await conn.query(
+        "CREATE TABLE lookup AS SELECT * FROM read_csv('lookup.csv', all_varchar=true, header=true, auto_detect=true)",
+      );
+    }
     await conn.query("SET enable_external_access = false");
     const schema = (await conn.query("DESCRIBE orders"))
       .toArray()
@@ -74,25 +116,48 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
       !schema.includes(plan.dateColumn)
     )
       throw new Error("MISSING_COLUMN");
-    const amount = `"${plan.amountColumn}"`;
-    const date = `"${plan.dateColumn}"`;
-    const invalid = (
-      await conn.query(
-        `SELECT COUNT(*) AS n FROM orders WHERE (${amount} IS NOT NULL AND NOT regexp_full_match(${amount}, '-?[0-9]{1,15}(\\.[0-9]{1,2})?')) OR ${date} IS NULL OR NOT regexp_full_match(${date}, '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z')`,
-      )
-    ).toArray()[0];
-    if (!invalid || Number(invalid.n) !== 0) throw new Error("INVALID_DATA");
     if (
-      plan.nullPolicy === "error" &&
-      Number(
-        (
-          await conn.query(
-            `SELECT COUNT(*) AS n FROM orders WHERE ${amount} IS NULL`,
-          )
-        ).toArray()[0]?.n,
-      ) !== 0
+      plan.version === 2 &&
+      (!plan.grainKeys!.every((k) => schema.includes(k)) ||
+        (relationship && !schema.includes(relationship.keyColumn)))
     )
-      throw new Error("NULL_AMOUNT");
+      throw new Error("MISSING_COLUMN");
+    if (relationship) {
+      const lookupSchema = (await conn.query("DESCRIBE lookup"))
+        .toArray()
+        .map((row) => String(row.column_name));
+      if (lookupSchema.length > 128 || lookupSchema.some((k) => k.length > 64))
+        throw new Error("EXPANDED_INPUT_LIMIT");
+      if (!lookupSchema.includes(relationship.lookupKeyColumn))
+        throw new Error("MISSING_COLUMN");
+    }
+    let diagnostics: EngineDiagnostics | undefined;
+    if (plan.version === 2)
+      diagnostics = await sqlDiagnostics(
+        conn as unknown as Parameters<typeof sqlDiagnostics>[0],
+        plan,
+      );
+    if (plan.version === 1) {
+      const amount = `"${plan.amountColumn}"`;
+      const date = `"${plan.dateColumn}"`;
+      const invalid = (
+        await conn.query(
+          `SELECT COUNT(*) AS n FROM orders WHERE (${amount} IS NOT NULL AND NOT regexp_full_match(${amount}, '-?[0-9]{1,15}(\\.[0-9]{1,2})?')) OR ${date} IS NULL OR NOT regexp_full_match(${date}, '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z')`,
+        )
+      ).toArray()[0];
+      if (!invalid || Number(invalid.n) !== 0) throw new Error("INVALID_DATA");
+      if (
+        plan.nullPolicy === "error" &&
+        Number(
+          (
+            await conn.query(
+              `SELECT COUNT(*) AS n FROM orders WHERE ${amount} IS NULL`,
+            )
+          ).toArray()[0]?.n,
+        ) !== 0
+      )
+        throw new Error("NULL_AMOUNT");
+    }
     const sqlSource = compileSQL(plan);
     const aggregate = (await conn.query(sqlSource)).toArray()[0];
     const sql: NumericResult = {
@@ -125,12 +190,14 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
     for (const name of Object.keys(request.assets)) delete request.assets[name];
     py.globals.set("plan_json", JSON.stringify(plan));
     py.globals.set("csv_text", csv);
+    if (relationship) py.globals.set("lookup_csv_text", lookupCSV);
     stage = "PYTHON_CALCULATION";
-    const pythonRaw = (await py.runPythonAsync(PYTHON_SOURCE)) as string;
+    const pythonRaw = (await py.runPythonAsync(pythonSource(plan))) as string;
     const pythonParsed = JSON.parse(pythonRaw) as NumericResult & {
       pandas: string;
       numpy: string;
       dataframeBytes: number;
+      diagnostics?: EngineDiagnostics;
     };
     const result: ExecutionResult = {
       datasetHash: plan.datasetHash,
@@ -148,13 +215,19 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
         numpy: pythonParsed.numpy,
       },
       sqlSource,
-      pythonSource: PYTHON_SOURCE,
+      pythonSource: pythonSource(plan),
       elapsedMs: performance.now() - started,
       memory: {
         pandasDataframeBytes: pythonParsed.dataframeBytes,
         duckdbTrackedBytes,
       },
     };
+    if (plan.version === 2)
+      result.diagnostics = {
+        contract: plan,
+        sql: diagnostics!,
+        python: pythonParsed.diagnostics!,
+      };
     if (new TextEncoder().encode(JSON.stringify(result)).length > 256 * 1024)
       throw new Error("OUTPUT_LIMIT");
     validateExecutionResult(result, plan);
@@ -175,6 +248,12 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
       "INPUT_LIMIT",
       "EXPANDED_INPUT_LIMIT",
       "INVALID_RESULT",
+      "INVALID_GRAIN",
+      "INVALID_RELATIONSHIP",
+      "RELATIONSHIP_APPROVAL_REQUIRED",
+      "GRAIN_VIOLATION",
+      "JOIN_CARDINALITY",
+      "POPULATION_MISMATCH",
     ];
     const code =
       error instanceof Error && allowed.includes(error.message)

@@ -17,6 +17,7 @@ export class LocalExecutor {
     id: string;
     plan: MetricPlan;
     bytes: Uint8Array;
+    lookupBytes?: Uint8Array;
     resolve: (r: ExecutionResult) => void;
     reject: (e: Error) => void;
   } | null = null;
@@ -79,6 +80,12 @@ export class LocalExecutor {
           "INPUT_LIMIT",
           "EXPANDED_INPUT_LIMIT",
           "EXECUTION_FAILED",
+          "INVALID_GRAIN",
+          "INVALID_RELATIONSHIP",
+          "RELATIONSHIP_APPROVAL_REQUIRED",
+          "GRAIN_VIOLATION",
+          "JOIN_CARDINALITY",
+          "POPULATION_MISMATCH",
         ];
         this.fail(
           typeof data.error === "string" && allowed.includes(data.error)
@@ -108,21 +115,43 @@ export class LocalExecutor {
     if (this.connected && this.pending) {
       const p = this.pending;
       this.port.postMessage(
-        { type: "EXECUTE", id: p.id, plan: p.plan, bytes: p.bytes },
-        [p.bytes.buffer],
+        {
+          type: "EXECUTE",
+          id: p.id,
+          plan: p.plan,
+          bytes: p.bytes,
+          ...(p.lookupBytes
+            ? { lookupBytes: p.lookupBytes, approvedRelationship: true }
+            : {}),
+        },
+        [p.bytes.buffer, ...(p.lookupBytes ? [p.lookupBytes.buffer] : [])],
       );
     }
   }
-  execute(plan: MetricPlan, bytes: Uint8Array): Promise<ExecutionResult> {
+  execute(
+    plan: MetricPlan,
+    bytes: Uint8Array,
+    lookup?: { bytes: Uint8Array; approvedRelationship: true },
+  ): Promise<ExecutionResult> {
     validatePlan(plan);
+    const relationship = plan.version === 2 ? plan.relationship : null;
+    if (
+      relationship &&
+      (!lookup ||
+        lookup.approvedRelationship !== true ||
+        !(lookup.bytes instanceof Uint8Array))
+    )
+      throw new Error("RELATIONSHIP_APPROVAL_REQUIRED");
+    if (!relationship && lookup) throw new Error("INVALID_JOB");
     if (this.pending) throw new Error("BUSY");
     if (this.closed) throw new Error("EXECUTOR_CLOSED");
     const copy = new Uint8Array(bytes);
     return new Promise((resolve, reject) => {
       this.pending = {
         id: crypto.randomUUID(),
-        plan: { ...plan },
+        plan: JSON.parse(JSON.stringify(plan)) as MetricPlan,
         bytes: copy,
+        ...(lookup ? { lookupBytes: new Uint8Array(lookup.bytes) } : {}),
         resolve,
         reject,
       };

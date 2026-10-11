@@ -62,6 +62,71 @@
         "title": "Dataset",
         "type": "object"
       },
+      "DiagnosticCounts": {
+        "additionalProperties": false,
+        "properties": {
+          "grainUniqueRows": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Grainuniquerows",
+            "type": "integer"
+          },
+          "joinUniqueRows": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Joinuniquerows",
+            "type": "integer"
+          },
+          "nullAmounts": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Nullamounts",
+            "type": "integer"
+          },
+          "periodRows": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Periodrows",
+            "type": "integer"
+          },
+          "populationRows": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Populationrows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "populationRows",
+          "periodRows",
+          "nullAmounts",
+          "grainUniqueRows",
+          "joinUniqueRows"
+        ],
+        "title": "DiagnosticCounts",
+        "type": "object"
+      },
+      "Diagnostics": {
+        "additionalProperties": false,
+        "properties": {
+          "contract": {
+            "$ref": "#/components/schemas/MetricPlan"
+          },
+          "python": {
+            "$ref": "#/components/schemas/DiagnosticCounts"
+          },
+          "sql": {
+            "$ref": "#/components/schemas/DiagnosticCounts"
+          }
+        },
+        "required": [
+          "contract",
+          "sql",
+          "python"
+        ],
+        "title": "Diagnostics",
+        "type": "object"
+      },
       "EmptyRequest": {
         "additionalProperties": false,
         "properties": {},
@@ -75,6 +140,16 @@
             "pattern": "^[a-f0-9]{64}$",
             "title": "Datasethash",
             "type": "string"
+          },
+          "diagnostics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Diagnostics"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "jobId": {
             "maxLength": 64,
@@ -120,7 +195,11 @@
             "type": "string"
           },
           "currency": {
-            "const": "USD",
+            "enum": [
+              "USD",
+              "EUR",
+              "JPY"
+            ],
             "title": "Currency",
             "type": "string"
           },
@@ -138,6 +217,23 @@
             "title": "End",
             "type": "string"
           },
+          "grainKeys": {
+            "anyOf": [
+              {
+                "items": {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+                  "type": "string"
+                },
+                "maxItems": 4,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grainkeys"
+          },
           "kind": {
             "const": "revenue_sum",
             "title": "Kind",
@@ -151,17 +247,29 @@
             "title": "Nullpolicy",
             "type": "string"
           },
+          "relationship": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Relationship"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "start": {
             "title": "Start",
             "type": "string"
           },
           "timezone": {
-            "const": "UTC",
             "title": "Timezone",
             "type": "string"
           },
           "version": {
-            "const": 1,
+            "enum": [
+              1,
+              2
+            ],
             "title": "Version",
             "type": "integer"
           }
@@ -208,6 +316,49 @@
           "count"
         ],
         "title": "Numeric",
+        "type": "object"
+      },
+      "Relationship": {
+        "additionalProperties": false,
+        "properties": {
+          "cardinality": {
+            "enum": [
+              "one_to_one",
+              "many_to_one"
+            ],
+            "title": "Cardinality",
+            "type": "string"
+          },
+          "datasetHash": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Datasethash",
+            "type": "string"
+          },
+          "keyColumn": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+            "title": "Keycolumn",
+            "type": "string"
+          },
+          "lookupKeyColumn": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$",
+            "title": "Lookupkeycolumn",
+            "type": "string"
+          },
+          "populationCount": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Populationcount",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "datasetHash",
+          "keyColumn",
+          "lookupKeyColumn",
+          "cardinality",
+          "populationCount"
+        ],
+        "title": "Relationship",
         "type": "object"
       },
       "RunInput": {

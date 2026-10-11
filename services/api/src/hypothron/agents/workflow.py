@@ -17,11 +17,13 @@ from hypothron.agents.models import (
     AnalystReply,
     Clarification,
     EvidenceInput,
+    MetricPlan,
     PlannerReply,
     ReportReply,
     RunInput,
 )
 from hypothron.providers.http import ProviderError
+from hypothron.verification import contract_hash, verify_evidence
 
 Role = Literal["planner", "analyst", "report"]
 
@@ -46,6 +48,7 @@ class State(TypedDict, total=False):
     status: str
     error: str
     report: dict[str, Any]
+    corrections: dict[str, int]
 
 
 def initial_state(request: object) -> State:
@@ -59,6 +62,7 @@ def initial_state(request: object) -> State:
         "jobs": [],
         "evidence": [],
         "status": "PLANNING",
+        "corrections": {},
     }
 
 
@@ -141,6 +145,20 @@ def build_workflow(
                 h["id"] for h in state["hypotheses"]
             }:
                 raise RoleFailure("INVALID_ROLE_OUTPUT")
+            if reply.action == "execute":
+                hypothesis = next(h for h in state["hypotheses"] if h["id"] == reply.hypothesis_id)
+                dataset = next(
+                    d
+                    for d in state["request"]["datasets"]
+                    if d["datasetHash"] == hypothesis["datasetHash"]
+                )
+                identity = contract_hash(MetricPlan.model_validate(dataset["contract"]))
+                if state.get("corrections", {}).get(identity, 0) >= 2:
+                    return {
+                        "calls": state["calls"] + 1,
+                        "decision": {"action": "finish"},
+                        "status": "REPORTING",
+                    }
             return {
                 "calls": state["calls"] + 1,
                 "decision": reply.model_dump(mode="json", by_alias=True),
@@ -178,17 +196,37 @@ def build_workflow(
                 raise ValueError("INVALID_EVIDENCE")
         except (ValidationError, ValueError):
             return {"status": "FAILED", "error": "INVALID_EVIDENCE"}
-        status = (
-            "INCONCLUSIVE"
-            if evidence.sql.minor_units is None or evidence.python.minor_units is None
-            else ("VERIFIED" if evidence.sql == evidence.python else "DISPUTED")
+        verdict = verify_evidence(MetricPlan.model_validate(state["pending"]["plan"]), evidence)
+        record = (
+            evidence.model_dump(mode="json", by_alias=True)
+            | verdict
+            | {
+                "hypothesisId": state["pending"]["hypothesisId"],
+                "dependsOn": state["pending"]["dependsOn"],
+            }
         )
-        record = evidence.model_dump(mode="json", by_alias=True) | {
-            "verification": status,
-            "provenance": "CLIENT_REPORTED",
-            "hypothesisId": state["pending"]["hypothesisId"],
-        }
         return {"evidence": state["evidence"] + [record], "pending": {}, "status": "ANALYZING"}
+
+    def correction(state: State) -> State:
+        last = state["evidence"][-1]
+        identity = last["contractHash"]
+        used = state.get("corrections", {}).get(identity, 0)
+        if used >= 2 or len(state["jobs"]) >= 6:
+            return {"status": "REPORTING", "decision": {"action": "finish"}}
+        return {
+            "corrections": state.get("corrections", {}) | {identity: used + 1},
+            "decision": {
+                "action": "execute",
+                "hypothesisId": last["hypothesisId"],
+                "reason": "Deterministic correction: recompute original approved contract",
+            },
+            "status": "ISSUING",
+        }
+
+    def route_accept(state: State) -> str:
+        if state["status"] == "FAILED":
+            return END
+        return "correction" if state["evidence"][-1]["verification"] == "DISPUTED" else "analyst"
 
     async def report(state: State) -> State:
         if not state["evidence"]:
@@ -231,6 +269,7 @@ def build_workflow(
         ("issue", issue),
         ("accept", accept),
         ("report", report),
+        ("correction", correction),
     ]:
         graph.add_node(name, node)
     graph.add_edge(START, "planner")
@@ -238,6 +277,9 @@ def build_workflow(
     graph.add_conditional_edges("clarify", lambda s: END if s["status"] == "FAILED" else "planner")
     graph.add_conditional_edges("analyst", route_analyst)
     graph.add_edge("issue", "accept")
-    graph.add_conditional_edges("accept", lambda s: END if s["status"] == "FAILED" else "analyst")
+    graph.add_conditional_edges("accept", route_accept)
+    graph.add_conditional_edges(
+        "correction", lambda s: "issue" if s["status"] == "ISSUING" else "report"
+    )
     graph.add_edge("report", END)
     return graph.compile(checkpointer=checkpointer)

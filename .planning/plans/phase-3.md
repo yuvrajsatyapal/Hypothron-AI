@@ -1,0 +1,7 @@
+# Phase 3 implementation plan
+Spec: .planning/specs/phase-3.md. Subagent-driven-development for independent implementation/review; root integration.
+Global constraints: existing main; local conventional tested-task commits only; leave unrelated .env.example; no paid inference, raw uploads, keys in state, arbitrary SQL/Python, persistence or Phase4.
+T3.1 browser slice: tests first for versioned metric semantics, exact currency scales, period/timezone/null and grain/cardinality; extend trusted fixed compilers/workers and compatible execution envelope. Backend slice: strict mirrored contracts and bounded aggregate diagnostics, semantic identity, contradiction classification/dependencies; graph two-retry correction and durable recovery tests. Integration tests and review before commit.
+T3.2: tests first for structured claim grounding/causal rejection/fallback; domain reporting module, graph/report schema; web runtime validation and evidence chart/table design; browser accessibility/safe rendering coverage. Review and commit.
+T3.3: deterministic ten-question/adverse evaluation artifacts; full backend/unit/browser/type/lint/format/build/schema checks; actual diagrams skill self-check/browser check; engineering/security review; report/deep dive/guide/current-state updates; final local commit and stop.
+Preflight: T3.1/T3.2 share evidence schema; root owns API schema/graph and coordinates frontend mirror. T3.2/T3.3 share reports; evaluations assert exact values rather than production-generated expectations. No conflicting file ownership.

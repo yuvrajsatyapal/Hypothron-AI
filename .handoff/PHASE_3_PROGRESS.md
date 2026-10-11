@@ -1,0 +1,9 @@
+# Phase 3 execution ledger
+User 2026-10-12 authorizes Phase3 only, main local task commits, no paid inference/push/deployment. Existing untracked services/api/.env.example must remain untouched.
+Read required context, v1 executor/graph/models. Phase2 UTC/USD revenue_sum v1 and free-text cited report are baseline.
+Plan extension: T3.1 versioned exact metrics + semantic diagnostics/lineage + bounded deterministic correction; T3.2 typed evidence-backed findings/charts + deterministic fallback; T3.3 ten golden/adverse evaluations, full gates/reviews/diagrams/deep dive.
+Ruling: new instruction supersedes saved stop-before-Phase3. Remain on main. No phase4.
+Interfaces: executor v2 -> backend MetricPlan/EvidenceInput -> verifier -> graph record -> typed report -> web runtime validation. Preserve v1 evidence shape compatibility; v2 verification requires diagnostics.
+Status: T3.1 in progress. Browser slice delegated under subagent-driven-development skill; root owns backend and integration. Spec/plan extension in .planning created by workflow.
+T3.1 latest validation: backend79pass12.36s, unit50pass1.76s, strictTS+mypy17files pass. Real v2 Chrome16cases pass1.4m. Review found shallow freezing, empty-v-populated priority, forbidden null diagnostics, scalar UI verdict; reproduced/fixed and scoped re-review underway. Native correction recovery/cancel test passes. Schema export still needs refresh before task commit. UI browser consent/replay test underway. No task commit yet.
+T3.1 engineering re-review ACCEPT all4fixes. Full backend79pass12.36s; scoped complete unit61pass8.91s (includes real mirrored Pyodide10tests). Strict TS rerun after temporarily holding T3.2 test in /tmp. T3.2 prepared tests /tmp/phase3-evidenceReport.test.ts and /tmp/phase3-test-reporting.py; restore only after T3.1 commit. v2 browser16actual cases pass, UI approval/replay pending.

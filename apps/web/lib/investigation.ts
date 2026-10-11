@@ -1,10 +1,11 @@
 import {
   validateNumeric,
   validatePlan,
-  verification,
+  canonicalPlan,
   type MetricPlan,
   type NumericResult,
 } from "../../executor/src/contracts";
+import { evidenceVerdict } from "./verification";
 export interface Job {
   kind: "execution";
   id: string;
@@ -21,6 +22,11 @@ export interface Evidence {
   verification: "VERIFIED" | "DISPUTED" | "INCONCLUSIVE";
   provenance: "CLIENT_REPORTED";
   hypothesisId: string;
+  classification?: string;
+  contractHash?: string;
+  dependsOn?: string[];
+  currency?: string;
+  metricVersion?: number;
 }
 export interface InvestigationState {
   status: string;
@@ -46,7 +52,7 @@ function strings(value: unknown, max: number): string[] {
   return value.map((v) => text(v, 64));
 }
 export function samePlan(a: MetricPlan, b: MetricPlan): boolean {
-  return (Object.keys(a) as (keyof MetricPlan)[]).every((k) => a[k] === b[k]);
+  return canonicalPlan(a) === canonicalPlan(b);
 }
 export function validateInvestigationState(
   value: unknown,
@@ -101,10 +107,13 @@ export function validateInvestigationState(
         sql = validateNumeric(r.sql),
         python = validateNumeric(r.python),
         hash = text(r.datasetHash, 64);
+      const plan = approved.find((p) => p.datasetHash === hash);
       if (
-        !approved.some((p) => p.datasetHash === hash) ||
+        !plan ||
         r.provenance !== "CLIENT_REPORTED" ||
-        verification(sql, python).state !== r.verification
+        evidenceVerdict(plan, r).state !== r.verification ||
+        (r.classification !== undefined &&
+          evidenceVerdict(plan, r).classification !== r.classification)
       )
         throw new Error("INVALID_RESPONSE");
       return {
@@ -115,6 +124,17 @@ export function validateInvestigationState(
         verification: r.verification as Evidence["verification"],
         provenance: "CLIENT_REPORTED",
         hypothesisId: text(r.hypothesisId, 3),
+        ...(r.classification === undefined
+          ? {}
+          : { classification: text(r.classification, 64) }),
+        ...(r.contractHash === undefined
+          ? {}
+          : { contractHash: text(r.contractHash, 64) }),
+        ...(r.dependsOn === undefined
+          ? {}
+          : { dependsOn: strings(r.dependsOn, 6) }),
+        currency: plan!.currency,
+        metricVersion: plan!.version,
       };
     });
   }

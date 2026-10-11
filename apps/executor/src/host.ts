@@ -47,10 +47,38 @@ window.addEventListener("message", async (event: MessageEvent) => {
         !(d.bytes instanceof Uint8Array) ||
         worker ||
         !assets ||
-        Object.keys(d).length !== 4
+        Object.keys(d).length !== (d.lookupBytes === undefined ? 4 : 6) ||
+        Object.keys(d).some(
+          (k) =>
+            ![
+              "type",
+              "id",
+              "plan",
+              "bytes",
+              "lookupBytes",
+              "approvedRelationship",
+            ].includes(k),
+        )
       )
         throw new Error("INVALID_JOB");
       const plan = validatePlan(d.plan);
+      const relation = plan.version === 2 ? plan.relationship : null;
+      if (
+        relation &&
+        (!(d.lookupBytes instanceof Uint8Array) ||
+          d.approvedRelationship !== true)
+      )
+        throw new Error("RELATIONSHIP_APPROVAL_REQUIRED");
+      if (
+        !relation &&
+        (d.lookupBytes !== undefined || d.approvedRelationship !== undefined)
+      )
+        throw new Error("INVALID_JOB");
+      if (
+        d.lookupBytes instanceof Uint8Array &&
+        d.lookupBytes.length + d.bytes.length > 10 * 1024 * 1024
+      )
+        throw new Error("INPUT_LIMIT");
       if (d.bytes.byteLength > 10 * 1024 * 1024) throw new Error("INPUT_LIMIT");
       activeId = d.id;
       worker = new Worker("/worker.js", { type: "module" });
@@ -90,10 +118,24 @@ window.addEventListener("message", async (event: MessageEvent) => {
           buffer.slice(0),
         ]),
       );
-      worker.postMessage({ id: d.id, plan, bytes: d.bytes, assets: copies }, [
-        d.bytes.buffer,
-        ...Object.values(copies),
-      ]);
+      worker.postMessage(
+        {
+          id: d.id,
+          plan,
+          bytes: d.bytes,
+          assets: copies,
+          ...(relation
+            ? { lookupBytes: d.lookupBytes, approvedRelationship: true }
+            : {}),
+        },
+        [
+          ...(d.lookupBytes instanceof Uint8Array
+            ? [d.lookupBytes.buffer]
+            : []),
+          d.bytes.buffer,
+          ...Object.values(copies),
+        ],
+      );
     } catch (error) {
       const code =
         error instanceof Error && /^[A-Z_]+$/.test(error.message)

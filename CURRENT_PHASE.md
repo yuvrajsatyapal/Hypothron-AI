@@ -1,13 +1,13 @@
 # Current Phase
 
-Updated: 2026-10-12. **Latest user scope: finish Phase 2, then stop before Phase 3.** Existing main only. Tested-task local commits are authorized; no branch/worktree changes, history rewriting, pushes, PRs, paid resources or external deployment.
+Updated: 2026-10-12. **Latest user scope: complete Phase 3 only, then stop before Phase 4.** Existing main only. Tested-task local commits are authorized; no branch/worktree changes, history rewriting, pushes, PRs, paid resources or external deployment.
 
 | Phase | Status | Evidence |
 |---|---|---|
 | 0 documentation/workflow | Complete | docs/WORKFLOW_REVIEW.md |
 | 1 deterministic browser foundation | Complete for ADR-015 scoped local desktop target | Report, deep dive, actual diagrams and measured JSON |
 | 2 durable LangGraph investigation | **Complete for scoped local desktop target** | docs/reports/PHASE_2_REPORT.md and docs/learning/PHASE_2_DEEP_DIVE.md |
-| 3 verification/evidence expansion | Not started; outside current scope | Depends on Phase 2 |
+| 3 verification/evidence expansion | In progress: T3.1 | Phase 3 spec/plan and execution ledger |
 | 4 opt-in persistence/replay bundles | Not started; outside current scope | Depends on Phase 3 |
 | 5 local release/evaluation | Not started; outside current scope | Hosted release remains unauthorized |
 
@@ -19,6 +19,6 @@ Support remains ADR-015 Chrome154.0.8037.99/macOSarm64/8GiB/local origins. CSV c
 
 Remaining risks: CLIENT_REPORTED agreement is not server attestation; prose numerical/causal grounding remains Phase3. Saved snapshots/export/import/full zero-inference replay bundles remain Phase4. Multi-host quotas, scheduled retention/backup policy, broad device evidence, Parquet, evaluations and hosted deployment probes remain Phase5. Known-key filtering cannot prove all transformed secrets are detected. No live inference compatibility/cost or production-readiness claim.
 
-Exact handoff: Phase2 is complete. **Stop here; do not implement Phase3 without a new user instruction.** If later authorized, begin T3.1 from the existing roadmap/spec/plan; do not redo Phase2 or relax its privacy/provenance/recovery invariants. Read README for local setup and environment. E2E starts a test-only mocked-HTTP API; stop the real API on8000 first. PostgreSQL runs locally on55432. Tests do not require provider keys or paid services. Unsaved bytes/session capability disappear on reload. Commit ledger lives in the Phase2 report; env/generated assets/database files remain excluded.
+Exact handoff: Phase2 is complete. **New 2026-10-12 instruction authorizes Phase3. Stop before Phase4.** If later authorized, begin T3.1 from the existing roadmap/spec/plan; do not redo Phase2 or relax its privacy/provenance/recovery invariants. Read README for local setup and environment. E2E starts a test-only mocked-HTTP API; stop the real API on8000 first. PostgreSQL runs locally on55432. Tests do not require provider keys or paid services. Unsaved bytes/session capability disappear on reload. Commit ledger lives in the Phase2 report; env/generated assets/database files remain excluded.
 
 Final tested integration commit: `6ca3989` on main. Phase2 report records earlier task hashes. No code was published or deployed.

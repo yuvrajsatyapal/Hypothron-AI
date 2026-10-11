@@ -224,14 +224,14 @@ async def test_job_cap_terminates_execution_loop_deterministically():
                     "jobId": job["id"],
                     "datasetHash": HASH,
                     "sql": {"minorUnits": "1", "count": 1},
-                    "python": {"minorUnits": "2", "count": 1},
+                    "python": {"minorUnits": "1", "count": 1},
                 }
             ),
             cfg,
         )
     assert result["status"] == "COMPLETE" and result["calls"] == 8
     assert len(result["jobs"]) == 6 and all(
-        e["verification"] == "DISPUTED" for e in result["evidence"]
+        e["verification"] == "VERIFIED" for e in result["evidence"]
     )
 
 

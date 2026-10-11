@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { approvedMetric, executionVerdict } from "../components/metricApproval";
 import { Investigation } from "../components/Investigation";
 import {
   LocalExecutor,
@@ -7,7 +8,7 @@ import {
   type MetricPlan,
   type ExecutionResult,
 } from "../lib/execution";
-import { verification, replayMatches } from "../../executor/src/contracts";
+import { replayMatches } from "../../executor/src/contracts";
 export default function Page() {
   const frame = useRef<HTMLIFrameElement | null>(null);
   const executor = useRef<LocalExecutor | null>(null);
@@ -22,11 +23,34 @@ export default function Page() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [replay, setReplay] = useState("");
-  const uploadGeneration = useRef(0);
-  const [executedPlan, setExecutedPlan] = useState<MetricPlan | null>(null);
-  const saved = useRef<{ plan: MetricPlan; result: ExecutionResult } | null>(
+  const [advanced, setAdvanced] = useState(false);
+  const [currency, setCurrency] = useState<MetricPlan["currency"]>("USD");
+  const [timezone, setTimezone] = useState("UTC");
+  const [nullPolicy, setNullPolicy] =
+    useState<MetricPlan["nullPolicy"]>("exclude");
+  const [grain, setGrain] = useState("id");
+  const lookup = useRef<{ bytes: Uint8Array; datasetHash: string } | null>(
     null,
   );
+  const lookupGeneration = useRef(0);
+  const [lookupName, setLookupName] = useState("");
+  const [lookupApproved, setLookupApproved] = useState(false);
+  const [keyColumn, setKeyColumn] = useState("id");
+  const [lookupKeyColumn, setLookupKeyColumn] = useState("id");
+  const [cardinality, setCardinality] = useState<"one_to_one" | "many_to_one">(
+    "many_to_one",
+  );
+  const [populationCount, setPopulationCount] = useState(0);
+  const [executedLookup, setExecutedLookup] = useState<
+    Uint8Array | undefined
+  >();
+  const uploadGeneration = useRef(0);
+  const [executedPlan, setExecutedPlan] = useState<MetricPlan | null>(null);
+  const saved = useRef<{
+    plan: MetricPlan;
+    result: ExecutionResult;
+    lookup?: Uint8Array;
+  } | null>(null);
   async function run(isReplay = false) {
     if (!bytes.current) return;
     if (!executor.current && frame.current)
@@ -39,23 +63,47 @@ export default function Page() {
     setResult(null);
     setReplay("");
     setStatus("Loading isolated runtimes and computing locally…");
-    const plan =
-      isReplay && saved.current
-        ? saved.current.plan
-        : ({
-            version: 1,
-            kind: "revenue_sum",
-            datasetHash: hash,
-            amountColumn: amount,
-            dateColumn: date,
-            start,
-            end,
-            timezone: "UTC",
-            currency: "USD",
-            nullPolicy: "exclude",
-          } as MetricPlan);
     try {
-      const computed = await executor.current.execute(plan, bytes.current);
+      const plan =
+        isReplay && saved.current
+          ? saved.current.plan
+          : approvedMetric({
+              datasetHash: hash,
+              amountColumn: amount,
+              dateColumn: date,
+              start,
+              end,
+              advanced,
+              currency,
+              timezone,
+              nullPolicy,
+              grain,
+              ...(advanced && lookup.current
+                ? {
+                    lookup: {
+                      datasetHash: lookup.current.datasetHash,
+                      keyColumn,
+                      lookupKeyColumn,
+                      cardinality,
+                      populationCount,
+                      approved: lookupApproved,
+                    },
+                  }
+                : {}),
+            });
+      const lookupBytes = isReplay
+        ? saved.current?.lookup
+        : advanced
+          ? lookup.current?.bytes
+          : undefined;
+      const computed = await executor.current.execute(
+        plan,
+        bytes.current,
+        lookupBytes
+          ? { bytes: lookupBytes, approvedRelationship: true }
+          : undefined,
+      );
+      setExecutedLookup(lookupBytes);
       setResult(computed);
       setExecutedPlan({ ...plan });
       setStatus("Local execution complete.");
@@ -63,12 +111,12 @@ export default function Page() {
         setReplay(
           replayMatches(saved.current.result, computed) ? "MATCH" : "MISMATCH",
         );
-      else saved.current = { plan, result: computed };
+      else saved.current = { plan, result: computed, lookup: lookupBytes };
     } catch (error) {
       setResult(null);
       setStatus(
         (error instanceof Error ? error.message : "EXECUTION_FAILED") +
-          ": Check the selected columns, UTC dates and input limits, then retry. Reload if the runtime is unavailable.",
+          ": Check the selected columns, period timezone and input limits, then retry. Reload if the runtime is unavailable.",
       );
     } finally {
       setBusy(false);
@@ -104,6 +152,8 @@ export default function Page() {
                   const generation = ++uploadGeneration.current;
                   const f = e.target.files?.[0];
                   setResult(null);
+                  setExecutedLookup(undefined);
+                  setLookupApproved(false);
                   saved.current = null;
                   setReplay("");
                   bytes.current = null;
@@ -150,7 +200,7 @@ export default function Page() {
               />
             </label>
             <label>
-              Period start (inclusive UTC)
+              Period start (inclusive)
               <input
                 disabled={busy}
                 value={start}
@@ -158,16 +208,173 @@ export default function Page() {
               />
             </label>
             <label>
-              Period end (exclusive UTC)
+              Period end (exclusive)
               <input
                 disabled={busy}
                 value={end}
                 onChange={(e) => setEnd(e.target.value)}
               />
             </label>
+            <label className="consent-row">
+              <input
+                type="checkbox"
+                checked={advanced}
+                disabled={busy}
+                onChange={(e) => {
+                  setAdvanced(e.target.checked);
+                  setLookupApproved(false);
+                }}
+              />
+              Use advanced v2 contract (grain, currency and timezone)
+            </label>
+            {advanced && (
+              <fieldset disabled={busy} style={{ minWidth: 0 }}>
+                <legend>Advanced metric contract</legend>
+                <label>
+                  Currency
+                  <select
+                    value={currency}
+                    onChange={(e) =>
+                      setCurrency(e.target.value as MetricPlan["currency"])
+                    }
+                  >
+                    <option value="USD">USD (2 decimal places)</option>
+                    <option value="EUR">EUR (2 decimal places)</option>
+                    <option value="JPY">JPY (whole yen)</option>
+                  </select>
+                </label>
+                <label>
+                  Timezone (UTC or fixed offset)
+                  <input
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                  />
+                </label>
+                <p>
+                  Period timestamps must end with Z for UTC, or this exact
+                  offset. Fixed offsets do not follow daylight saving changes.
+                </p>
+                <label>
+                  Unique dataset grain keys (comma-separated)
+                  <input
+                    value={grain}
+                    onChange={(e) => setGrain(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Missing amount policy
+                  <select
+                    value={nullPolicy}
+                    onChange={(e) =>
+                      setNullPolicy(e.target.value as MetricPlan["nullPolicy"])
+                    }
+                  >
+                    <option value="exclude">Exclude missing amounts</option>
+                    <option value="error">Reject missing amounts</option>
+                  </select>
+                </label>
+                <label>
+                  Optional lookup CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={async (e) => {
+                      const generation = ++lookupGeneration.current;
+                      lookup.current = null;
+                      setLookupName("");
+                      setLookupApproved(false);
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 10 * 1024 * 1024) {
+                        setStatus("INPUT_LIMIT");
+                        return;
+                      }
+                      try {
+                        const data = new Uint8Array(await file.arrayBuffer());
+                        const datasetHash = await contentHash(data);
+                        if (generation !== lookupGeneration.current) return;
+                        lookup.current = { bytes: data, datasetHash };
+                        setLookupName(file.name);
+                      } catch {
+                        if (generation === lookupGeneration.current)
+                          setStatus("INPUT_READ_FAILED");
+                      }
+                    }}
+                  />
+                </label>
+                {lookupName && (
+                  <>
+                    <p>Lookup in local memory: {lookupName}</p>
+                    <label>
+                      Source join key
+                      <input
+                        value={keyColumn}
+                        onChange={(e) => {
+                          setKeyColumn(e.target.value);
+                          setLookupApproved(false);
+                        }}
+                      />
+                    </label>
+                    <label>
+                      Lookup join key
+                      <input
+                        value={lookupKeyColumn}
+                        onChange={(e) => {
+                          setLookupKeyColumn(e.target.value);
+                          setLookupApproved(false);
+                        }}
+                      />
+                    </label>
+                    <label>
+                      Join cardinality
+                      <select
+                        value={cardinality}
+                        onChange={(e) => {
+                          setCardinality(e.target.value as typeof cardinality);
+                          setLookupApproved(false);
+                        }}
+                      >
+                        <option value="many_to_one">
+                          Many source rows to one lookup row
+                        </option>
+                        <option value="one_to_one">
+                          One source row to one lookup row
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      Expected source population rows
+                      <input
+                        type="number"
+                        min={0}
+                        max={100000}
+                        value={populationCount}
+                        onChange={(e) => {
+                          setPopulationCount(Number(e.target.value));
+                          setLookupApproved(false);
+                        }}
+                      />
+                    </label>
+                    <label className="consent-row">
+                      <input
+                        type="checkbox"
+                        checked={lookupApproved}
+                        onChange={(e) => setLookupApproved(e.target.checked)}
+                      />
+                      I approve this derived join on the displayed keys,
+                      cardinality and population. Original source bytes remain
+                      unchanged.
+                    </label>
+                  </>
+                )}
+              </fieldset>
+            )}
             <p>
-              Contract: USD, exact cents, UTC, exclude missing amounts. Initial
-              supported operation: revenue sum.
+              Contract: {advanced ? currency : "USD"}, exact{" "}
+              {advanced && currency === "JPY" ? "yen" : "minor units"},{" "}
+              {advanced ? timezone : "UTC"},{" "}
+              {nullPolicy === "exclude" ? "exclude" : "reject"} missing amounts.
+              Revenue sum.
             </p>
             <div className="actions">
               <button disabled={!hash || busy} onClick={() => run()}>
@@ -199,12 +406,14 @@ export default function Page() {
                 <p data-testid="executed-contract">
                   Executed contract: {executedPlan?.amountColumn}, date{" "}
                   {executedPlan?.dateColumn}, [{executedPlan?.start},{" "}
-                  {executedPlan?.end}), USD / UTC / missing amounts excluded.
-                  Replay uses this original contract.
+                  {executedPlan?.end}), {executedPlan?.currency} /{" "}
+                  {executedPlan?.timezone} / {executedPlan?.nullPolicy} missing
+                  amounts / v{executedPlan?.version}. Replay uses this original
+                  contract.
                 </p>
                 <p data-testid="verification" className="verdict">
-                  {verification(result.sql, result.python).state} ·
-                  CLIENT_REPORTED
+                  {executedPlan && executionVerdict(executedPlan, result).state}{" "}
+                  · CLIENT_REPORTED
                 </p>
                 <p>
                   Local agreement is not server attestation or proof of
@@ -212,7 +421,8 @@ export default function Page() {
                 </p>
                 <table>
                   <caption>
-                    Exact monetary result in minor units (cents)
+                    Exact monetary result in{" "}
+                    {executedPlan?.currency === "JPY" ? "yen" : "minor units"}
                   </caption>
                   <thead>
                     <tr>
@@ -238,6 +448,43 @@ export default function Page() {
                     </tr>
                   </tbody>
                 </table>
+                {result.diagnostics && (
+                  <div
+                    style={{ overflowX: "auto" }}
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Independent contract diagnostics"
+                  >
+                    <table style={{ minWidth: 540 }}>
+                      <caption>Independent contract diagnostics</caption>
+                      <thead>
+                        <tr>
+                          <th>Engine</th>
+                          <th>Population</th>
+                          <th>Period</th>
+                          <th>Null amounts</th>
+                          <th>Unique grain</th>
+                          <th>Join keys</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(["sql", "python"] as const).map((engine) => {
+                          const d = result.diagnostics![engine];
+                          return (
+                            <tr key={engine}>
+                              <th>{engine}</th>
+                              <td>{d.populationRows}</td>
+                              <td>{d.periodRows}</td>
+                              <td>{d.nullAmounts}</td>
+                              <td>{d.grainUniqueRows}</td>
+                              <td>{d.joinUniqueRows}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
                 <p>
                   Dataset rows: {result.rows}; columns:{" "}
                   {result.schema.join(", ")}
@@ -267,10 +514,15 @@ export default function Page() {
         {result && executedPlan && bytes.current && (
           <Investigation
             key={hash}
-            primary={{ bytes: bytes.current, plan: executedPlan, result }}
-            execute={async (plan, data) => {
+            primary={{
+              bytes: bytes.current,
+              plan: executedPlan,
+              result,
+              lookup: executedLookup,
+            }}
+            execute={async (plan, data, derivedLookup) => {
               if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
-              return executor.current.execute(plan, data);
+              return executor.current.execute(plan, data, derivedLookup);
             }}
             onBusy={setBusy}
             cancelLocal={() => executor.current?.cancel()}
