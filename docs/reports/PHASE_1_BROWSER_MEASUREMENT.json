@@ -1,0 +1,75 @@
+[
+  {
+    "date": "2026-10-11T17:47:44.608Z",
+    "browser": "154.0.8037.99",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "fixture": "tests/fixtures/orders.csv",
+    "startupToEvidenceMs": 6795,
+    "engine": "5479 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
+    "engineDataMemory": "Tracked DuckDB allocations: 104448 bytes; Pandas dataframe: 572 bytes. These measurements exclude runtime overhead and are not peak heap bounds.",
+    "sampledPeakBrowserProcessTreeRssBytes": 1106247680,
+    "samples": 37,
+    "samplingIntervalMs": 200,
+    "scope": "Whole fresh headless Chrome process tree, including runtime assets. Sampled RSS is not a continuous maximum, per-engine allocation, mobile device measurement, or portable heap guarantee."
+  },
+  {
+    "date": "2026-10-11T17:55:17.419Z",
+    "browser": "154.0.8037.99",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "fixture": "synthetic 100000 UTC rows; constant 10.10 USD",
+    "startupToEvidenceMs": 6832,
+    "engine": "5512 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
+    "engineDataMemory": "Tracked DuckDB allocations: 4263936 bytes; Pandas dataframe: 7500072 bytes. These measurements exclude runtime overhead and are not peak heap bounds.",
+    "sampledPeakBrowserProcessTreeRssBytes": 1269874688,
+    "samples": 35,
+    "samplingIntervalMs": 200,
+    "scope": "Whole fresh headless Chrome process tree, including runtime assets. Sampled RSS is not a continuous maximum, per-engine allocation, mobile device measurement, or portable heap guarantee."
+  },
+  {
+    "date": "2026-10-11T18:47:07.066Z",
+    "browser": "154.0.8037.99",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "fixture": "synthetic 100000 UTC rows; constant 10.10 USD",
+    "startupToEvidenceMs": 6603,
+    "engine": "4591 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
+    "engineDataMemory": "Tracked DuckDB allocations: 4263936 bytes; Pandas dataframe: 7500072 bytes. These measurements exclude runtime overhead and are not peak heap bounds.",
+    "sampledPeakBrowserProcessTreeRssBytes": 1017954304,
+    "samples": 37,
+    "samplingIntervalMs": 200,
+    "scope": "Whole fresh headless Chrome process tree, including runtime assets. Sampled RSS is not a continuous maximum, per-engine allocation, mobile device measurement, or portable heap guarantee."
+  },
+  {
+    "date": "2026-10-11T18:51:16.592Z",
+    "memoryOptimization": "Job runtime/package buffers released after initialization",
+    "browser": "154.0.8037.99",
+    "platform": "darwin",
+    "architecture": "arm64",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "fixture": "synthetic 100000 UTC rows; constant 10.10 USD; padding 64",
+    "startupToEvidenceMs": 7577,
+    "engine": "5333 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
+    "engineDataMemory": "Tracked DuckDB allocations: 11376640 bytes; Pandas dataframe: 16400072 bytes. These measurements exclude runtime overhead and are not peak heap bounds.",
+    "sampledPeakBrowserProcessTreeRssBytes": 1111834624,
+    "samples": 40,
+    "samplingIntervalMs": 200,
+    "scope": "Whole fresh headless Chrome process tree, including runtime assets. Sampled RSS is not a continuous maximum, per-engine allocation, mobile device measurement, or portable heap guarantee."
+  }
+]

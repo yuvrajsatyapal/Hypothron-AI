@@ -1,0 +1,7 @@
+node_modules
+apps/executor/public
+.next
+.next-dev
+.venv
+pnpm-lock.yaml
+services/api/uv.lock

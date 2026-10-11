@@ -1,0 +1,1 @@
+{"name":"@hypothron/executor","private":true,"version":"0.1.0","dependencies":{"@duckdb/duckdb-wasm":"^1.30.0","pyodide":"0.29.3"}}

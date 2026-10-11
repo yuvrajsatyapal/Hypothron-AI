@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hypothron AI · trust and execution</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Noto+Serif:ital@0;1&family=Noto+Sans+KR:wght@400;500;600&family=Noto+Serif+KR:wght@400&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;   /* white-smoke */
+      --color-ink:     #2d3142;   /* jet-black */
+      --color-muted:   #4f5d75;   /* blue-slate */
+      --color-accent:  #bf4520;   /* burnt-tangerine */
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', 'Noto Serif KR', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .frame { max-width: 1320px; min-width: 0; width: 100%; }
+    /* The SVG holds its readable width (min-width == the viewBox width, so the
+       type ramp is never silently scaled down). This wrapper lets a narrow
+       screen scroll the diagram instead of the whole page. */
+    .diagram-container { width: 100%; overflow-x: auto; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+
+    svg { width: 100%; min-width: 1280px; display: block; }
+    /* Paper has no scrollbar, so the local scroller would clip instead of
+       scroll. Let the diagram scale down to the sheet: smaller but whole
+       beats sharp but cut off. Must come after the svg rule above - a media
+       query adds no specificity, so a later plain rule would win. */
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Architecture · Secure paved road · Diagram Design</p>
+    <h1>Hypothron AI · trust and execution</h1>
+
+    <!-- Replace system-architecture with a unique slug for this diagram before export. -->
+    <div class="diagram-container">
+      <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="system-architecture-title system-architecture-desc">
+        <title id="system-architecture-title">Hypothron AI · trust and execution</title>
+        <desc id="system-architecture-desc">Hypothron AI keeps datasets in the browser, restricts analytical execution, and routes approved metadata through FastAPI and LangGraph.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+
+          <!-- OPTIONAL: dot-pattern background. Uncomment the <pattern> and the second <rect> below if you want the dotted paper look. -->
+          <!--
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          -->
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <!-- <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/> -->
+
+        <rect x="40" y="88" width="320" height="520" rx="8" fill="rgba(45,49,66,0.02)" stroke="#4f5d75" stroke-dasharray="4,4"/><text x="56" y="112" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">APP ORIGIN · USER SESSION</text><rect x="380" y="88" width="320" height="520" rx="8" fill="rgba(45,49,66,0.02)" stroke="#4f5d75" stroke-dasharray="4,4"/><text x="396" y="112" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">EXECUTION ORIGIN · NO CREDENTIALS</text><rect x="720" y="88" width="280" height="520" rx="8" fill="rgba(45,49,66,0.02)" stroke="#4f5d75" stroke-dasharray="4,4"/><text x="736" y="112" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="start">SERVER · SCOPED AUTHORITY</text><path d="M 200,152 V 64 Q 200,56 208,56 H 872 Q 880,56 880,64 V 152" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/><rect x="498.0" y="36" width="84" height="12" rx="2" fill="#f5f5f5"/><text x="540" y="45" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">APPROVED META</text><line x1="320" y1="192" x2="400" y2="192" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="336.0" y="172" width="48" height="12" rx="2" fill="#f5f5f5"/><text x="360" y="181" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">BYTES</text><line x1="200" y1="232" x2="200" y2="432" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="208" y="324" width="72" height="12" fill="#f5f5f5"/><text x="244" y="333" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">SAVE ONLY</text><line x1="880" y1="232" x2="880" y2="328" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="888" y="272" width="64" height="12" fill="#f5f5f5"/><text x="920" y="281" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">PLAN</text><line x1="880" y1="408" x2="880" y2="480" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/><rect x="888" y="440" width="64" height="12" fill="#f5f5f5"/><text x="920" y="449" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">AUDIT</text><line x1="1000" y1="368" x2="1040" y2="368" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/><path d="M 760,212 H 736 Q 728,212 728,220 V 292 Q 728,300 720,300 H 288 Q 280,300 280,292 V 232" fill="none" stroke="#2e5aa8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow-link)"/><rect x="482.0" y="280" width="84" height="12" rx="2" fill="#f5f5f5"/><text x="524" y="289" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">JOBS / STATUS</text><line x1="640" y1="212" x2="708" y2="212" stroke="#4f5d75" stroke-dasharray="4,3"/><line x1="708" y1="204" x2="708" y2="220" stroke="#2d3142" stroke-width="2"/><text x="674" y="243" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">BLOCKED</text><rect x="80" y="152" width="240" height="80" rx="6" fill="#f5f5f5"/><rect x="80" y="152" width="240" height="80" rx="6" fill="#ffffff" stroke="#2d3142"/><rect x="88" y="160" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#2d3142"/><text x="116" y="172" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">UI</text><text x="200.0" y="196" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">Next.js workspace</text><text x="200.0" y="216" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">memory + consent</text><rect x="80" y="432" width="240" height="80" rx="6" fill="#f5f5f5"/><rect x="80" y="432" width="240" height="80" rx="6" fill="rgba(45,49,66,0.05)" stroke="#2d3142"/><rect x="88" y="440" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#2d3142"/><text x="116" y="452" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">STORE</text><text x="200.0" y="476" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">Local investigation bundle</text><text x="200.0" y="496" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">IndexedDB / Dexie</text><rect x="400" y="152" width="240" height="80" rx="6" fill="#f5f5f5"/><rect x="400" y="152" width="240" height="80" rx="6" fill="rgba(191,69,32,0.08)" stroke="#bf4520"/><rect x="408" y="160" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#bf4520"/><text x="436" y="172" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">WASM</text><text x="520.0" y="196" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">Restricted analytical workers</text><text x="520.0" y="216" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">DuckDB-WASM / Pyodide</text><rect x="760" y="152" width="240" height="80" rx="6" fill="#f5f5f5"/><rect x="760" y="152" width="240" height="80" rx="6" fill="#ffffff" stroke="#2d3142"/><rect x="768" y="160" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#2d3142"/><text x="796" y="172" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">API</text><text x="880.0" y="196" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">FastAPI policy gate</text><text x="880.0" y="216" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">BYOK + job validation</text><rect x="760" y="328" width="240" height="80" rx="6" fill="#f5f5f5"/><rect x="760" y="328" width="240" height="80" rx="6" fill="rgba(191,69,32,0.08)" stroke="#bf4520"/><rect x="768" y="336" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#bf4520"/><text x="796" y="348" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">GRAPH</text><text x="880.0" y="372" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">LangGraph investigation</text><text x="880.0" y="392" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">typed conditional roles</text><rect x="760" y="480" width="240" height="80" rx="6" fill="#f5f5f5"/><rect x="760" y="480" width="240" height="80" rx="6" fill="rgba(45,49,66,0.05)" stroke="#2d3142"/><rect x="768" y="488" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#2d3142"/><text x="796" y="500" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">STORE</text><text x="880.0" y="524" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">PostgreSQL ledger</text><text x="880.0" y="544" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">metadata / checkpoints</text><rect x="1040" y="328" width="200" height="80" rx="6" fill="#f5f5f5"/><rect x="1040" y="328" width="200" height="80" rx="6" fill="#ffffff" stroke="#2d3142"/><rect x="1048" y="336" width="56" height="16" rx="2" fill="#f5f5f5" stroke="#2d3142"/><text x="1076" y="348" font-family="'Geist Mono', ui-monospace, monospace" font-size="8" font-weight="400" fill="#4f5d75" text-anchor="middle">REMOTE</text><text x="1140.0" y="372" font-family="'Geist', system-ui, sans-serif" font-size="12" font-weight="600" fill="#2d3142" text-anchor="middle">LLM providers</text><text x="1140.0" y="392" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">OpenRouter / Gemini</text><text x="540" y="368" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">No keys. No arbitrary source.</text><text x="540" y="392" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">Local agreement is client-reported.</text><text x="200" y="560" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="middle">No raw dataset upload by default.</text><line x1="40" y1="660" x2="1240" y2="660" stroke="#bfc0c0"/><line x1="40" y1="688" x2="64" y2="688" stroke="#2e5aa8" stroke-width="2"/><text x="76" y="691" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="start">Approved API / provider route</text><line x1="340" y1="688" x2="364" y2="688" stroke="#4f5d75" stroke-width="2"/><text x="376" y="691" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="start">Local data or metadata flow</text><line x1="640" y1="688" x2="664" y2="688" stroke="#bf4520" stroke-width="2"/><text x="676" y="691" font-family="'Geist Mono', ui-monospace, monospace" font-size="9" font-weight="400" fill="#4f5d75" text-anchor="start">Investigation / analytical focal</text>
+
+      </svg>
+    </div>
+    <p style="margin-top:24px;font-size:14px;line-height:1.6;color:#4f5d75">Scope: public browser mode. The executor cannot directly call the API; the app bridges approved jobs and results. Blocked path denotes raw-data or privileged API bypass. Optional native execution, retries and cloud sync are excluded; see the written contracts. Default editorial style is provisional, not a UI design system.</p>
+  </div>
+</body>
+</html>

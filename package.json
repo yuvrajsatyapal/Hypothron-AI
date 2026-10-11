@@ -1,0 +1,23 @@
+{
+  "name": "hypothron-ai",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "pnpm --filter @hypothron/web typecheck && tsc -p apps/executor/tsconfig.json --noEmit",
+    "build": "pnpm executor:build && pnpm --filter @hypothron/web build",
+    "executor:build": "node scripts/build-executor.mjs",
+    "executor": "node apps/executor/server.mjs",
+    "web": "pnpm --filter @hypothron/web dev",
+    "e2e": "playwright test",
+    "format:check": "prettier --check \"apps/**/*.ts\" \"apps/**/*.tsx\" \"apps/web/app/globals.css\" \"scripts/**/*.mjs\" \"scripts/tests/*.ts\""
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "prettier": "3.6.2",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
