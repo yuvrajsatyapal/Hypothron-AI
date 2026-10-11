@@ -75,4 +75,4 @@ Stop before Phase3 at the user's request. No known failing available test remain
 
 Run locally using [README.md](../../README.md). Required API variable: DATABASE_URL; optional APP_ORIGIN and frontend NEXT_PUBLIC_API_ORIGIN retain tested localhost defaults. Provider credentials are entered in the UI; never put them in env files. Automated browser tests launch the mock-HTTP fixture API themselves; stop a real API on8000 first.
 
-Commit ledger (existing main): foundation `29b4b6c05a9f04fb6f01b6877f698e78f8347949`; providers `4465520085dabd6d126f23e9c1632cf1793cc372`; graph `4b72afc1c800407832cade07587a45a1447f66f2`; durable foundation `94b32d8`. Final integration hash is recorded after its tested-task commit without amending history.
+Commit ledger (existing main): foundation `29b4b6c05a9f04fb6f01b6877f698e78f8347949`; providers `4465520085dabd6d126f23e9c1632cf1793cc372`; graph `4b72afc1c800407832cade07587a45a1447f66f2`; durable foundation `94b32d8`. Final tested integration: `6ca3989` (`feat(investigations): integrate consent and recoverable browser workflows`). Completion-ledger documentation follows in a separate local commit; no history is amended.
