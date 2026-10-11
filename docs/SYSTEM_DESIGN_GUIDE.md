@@ -77,3 +77,7 @@ Read [http.py](../services/api/src/hypothron/providers/http.py) and [test_provid
 ## Mandatory phase deep dives
 
 Start with [Phase 1 deep dive](learning/PHASE_1_DEEP_DIVE.md): actual functions, complete flow, independent exact algorithms, ASGI/transactions, boundaries, tests and interview exercises. Future completed phases must add PHASE_N_DEEP_DIVE.md with implementation-based diagrams before their gate closes; link rather than duplicate prior concepts. No Phase 2–5 deep dive is claimed yet. ADR-015 now explicitly defers mobile runtime support and scopes initial local validation to the measured desktop configuration.
+
+## Phase2 implementation while integration is in progress
+
+[Phase2 report](reports/PHASE_2_REPORT.md) maps the genuine typed conditional graph and tests. Trace planner→clarification or analyst→issue→interrupt→bound evidence→analyst follow-up→report. Read the issue/accept separation to see why replayed interrupt nodes must not generate new IDs or perform new external side effects. Current InMemorySaver tests validate routing, not crash persistence or ownership. Durable ledger/API/UI and the comprehensive Phase2 deep dive remain pending gates.

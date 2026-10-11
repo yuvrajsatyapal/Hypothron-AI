@@ -96,3 +96,5 @@ Current independent prework: the Gemini/OpenRouter HTTP transport library is imp
 ## Implemented foundation diagrams
 
 [Phase 1 components and trust boundaries](docs/diagrams/phase-1-architecture.html) and [actual local computation sequence](docs/diagrams/phase-1-sequence.html) depict working code. Read [Phase 1 deep dive](docs/learning/PHASE_1_DEEP_DIVE.md) for arrow-by-arrow explanations, failure flows and invariants. Earlier full-system diagrams depict the target. Initial supported runtime/device scope is ADR-015; no mobile or public-host guarantee follows from localhost measurements.
+
+Phase2 module now implements planner/analyst/report schemas and conditional LangGraph clarification→immutable job interrupt→bound local evidence→follow-up/report routing. It is tested with InMemorySaver only; production saver/ledger/API/UI remain pending. Construct/discard credential-bearing role provider and compiled graph per request segment. Citation existence checks are implemented; per-numerical-claim report validation remains Phase3.

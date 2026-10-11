@@ -18,6 +18,8 @@ Check the filesystem; planned entries are not implementation claims. Update this
 | apps/web/ | Next.js workspace; browser-memory dataset ownership | Implemented foundation |
 | apps/executor/ | Separate credential-free static origin; bridge + fixed analytical workers | Implemented foundation |
 | services/api/src/hypothron/ | FastAPI metadata/session/readiness routes, body limits and SQLAlchemy model; orchestration remains planned | Implemented foundation |
+| services/api/src/hypothron/agents/ | Strict role/approved metadata contracts, conditional StateGraph and ephemeral role transport | Tested module; durable/API/UI integration pending |
+| services/api/tests/test_workflow.py | Genuine LangGraph routing/interrupt/budget/binding tests | 11 pass with test-only InMemorySaver |
 | services/api/src/hypothron/providers/http.py | Request-scoped Gemini/OpenRouter HTTP adapters; fixed destinations, identity-only bounded streaming and decoded credential filtering | Independent prework, unexposed |
 | services/api/tests/test_providers.py | Deterministic real-adapter wire/error/budget/secret/resource regressions using mock HTTP | 26 tests pass |
 | services/api/migrations/ | Alembic versioned PostgreSQL schema | Implemented foundation |
@@ -35,4 +37,4 @@ Dependency direction: API routes → domain/policies/repositories; domain never 
 | docs/reports/PHASE_1_REPORT.md / PHASE_1_BROWSER_MEASUREMENT.json | Gate status, code-based learning, measured evidence and exact resume |
 | compose.yaml / services/api/.env.example | Local PostgreSQL development setup; no hosted credentials |
 
-Not implemented: LangGraph/provider API/UI integration, job/event/checkpoint ledgers, persistent replay/export/import/Dexie, Parquet/multi-dataset analysis, chart/report generation, CI and hosted deployment. FILE_MAP is a responsibility map, not a phase completion claim.
+Not implemented: durable LangGraph/provider API/UI integration, job/event/checkpoint ledgers, persistent replay/export/import/Dexie, Parquet/multi-dataset analysis, chart/report generation, CI and hosted deployment. FILE_MAP is a responsibility map, not a phase completion claim.

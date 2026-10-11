@@ -14,7 +14,7 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 ## Phase 2
 
 - [x] T2.1 Genuine OpenRouter/Gemini transport adapters; structured validation/error/secret tests. Independent prework only; no inference route or live compatibility claim.
-- [ ] T2.2 Typed conditional LangGraph roles and budgeted follow-up/clarification tests.
+- [x] T2.2 Typed conditional LangGraph roles and budgeted follow-up/clarification tests; module Gate3.5 ACCEPT.
 - [ ] T2.3 PostgreSQL checkpoints, immutable jobs/results/events, lease fencing and crash recovery tests.
 - [ ] T2.4 UI/API/SSE end-to-end investigations and phase report.
 
