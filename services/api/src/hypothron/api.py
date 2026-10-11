@@ -12,6 +12,7 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from psycopg import Error as PsycopgError
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -32,7 +33,16 @@ class EmptyRequest(BaseModel):
 def create_app(
     *, database_url: str, provider_transport: httpx.AsyncBaseTransport | None = None
 ) -> FastAPI:
-    engine = create_async_engine(database_url, pool_size=3, max_overflow=0)
+    engine = create_async_engine(
+        database_url,
+        pool_size=3,
+        max_overflow=0,
+        pool_timeout=5,
+        connect_args={
+            "connect_timeout": 5,
+            "options": "-c statement_timeout=5000 -c lock_timeout=5000",
+        },
+    )
     sessions = async_sessionmaker(engine, expire_on_commit=False)
 
     @asynccontextmanager
@@ -53,6 +63,12 @@ def create_app(
     @app.exception_handler(RequestValidationError)
     async def invalid_request(_: object, __: RequestValidationError) -> JSONResponse:
         return JSONResponse(status_code=422, content={"error": {"code": "INVALID_INPUT"}})
+
+    async def unavailable(_: object, __: Exception) -> JSONResponse:
+        return JSONResponse(status_code=503, content={"error": {"code": "DATABASE_UNAVAILABLE"}})
+
+    app.add_exception_handler(SQLAlchemyError, unavailable)
+    app.add_exception_handler(PsycopgError, unavailable)
 
     @app.get("/v1/health")
     async def health() -> dict[str, str]:

@@ -14,6 +14,19 @@ export default defineConfig({
   },
   webServer: [
     {
+      command:
+        "services/api/.venv/bin/uvicorn browser_server:app --host 127.0.0.1 --port 8000 --no-access-log",
+      env: {
+        PYTHONPATH: "services/api/tests",
+        DATABASE_URL:
+          process.env.DATABASE_URL ||
+          "postgresql+psycopg://hypothron:local-development-only@127.0.0.1:55432/hypothron",
+      },
+      url: "http://127.0.0.1:8000/__test__/provider",
+      reuseExistingServer: true,
+      timeout: 30000,
+    },
+    {
       command: "pnpm executor",
       url: "http://127.0.0.1:3001",
       reuseExistingServer: true,

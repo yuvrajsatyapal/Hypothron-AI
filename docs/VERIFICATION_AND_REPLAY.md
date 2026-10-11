@@ -71,3 +71,7 @@ Comparison statuses: MATCH, MISMATCH, INCOMPATIBLE_RUNTIME, MISSING_INPUT, UNSUP
 ## Golden tests
 
 Reference decimal revenue/refund totals, duplicate joins, null-only groups, DST/period boundaries, zero denominator, altered snapshot byte, poisoned result, incompatible runtime, lost source snapshot and cancellation. Deterministic replay tests assert no provider adapter invocation and no key requirement. A fixture where both client outputs are forged must retain CLIENT_REPORTED provenance. Injecting one wrong output must produce DISPUTED, regardless of persuasive model prose.
+
+## Implemented boundary at the Phase 2 exit
+
+The current numerical path is exact revenue_sum v1 under approved USD/UTC/period/null semantics. Browser values produce VERIFIED, DISPUTED or INCONCLUSIVE with CLIENT_REPORTED provenance; backend ownership/hash/job/digest checks do not attest computation. Evidence citations must reference accepted jobs, but full numerical prose grounding and contradiction correction remain Phase 3. The foundation re-executes an in-memory plan without inference; saved snapshots, export/import and complete runtime-compatible investigation replay remain Phase 4. No Dexie storage is opened before Save, and no Save implementation exists yet. See [the Phase 2 deep dive](learning/PHASE_2_DEEP_DIVE.md).

@@ -1,6 +1,6 @@
-# Execution Protocol v0.1 — Proposed Contract
+# Execution Protocol — Target and implemented local v1
 
-This is a design contract, not implemented OpenAPI. Pydantic schemas will produce versioned JSON Schema/TypeScript definitions. Reject unknown fields at security boundaries; support explicit protocol-version negotiation, not permissive fallback.
+The full envelope below is the target for expanded metrics/replay/release. The implemented Phase1–2 local v1 subset is explicitly documented below and exported in packages/contracts/openapi-v1.json; it must not be mistaken for every future envelope field. Pydantic generates API JSON Schema; browser bindings currently have explicit runtime-validation tests rather than generated TypeScript definitions. Reject unknown fields at security boundaries; support explicit protocol-version negotiation, not permissive fallback.
 
 ## Analytical operation IR
 
@@ -60,3 +60,11 @@ Deterministically enforce PRD caps on both API and executor. The backend owns at
 ## Required fixtures
 
 Duplicate same/different results, lost ACK, job expiry, cancellation race, state-version conflict, run-owner restart, forged source/runtime declarations, out-of-order DAG task, malicious operation, over-limit payload and ambiguous provider timeout. Result signatures/hashes may protect envelope integrity but cannot prove execution correctness.
+
+## Implemented local Phase 2 surface
+
+POST /v1/investigations accepts strict requestId(UUID), question/1–3 dataset descriptors with exact revenue_sum v1 contracts, selected provider/model, request-scoped key and true consent. Owner/input-scoped creation is idempotent and makes no inference. POST /{id}/advance uses fresh key and optional clarification answer; the graph resumes durably. POST /{id}/results accepts jobId/hash and canonical paired scalar values; duplicate identical ACKs remain allowed after termination. GET /{id} returns owner/expiry-scoped state without inference. GET /{id}/events uses Bearer fetch SSE and integer after cursor; global event IDs are monotonic and deduplicated, not contiguous per-run counters. POST /{id}/cancel fences future writes.
+
+Jobs have kind/id/hypothesisId/plan/dependsOn/reason; public browser code compares the exact approved plan before dispatch. Run ownership/epoch/expiry live in the server ledger, not a signed browser attestation. Native checkpoints and business records commit separately and reconcile (ADR-016). Result POST does not invoke a model; separate advance is required. No arbitrary source/raw rows/server-attested provenance is accepted. Twelve attempted calls, six jobs and one clarification are enforced outside model discretion.
+
+Expanded envelopes, correction attempts, explicit state-version negotiation, runtime claims in backend results, history-gap responses, scoped deletion endpoints and deployment-global admission remain later work. The current narrow runtime is pinned and validated locally; full replay compatibility remains Phase4. This is an explicit implementation boundary, not a waiver of final release contracts.

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from hypothron.agents.models import (
@@ -46,12 +47,20 @@ class Ledger:
     def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
         self.sessions = sessions
 
-    async def create(self, owner: str, request: object, provider: str, model: str) -> RunRecord:
+    async def create(
+        self,
+        owner: str,
+        request: object,
+        provider: str,
+        model: str,
+        *,
+        request_id: str | None = None,
+    ) -> RunRecord:
         if provider not in {"gemini", "openrouter"}:
             raise LedgerError("INVALID_PROVIDER")
         validated = RunInput.model_validate(request).model_dump(mode="json", by_alias=True)
         run = RunRecord(
-            id=str(uuid4()),
+            id=request_id or str(uuid4()),
             owner=owner,
             request=validated,
             provider=provider,
@@ -62,10 +71,37 @@ class Ledger:
             expires_at=datetime.now(UTC) + timedelta(hours=24),
         )
         async with self.sessions.begin() as db:
-            db.add(run)
-            await db.flush()
-            db.add(EventRecord(run_id=run.id, kind="created", payload={"status": "PLANNING"}))
-        return run
+            inserted = await db.scalar(
+                insert(RunRecord)
+                .values(
+                    id=run.id,
+                    owner=owner,
+                    request=validated,
+                    provider=provider,
+                    model=model,
+                    status="PLANNING",
+                    attempts=0,
+                    epoch=0,
+                    expires_at=run.expires_at,
+                )
+                .on_conflict_do_nothing(index_elements=[RunRecord.id])
+                .returning(RunRecord.id)
+            )
+            stored = await db.scalar(
+                select(RunRecord).where(RunRecord.id == run.id).with_for_update()
+            )
+            if (
+                stored is None
+                or stored.owner != owner
+                or stored.request != validated
+                or stored.provider != provider
+                or stored.model != model
+                or stored.expires_at <= datetime.now(UTC)
+            ):
+                raise LedgerError("CREATION_CONFLICT")
+            if inserted:
+                db.add(EventRecord(run_id=run.id, kind="created", payload={"status": "PLANNING"}))
+            return stored
 
     async def owned(
         self, db: AsyncSession, owner: str, run_id: str, *, lock: bool = False

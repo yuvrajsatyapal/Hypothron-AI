@@ -1,6 +1,6 @@
 # Hypothron AI — Technology Decisions
 
-The table describes the target stack. The deterministic foundation is installed with pnpm-lock.yaml and services/api/uv.lock; runtime-manifest.json pins mirrored assets. Phase 2–5 orchestration/persistence/UI libraries remain planned; isolated provider transport prework uses the already installed HTTPX dependency. The foundation currently uses React state and explicit CSS instead of introducing unused UI/state packages. Actual tested versions and compatibility limits are in docs/reports/PHASE_1_REPORT.md and its measurement JSON; installed does not mean production validated.
+The table describes the target stack. The deterministic foundation is installed with pnpm-lock.yaml and services/api/uv.lock; runtime-manifest.json pins mirrored assets. Phase2 installs locked LangGraph1.2.14, checkpoint-postgres3.1.2 and its psycopg/native saver dependencies; provider adapters use HTTPX. Dexie and later analytical/UI expansion remain planned. The foundation currently uses React state and explicit CSS instead of introducing unused UI/state packages. Actual tested versions and compatibility limits are in docs/reports/PHASE_1_REPORT.md and its measurement JSON; installed does not mean production validated.
 
 | Technology | Responsibility | Trade-off / selection rule |
 |---|---|---|
@@ -40,4 +40,4 @@ This selection remains provisional until a deployment probe proves Python depend
 
 No Redis/Celery/Kafka/Kubernetes, dedicated vector database, pgvector, RAG, Neo4j or separate agents-as-services initially. No object storage because raw snapshots stay local. Add only after an ADR identifies a requirement, simpler alternatives and ongoing cost. Native arbitrary execution is optional local tooling, not a required public service.
 
-Implemented provider prework uses request-scoped HTTPX against the official OpenRouter/Gemini REST endpoints. This avoids unused SDK abstractions while retaining a typed validated domain response. It has mock-wire/security coverage, not live-model capability validation; model capability descriptors and consent remain planned.
+Implemented request-scoped provider integration uses request-scoped HTTPX against the official OpenRouter/Gemini REST endpoints. This avoids unused SDK abstractions while retaining a typed validated domain response. It has mock-wire/security coverage, not live-model capability validation; the workspace now requires explicit provider/metadata consent and displays request/output-token caps. Live model capability/pricing probes remain unverified.

@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { Investigation } from "../components/Investigation";
 import {
   LocalExecutor,
   contentHash,
@@ -85,8 +86,8 @@ export default function Page() {
           <h1>Inspect the evidence.</h1>
           <p>
             Datasets remain in browser memory. This foundation calculates
-            revenue independently with SQL and Python. No LLM calls or automatic
-            saving.
+            revenue independently with SQL and Python. AI investigations require
+            explicit provider consent. No automatic saving.
           </p>
         </section>
         <div className="workspace">
@@ -263,6 +264,18 @@ export default function Page() {
             )}
           </section>
         </div>
+        {result && executedPlan && bytes.current && (
+          <Investigation
+            key={hash}
+            primary={{ bytes: bytes.current, plan: executedPlan, result }}
+            execute={async (plan, data) => {
+              if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
+              return executor.current.execute(plan, data);
+            }}
+            onBusy={setBusy}
+            cancelLocal={() => executor.current?.cancel()}
+          />
+        )}
         <iframe
           ref={frame}
           title="Restricted analytical executor"

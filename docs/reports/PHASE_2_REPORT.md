@@ -1,39 +1,78 @@
 # Phase 2 — durable bounded investigation
 
-Updated: 2026-10-12. **In progress, not complete.** T2.1 provider transport is complete; T2.2 conditional graph module is implemented/tested with Gate3.5 ACCEPT. T2.3 durable ownership/checkpoints/jobs is reviewed complete; T2.4 workspace/SSE integration remains in progress. No Phase2 completion/deep-dive gate is claimed.
+Date: 2026-10-12. **Complete for the scoped local desktop target.** Implementation, documentation, available validation and engineering/design gates pass. Covers T2.1–T2.4 in [TASKS.md](../../TASKS.md). The user's latest scope is **finish Phase 2, then stop before Phase 3**.
 
 ## Implemented behavior and code map
 
-[models.py](../../services/api/src/hypothron/agents/models.py) defines strict metadata/approved metric, hypothesis, planner/analyst/report and numerical evidence contracts. No rows or arbitrary source fields are accepted. [workflow.py](../../services/api/src/hypothron/agents/workflow.py) builds a genuine LangGraph StateGraph: planner conditionally clarifies or delegates; analyst chooses an existing hypothesis; deterministic issuance selects its unchanged approved contract; an interrupt waits for a hash/job-bound result; new evidence returns to the analyst for follow-up or report. A separate issuance node checkpoints a UUID before the replayed interrupt node, avoiding regenerated IDs on resume.
+The [investigation panel](../../apps/web/components/Investigation.tsx) uses the primary approved CSV metric plus up to two locally profiled additional snapshots. Explicit consent authorizes questions, schema, contracts and bounded aggregates to reach FastAPI and the chosen provider. Raw CSV bytes stay in memory and execute on the credential-free origin. A clarification pauses the graph; a fresh answer/key resumes the original provider/model/question. Conditional follow-up executes genuine DuckDB-WASM and Pyodide calculations and produces evidence-cited output. No Save or persistent browser storage is introduced.
 
-[provider.py](../../services/api/src/hypothron/agents/provider.py) adapts genuine request-scoped Gemini/OpenRouter HTTP to three distinct role instructions/schemas. The key lives in an ephemeral transport instance, never graph state/config. It requires reservation/usage callbacks. Production atomic reservation and role-response caching are T2.3 work. No live-model calls or inference routes exist yet.
+[models.py](../../services/api/src/hypothron/agents/models.py), [workflow.py](../../services/api/src/hypothron/agents/workflow.py) and [provider.py](../../services/api/src/hypothron/agents/provider.py) implement three typed LangGraph roles: planner, analyst and report. Deterministic policy bounds twelve outbound attempts, six jobs and one clarification. Issuance checkpoints a UUID before the interrupt node, so resume does not regenerate the job. [providers](../../services/api/src/hypothron/providers) implement genuine Gemini/OpenRouter HTTP with fixed destinations, strict structured replies, bounded bodies/timeouts and ephemeral keys. Tests mock external transport; no paid or live provider calls ran.
 
-Policy caps outbound graph attempts at12, execution jobs at6 and clarification round at1. IDs/citations must belong to the approved graph. Independent scalar evidence comparisons retain CLIENT_REPORTED provenance; unknown/noncanonical output fails. Metadata includes approved questions/schema/contracts and aggregate evidence, not CSV bytes. Policy is outside LLM discretion.
+[investigations.py](../../services/api/src/hypothron/investigations.py) provides bearer-owned creation, read, advance, result submission, cancellation and finite authenticated SSE. Creation is an idempotent metadata transaction with a client-generated UUID and **zero inference**; advance is separate. [ledger.py](../../services/api/src/hypothron/ledger.py), [driver.py](../../services/api/src/hypothron/driver.py), [checkpoints.py](../../services/api/src/hypothron/checkpoints.py) and [retention.py](../../services/api/src/hypothron/retention.py) implement durable reservation/cache, lease fencing, exact-thread native PostgreSQL checkpoints, immutable acceptance and bounded lazy expiry cleanup. Migration 0002 is applied. [openapi-v1.json](../../packages/contracts/openapi-v1.json) is exported from the actual routes, with a drift check.
 
-## Tests and Red → Green
+## Decisions and alternatives
 
-The first workflow test run failed collection because the implementation was absent. Five routing/budget/binding/citation tests passed after implementation. A new invalid-clarification test then exposed a fixed edge that incorrectly restarted planner inference after rejection; conditional failure routing now stops it. Eleven workflow tests pass, including clarification→job→evidence-driven follow-up→report, 12-call refusal, six-job termination, hash binding, orphan citations, provider timeout without retry, one clarification cap, selection among three approved dataset descriptors and real adapter wire construction with no canary in checkpoint state/metadata. InMemorySaver is a deterministic test harness, not durable production persistence.
+ADR-016 in [DECISIONS.md](../../DECISIONS.md) records recoverable creation and request-scoped inference. Persisting keys or holding a background job across pauses would violate the privacy boundary. Retrying uncertain inference could duplicate charges; an unfinished durable reservation instead yields BILLING_UNKNOWN. Completed replies can be reused only with matching ordinal/role/context digest.
 
-## Learning and decisions
+Native checkpoints and business records use separate commits. Recoverable reconciliation bridges them; this is not universal atomicity or exactly-once inference billing. Lease epochs fence stale writes under row locks, including native saver writes. Cancellation clears keys before awaiting and captures a UI generation/run ID so delayed callbacks cannot affect a subsequent investigation. A fixed number of roles keeps responsibilities clear without adding services or runtime agents.
 
-Read models→workflow→provider→test_workflow.py. Distinguish the reasoning control graph from the job dependency DAG. `interrupt` restarts its node on resume: keep side effects/UUID creation in a completed earlier node. Typed model outputs still need ownership/contract/citation policy checks. Absolute provider deadlines do not imply exactly-once billing. LangGraph checkpointing alone does not atomically commit a business job ledger; T2.3 must reconcile both with fenced ownership and durably reserved/cacheable side effects.
+## Acceptance evidence
 
-Primary API references used during implementation: [LangGraph interrupts](https://docs.langchain.com/oss/python/langgraph/interrupts), [persistence](https://docs.langchain.com/oss/python/langgraph/persistence). Study the installed version/lock alongside documentation. The Phase2 deep dive and implemented diagrams are mandatory before the phase exits; they will teach the integrated system after T2.3/T2.4 exist rather than inventing those flows now.
+| Roadmap gate | Result | Evidence | Limit |
+|---|---|---|---|
+| Three datasets, ambiguity, prioritized hypotheses, conditional execution and evidence-driven follow-up/report | Pass | Real-browser investigation test; eleven graph tests | Three descriptors; individual approved revenue sums, not joins |
+| Job issuance/result receipt crash and reconnect recovery | Pass | test_driver.py, test_recovery.py, test_ledger.py; browser lost-creation-ACK recovery | Full reload loses anonymous capability and unsaved bytes |
+| Twelve attempts, six jobs, ownership, sanitized state and provider errors | Pass | Real PostgreSQL ledgers, typed workflow and 26 provider tests | No live provider pricing/capability or deployment-global quota claim |
+| Scripted providers prove routing/failures with no paid inference | Pass | MockTransport only replaces external HTTP; API/graph/DB/browser engines are real | Live smoke tests not run; no provider charge incurred by tests |
+| Deep dive, actual diagrams, implementation consistency | Pass | Links below; skill self-check and Chrome geometry checks | Local desktop target only |
+| Engineering/design review | Pass: Design ACCEPT; final engineering ACCEPT | T2.3 engineering ACCEPT; final T2.4 review ACCEPT after cancellation-generation fix; UI review ACCEPT | Reviewer independently inspected final cancellation code and previously passed30unit tests; complete backend/browser/build evidence is the builder’s |
 
-## Commit ledger and next work
+## Validation
 
-T1 foundation:29b4b6c05a9f04fb6f01b6877f698e78f8347949. T2.1:4465520085dabd6d126f23e9c1632cf1793cc372. T2.2:4b72afc1c800407832cade07587a45a1447f66f2. Next:T2.3 real PostgreSQL saver/ledger/lease/recovery and T2.4 UI/provider consent/SSE integration. No automatic provider retry on uncertain billing. No raw data/key persistence. Continue without another approval; external release remains unauthorized.
+Environment: macOS arm64, Node22.22.3/pnpm10.33.0, Python3.12.15, PostgreSQL17 via Docker, installed Chrome154.0.8037.99. Synthetic fixtures only.
 
-Final T2.2 check:42backend tests pass (11workflow+26provider+5realPostgreSQL), Ruff and mypy10source files pass. Reviewer independently reran11workflow tests and accepted the scoped module. Citation validation currently checks existence, not every free-text numeric claim; Phase3 must strengthen it. The compiled graph closes over its ephemeral provider/key: production must construct/discard it per segment, never cache credential-bearing graph instances. Durable reservation/ownership/fencing/recovery remain T2.3 gates.
+| Command | Measured result | Scope |
+|---|---|---|
+| `DATABASE_URL=<local fixture URL> .venv/bin/pytest -q` from services/api | **65 passed, 15.58s** | Actual local PostgreSQL; external provider HTTP mocked |
+| `pnpm test` | **30 passed, 640ms** | Five Vitest files |
+| `pnpm e2e` | **19 passed, 3.6m** | Real Chrome, API, graph, DB and analytical engines |
+| `pnpm e2e tests/e2e/investigation.spec.ts` final rerun | **1 passed, 1.8m**; test1.3m | Includes delayed cancellation ACK/new-run-key regression |
+| `pnpm typecheck`, `pnpm format:check` | Pass | Web/executor TypeScript and configured Prettier paths |
+| `.venv/bin/ruff check src tests`, `.venv/bin/mypy src` | Pass; mypy16 source files | API code/tests |
+| `pnpm build` | Pass; compile5.8s | Production frontend/executor; 111kB first-load JS excludes analytical assets |
+| `.venv/bin/alembic current` | `0002 (head)` | Actual database |
+| `.venv/bin/python ../../scripts/export-api-contracts.py --check` | Pass | Implemented OpenAPI matches committed contract |
+| diagram-design `scripts/self_check.py` on three HTML diagrams | Pass | Accessible SVG/static single-file checks |
+| `node scripts/check-diagrams.mjs docs/diagrams/phase-2-{architecture,sequence,routing}.html` | Pass | Loaded fonts, no text outside canvas, 390px local scroll without page overflow |
 
-## T2.3 durable foundation evidence (2026-10-12)
+Red → Green examples: absent workflow modules initially failed collection; malformed clarification exposed incorrect routing; parent/event insertion order, independent job cap, cross-run saver reads and terminal mutations gained regressions. Lost creation ACK led to separating idempotent metadata creation from inference. Cancellation during a provider call proves late writes are fenced; a held browser cancellation response proves the next run remains intact. Label association failures were fixed with explicit input/select labels. Docker stopping caused readiness failures and was restored before reruns. A final backend command initially used the wrong environment variable and failed; the corrected DATABASE_URL run is the measured pass above. None of those failures were counted as successful validation.
 
-Migration0002 installs the native saver schema through Alembic and metadata-only run/job/attempt/event tables. SQLAlchemy transactions row-lock runs before reservation, acceptance and lease mutations. Creation explicitly flushes the parent before its event. Attempts are durably reserved before transport, completed strict replies cached by role/context digest/ordinal, and unfinished reservations fail with BILLING_UNKNOWN without retry. Both graph and ledger enforce12 calls/6jobs. ExecutionJob rejects extra fields.
+## Mandatory learning and diagram gate
 
-FencedPostgresSaver scopes reads/listing/writes to its leased run; unrestricted listing/cross-run before cursors/deletion are denied. Live epochs and terminal checks fence writes. Cancellation invalidates the epoch; an identical previously accepted result still receives its ACK, while new terminal results are denied. Driver reconstructs adapters/savers per request, disables tracing and applies a60s whole-segment deadline with separately bounded5s cleanup. Native connections/statements/locks have5s limits; the process-local2-slot semaphore is not a deployment-global quota.
+Read [PHASE_2_DEEP_DIVE.md](../learning/PHASE_2_DEEP_DIVE.md) for practical framework internals, fourteen numbered execution steps, transaction/recovery algorithms, examples/invariants/complexity, production trade-offs, actual tests, interview answers, exercises and prioritized study checklists.
 
-Crash injections prove the same checkpointed job is inserted after a missed ledger write, accepted evidence resumes a fresh driver, and interruption after reservation produces billing uncertainty without another inference. Expiry sweep locks parents, removes checkpoint writes/blobs/checkpoints, then cascades business metadata. It runs on session creation; a scheduled hosted sweep/backup policy remains Phase5. Completed-state inspection checks owner/expiry before an exact-thread read and cannot invoke inference.
+Implementation diagrams use the user's selected default editorial diagram-design style:
 
-Red runs exposed missing modules, event-before-parent insertion, missing independent job cap, cross-run native reads, terminal mutation and orphan native retention. Each reproduced issue now has a passing regression. Latest full run:61backend tests passed in2.54s; subsequently two added API negative/SSE tests also pass (63 total pending next full run). Ruff/mypy16 modules pass. Gate3.5 ACCEPT; reviewer independently37provider/workflow tests pass, reviewer local TCP unavailable for PostgreSQL. Parent realDB evidence is explicit. API tests use real Gemini wire construction with MockTransport, never live inference.
+- [Components and trust boundaries](../diagrams/phase-2-architecture.html).
+- [Creation/inference/execution sequence](../diagrams/phase-2-sequence.html).
+- [Conditional routing and recovery](../diagrams/phase-2-routing.html).
 
-Read ledger→checkpoints→driver→retention and their tests to study transaction boundaries, fencing vs leases, interrupt node restart, cached side effects vs exactly-once billing, and recovery across separate checkpoint/business commits. Comprehensive Phase2 teaching/diagrams remain mandatory before phase exit.
+All are linked from [ARCHITECTURE.md](../../ARCHITECTURE.md) and the deep dive. Visual inspection corrected an obscured hash/schema annotation, an overlong provider label, inaccurate generic sequence subtitles and a missing terminal return arrow. Google Fonts have offline fallbacks. No UI brand system is inferred from diagram styling.
+
+## Learning guide
+
+Read models → workflow → providers → ledger → checkpoints → driver → routes → Investigation → recovery/browser tests. Study interrupt restart semantics first, then database row locks/fencing, side-effect reservation vs cached results, reconciliation across separate commits, and browser/server trust. The [system-design guide](../SYSTEM_DESIGN_GUIDE.md) links the phase learning progression.
+
+## Security and reliability
+
+No raw-upload endpoint, default browser persistence or persistent credential storage was added. Keys are request-scoped and checked against outgoing/stored structures, never checkpoint configuration. Fixed HTTPS provider mappings disable proxy/redirect behavior; body/deadline limits bound transport. Result ownership/hash/job binding and canonical digest enforce idempotency. SQLAlchemy and native saver operations have bounded waits; whole graph segments are60s, leases90s, provider calls20s, client requests65s and interactions10min. SSE streams terminate/reconnect with committed event cursors; events contain no keys.
+
+VERIFIED with CLIENT_REPORTED provenance means agreement of browser values, not server attestation. Schema/metadata/aggregates remain sensitive. Known-key echo checks do not prove detection of every transformed secret. Structured citation checks do not ground every free-text numerical or causal assertion; Phase3 must strengthen that contract. No measured universal memory/security/performance guarantee is claimed.
+
+## Resume / remaining work
+
+Stop before Phase3 at the user's request. No known failing available test remains at validation closure. Pending later work: richer verification/correction/lineage and supported numerical claims (Phase3), explicit Dexie Save/delete/export/import and complete replay bundles (Phase4), Parquet, broader evaluations, CI, scheduled retention, global quotas and hosted security/header/recovery probes (Phase5). No deployment, paid services, push or PR is authorized. Production readiness is not claimed.
+
+Run locally using [README.md](../../README.md). Required API variable: DATABASE_URL; optional APP_ORIGIN and frontend NEXT_PUBLIC_API_ORIGIN retain tested localhost defaults. Provider credentials are entered in the UI; never put them in env files. Automated browser tests launch the mock-HTTP fixture API themselves; stop a real API on8000 first.
+
+Commit ledger (existing main): foundation `29b4b6c05a9f04fb6f01b6877f698e78f8347949`; providers `4465520085dabd6d126f23e9c1632cf1793cc372`; graph `4b72afc1c800407832cade07587a45a1447f66f2`; durable foundation `94b32d8`. Final integration hash is recorded after its tested-task commit without amending history.

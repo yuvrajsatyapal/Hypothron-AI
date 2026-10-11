@@ -1,5 +1,6 @@
 import json
 import os
+from uuid import uuid4
 
 import httpx
 import pytest
@@ -56,6 +57,7 @@ async def test_authenticated_byok_investigation_result_resume_and_secret_nonpers
         session = (await client.post("/v1/sessions")).json()
         auth = {"Authorization": "Bearer " + session["token"]}
         body = {
+            "requestId": str(uuid4()),
             "request": request(),
             "provider": "gemini",
             "model": "gemini-test",
@@ -65,8 +67,12 @@ async def test_authenticated_byok_investigation_result_resume_and_secret_nonpers
         assert (await client.post("/v1/investigations", json=body)).status_code == 401
         started = await client.post("/v1/investigations", headers=auth, json=body)
         assert started.status_code == 201, started.text
-        result = started.json()
-        run_id, job = result["id"], result["state"]["pending"]
+        run_id = started.json()["id"]
+        initial = await client.post(
+            f"/v1/investigations/{run_id}/advance", headers=auth, json={"key": key}
+        )
+        result = initial.json()
+        job = result["state"]["pending"]
         assert (await client.get(f"/v1/investigations/{run_id}")).status_code == 401
         outsider = (await client.post("/v1/sessions")).json()
         assert (
@@ -118,6 +124,7 @@ async def test_consent_secret_extra_rows_and_provider_rejection_before_storage()
         session = (await client.post("/v1/sessions")).json()
         auth = {"Authorization": "Bearer " + session["token"]}
         base = {
+            "requestId": str(uuid4()),
             "request": request(),
             "provider": "gemini",
             "model": "gemini-test",
@@ -167,3 +174,105 @@ async def test_terminal_sse_reconnect_cursor_and_cross_owner_rejection():
         assert (
             await client.get(f"/v1/investigations/{run.id}/events?after={cursor}", headers=auth)
         ).text == ""
+
+
+@pytest.mark.asyncio
+async def test_initial_creation_ack_is_recoverable_and_has_zero_inference():
+    from uuid import uuid4
+
+    from sqlalchemy import select
+
+    from hypothron.records import RunRecord
+
+    calls = []
+
+    def forbidden(req):
+        calls.append(req)
+        raise AssertionError("creation must not invoke inference")
+
+    app = create_app(
+        database_url=os.environ["DATABASE_URL"], provider_transport=httpx.MockTransport(forbidden)
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        session = (await client.post("/v1/sessions")).json()
+        auth = {"Authorization": "Bearer " + session["token"]}
+        identifier = str(uuid4())
+        body = {
+            "requestId": identifier,
+            "request": request(),
+            "provider": "gemini",
+            "model": "gemini-test",
+            "key": "canary-key",
+            "consent": True,
+        }
+        first = await client.post("/v1/investigations", headers=auth, json=body)
+        assert first.status_code == 201, first.text
+        second = await client.post("/v1/investigations", headers=auth, json=body)
+        assert second.status_code == 201
+        assert first.json()["id"] == second.json()["id"] == identifier
+        assert (
+            await client.get(f"/v1/investigations/{identifier}", headers=auth)
+        ).status_code == 200
+        assert not calls
+    async with app.state.sessions() as db:
+        rows = list(await db.scalars(select(RunRecord).where(RunRecord.owner == session["id"])))
+        assert len(rows) == 1 and rows[0].attempts == 0
+
+
+@pytest.mark.asyncio
+async def test_cancel_during_initial_inference_fences_late_reply():
+    import asyncio
+
+    started, finish = asyncio.Event(), asyncio.Event()
+    calls = []
+
+    async def wire(req):
+        calls.append(req)
+        started.set()
+        await finish.wait()
+        reply = {"clarification": "Which period?", "hypotheses": []}
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [
+                    {"finishReason": "STOP", "content": {"parts": [{"text": json.dumps(reply)}]}}
+                ]
+            },
+        )
+
+    app = create_app(
+        database_url=os.environ["DATABASE_URL"], provider_transport=httpx.MockTransport(wire)
+    )
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        session = (await client.post("/v1/sessions")).json()
+        auth = {"Authorization": "Bearer " + session["token"]}
+        identifier = str(uuid4())
+        body = {
+            "requestId": identifier,
+            "request": request(),
+            "provider": "gemini",
+            "model": "gemini-test",
+            "key": "canary-key",
+            "consent": True,
+        }
+        assert (await client.post("/v1/investigations", headers=auth, json=body)).status_code == 201
+        inference = asyncio.create_task(
+            client.post(
+                f"/v1/investigations/{identifier}/advance", headers=auth, json={"key": "canary-key"}
+            )
+        )
+        await asyncio.wait_for(started.wait(), 2)
+        assert (
+            await client.post(f"/v1/investigations/{identifier}/cancel", headers=auth, json={})
+        ).status_code == 200
+        finish.set()
+        reply = await inference
+        assert reply.status_code == 409
+        assert (await client.get(f"/v1/investigations/{identifier}", headers=auth)).json()["state"][
+            "status"
+        ] == "CANCELLED"
+        assert len(calls) == 1

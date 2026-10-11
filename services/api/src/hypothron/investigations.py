@@ -9,16 +9,21 @@ from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
+from psycopg import AsyncConnection
+from psycopg.rows import dict_row
 from pydantic import BaseModel, Field, SecretStr
 
 from hypothron.agents.models import EvidenceInput, RunInput, StrictModel
-from hypothron.agents.workflow import Role, build_workflow
+from hypothron.agents.workflow import Role, build_workflow, initial_state
 from hypothron.driver import InvestigationDriver
 from hypothron.ledger import TERMINAL, Ledger, LedgerError
 from hypothron.providers.http import _contains_secret
 
 
 class StartRequest(StrictModel):
+    request_id: Annotated[
+        str, Field(pattern=r"^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$")
+    ] = Field(alias="requestId")
     request: RunInput
     provider: Literal["gemini", "openrouter"]
     model: Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")]
@@ -58,13 +63,19 @@ def mount_routes(
     async def start(body: StartRequest, owner: dict[str, str] = authenticated) -> dict[str, Any]:
         request = body.request.model_dump(mode="json", by_alias=True)
         if _contains_secret(
-            {"request": request, "model": body.model, "provider": body.provider},
+            {
+                "request": request,
+                "model": body.model,
+                "provider": body.provider,
+                "requestId": body.request_id,
+            },
             body.key.get_secret_value(),
         ):
             raise LedgerError("SECRET_IN_INPUT")
-        run = await ledger.create(owner["id"], request, body.provider, body.model)
-        state = await driver.advance(owner["id"], run.id, body.key, transport=transport)
-        return {"id": run.id, "state": public_state(state)}
+        run = await ledger.create(
+            owner["id"], request, body.provider, body.model, request_id=body.request_id
+        )
+        return {"id": run.id, "state": dict(initial_state(run.request), status=run.status)}
 
     @app.post("/v1/investigations/{run_id}/advance")
     async def advance(
@@ -86,8 +97,7 @@ def mount_routes(
         await ledger.cancel(owner["id"], run_id)
         return {"status": "CANCELLED"}
 
-    @app.get("/v1/investigations/{run_id}")
-    async def read(run_id: str, owner: dict[str, str] = authenticated) -> dict[str, Any]:
+    async def inspect(run_id: str, owner: dict[str, str] = authenticated) -> dict[str, Any]:
         # Scope authenticated before touching native tables. Read-only inspection has no
         # credential, provider call or write lease, and exposes only this exact run.
         row = await ledger.get(owner["id"], run_id)
@@ -101,13 +111,29 @@ def mount_routes(
             pickle_fallback=False, allowed_json_modules=[], allowed_msgpack_modules=[]
         )
         conninfo = driver.database_url.replace("postgresql+psycopg://", "postgresql://", 1)
-        async with AsyncPostgresSaver.from_conn_string(conninfo, serde=serde) as saver:
+        async with await AsyncConnection.connect(
+            conninfo,
+            autocommit=True,
+            prepare_threshold=0,
+            row_factory=dict_row,
+            connect_timeout=5,
+            options="-c statement_timeout=5000 -c lock_timeout=5000",
+        ) as connection:
+            saver = AsyncPostgresSaver(connection, serde=serde)
             snapshot = await build_workflow(forbidden_provider, saver).aget_state(
                 {"configurable": {"thread_id": run_id}}
             )
         state = public_state(dict(snapshot.values))
         state["status"] = row.status
         return {"id": run_id, "attempts": row.attempts, "state": state}
+
+    @app.get("/v1/investigations/{run_id}")
+    async def read(run_id: str, owner: dict[str, str] = authenticated) -> dict[str, Any]:
+        try:
+            async with asyncio.timeout(5):
+                return await inspect(run_id, owner)
+        except TimeoutError:
+            raise LedgerError("READ_TIMEOUT") from None
 
     @app.get("/v1/investigations/{run_id}/events")
     async def events(

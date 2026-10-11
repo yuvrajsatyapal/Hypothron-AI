@@ -1,6 +1,6 @@
 # Hypothron AI — Architecture
 
-Status: target architecture with an implemented deterministic foundation; current tested scope and remaining validation are in CURRENT_PHASE.md and the Phase 1 report. See DECISIONS.md for rationale and docs/RISKS_AND_RESOLUTIONS.md for unresolved release gates.
+Status: target architecture with implemented local Phases 1–2; tested scope and remaining validation are in CURRENT_PHASE.md and the phase reports. See DECISIONS.md for rationale and docs/RISKS_AND_RESOLUTIONS.md for unresolved release gates.
 
 ## System shape
 
@@ -57,7 +57,7 @@ LangGraph state contains run/session IDs, consent references, dataset hashes and
 
 [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence) and [interrupts](https://docs.langchain.com/oss/python/langgraph/interrupts) support checkpointed continuation. Our idempotency and privacy policies still require explicit implementation around that framework.
 
-Use database transactions to commit pending jobs, state versions and events consistently. An application runner claims a run using a renewable PostgreSQL lease and fencing epoch; no held connection throughout browser execution. Recovery resumes at most one owner. Checkpoint integration must be proven against the pinned LangGraph saver; if atomic writes cannot be coordinated, reconcile from the job ledger before graph resume. This is a Phase 2 gate, not a solved framework assumption.
+Business transitions and their events commit transactionally. The native saver commits separately; the driver reconciles checkpointed job IDs and accepted results before resume. Live run epochs/holders/expiry fence native writes under the parent row lock. Short 60-second request segments use a 90-second lease; no connection/lease is held during a browser pause. Lease renewal is not implemented. Crash-boundary and stale-owner tests use the pinned native PostgreSQL saver. See ADR-016 and the Phase 2 deep dive.
 
 Run execution is divided into short request-triggered segments. SSE is an observation channel; opening it does not start/restart execution. Durable events/job records let clients reconnect and submit later. Deployments may terminate in-flight requests: record CALL_STARTED before inference and CALL_COMPLETED after; ambiguous provider completion requires user-controlled retry and consumes another attempt. Do not promise exactly-once LLM billing. A sleeping free host does not autonomously run investigations while the browser is absent.
 
@@ -89,12 +89,12 @@ Server checks can establish authorized job issuance and a syntactically consiste
 
 ## Implemented foundation versus target system
 
-Only the Phase 1 deterministic slice exists. Local flow: Next.js memory snapshot/metric → typed MessageChannel after readiness → credential-free host with hash-checked asset buffers → network-denied DuckDB/Pyodide workers → validated paired numerical evidence → CLIENT_REPORTED comparison → original-plan in-memory replay. Runtime-source bundling and dataset-free bootstrap are ADR-013; local opaque capability transport is ADR-014. FastAPI currently owns PostgreSQL health/session metadata but the browser foundation does not yet run an investigation API workflow. LangGraph, providers, durable ledgers/checkpoints, report/evidence expansion and opt-in replay bundles remain target components. See FILE_MAP.md and docs/reports/PHASE_1_REPORT.md for actual files and evidence.
-
-Current independent prework: the Gemini/OpenRouter HTTP transport library is implemented and mock-tested, without graph/API/UI integration or durable attempt accounting. Its tested boundary is documented in SECURITY.md and the Phase 1 report; provider capability/pricing selection remains target behavior.
+Phase 1 supplies the restricted local calculation and memory-only replay. Phase 2 integrates genuine planner/analyst/report LangGraph routing, request-scoped Gemini/OpenRouter BYOK, native PostgreSQL checkpoints, fenced business ledgers, idempotent metadata creation and results, bounded SSE and a consent-gated workspace. Three local CSV descriptors can drive conditional jobs; CSV bytes never leave the browser. Keys and bearer capabilities remain ephemeral. Reports currently check citation existence, not every free-text numerical claim. Numerical expansion, Dexie/bundles, Parquet, global abuse controls and hosted deployment remain later phases. FILE_MAP and phase reports distinguish tested code from the broader target.
 
 ## Implemented foundation diagrams
 
 [Phase 1 components and trust boundaries](docs/diagrams/phase-1-architecture.html) and [actual local computation sequence](docs/diagrams/phase-1-sequence.html) depict working code. Read [Phase 1 deep dive](docs/learning/PHASE_1_DEEP_DIVE.md) for arrow-by-arrow explanations, failure flows and invariants. Earlier full-system diagrams depict the target. Initial supported runtime/device scope is ADR-015; no mobile or public-host guarantee follows from localhost measurements.
 
-Phase2 module now implements planner/analyst/report schemas and conditional LangGraph clarification→immutable job interrupt→bound local evidence→follow-up/report routing. It is tested with InMemorySaver only; production saver/ledger/API/UI remain pending. Construct/discard credential-bearing role provider and compiled graph per request segment. Citation existence checks are implemented; per-numerical-claim report validation remains Phase3.
+## Implemented Phase 2 diagrams
+
+[Component/data boundaries](docs/diagrams/phase-2-architecture.html), [creation/inference/execution sequence](docs/diagrams/phase-2-sequence.html) and [conditional routing/recovery](docs/diagrams/phase-2-routing.html) describe implemented code. [Phase 2 deep dive](docs/learning/PHASE_2_DEEP_DIVE.md) explains each component/arrow, SQLAlchemy transactions, native saver fencing, side-effect caches and recovery limitations. The business and checkpoint records use one PostgreSQL deployment but separate commits. The driver is recreated per segment, with tracing disabled; no credential-bearing graph is cached.
