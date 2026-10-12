@@ -1,0 +1,456 @@
+{
+  "version": 1,
+  "authority": "Hand-derived synthetic fixtures, no providers or production calculation helpers used to construct expected values.",
+  "golden": [
+    {
+      "id": "G01",
+      "question": "What is the exact USD revenue sum in Q3?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,B,2025-08-01T00:00:00Z,20.20\n3,C,2025-09-30T23:59:59Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "3033",
+        "count": 3,
+        "status": "VERIFIED"
+      }
+    },
+    {
+      "id": "G02",
+      "question": "What is the EUR sum including a negative refund?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,-0.03\n",
+      "plan": {
+        "currency": "EUR",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "1007",
+        "count": 2,
+        "status": "VERIFIED"
+      }
+    },
+    {
+      "id": "G03",
+      "question": "What is the whole-yen JPY sum after a refund?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10\n2,A,2025-08-01T00:00:00Z,-3\n",
+      "plan": {
+        "currency": "JPY",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "7",
+        "count": 2,
+        "status": "VERIFIED"
+      }
+    },
+    {
+      "id": "G04",
+      "question": "Is there evidence for a sum when the approved period contains no rows?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-10-01T00:00:00Z,10.10\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": null,
+        "count": 0,
+        "status": "INCONCLUSIVE"
+      }
+    },
+    {
+      "id": "G05",
+      "question": "Is a null-only period a zero or an inconclusive result?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,\n2,B,2025-08-01T00:00:00Z,\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": null,
+        "count": 0,
+        "status": "INCONCLUSIVE"
+      }
+    },
+    {
+      "id": "G06",
+      "question": "Which rows contribute at the half-open Q3 UTC boundaries?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-06-30T23:59:59Z,999.00\n2,A,2025-07-01T00:00:00Z,10.00\n3,A,2025-09-30T23:59:59Z,20.00\n4,A,2025-10-01T00:00:00Z,999.00\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "3000",
+        "count": 2,
+        "status": "VERIFIED"
+      }
+    },
+    {
+      "id": "G07",
+      "question": "What is the sum for Q3 boundaries in fixed +05:30 local time?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-06-30T23:59:59+05:30,999.00\n2,A,2025-07-01T00:00:00+05:30,12.34\n3,B,2025-09-30T23:59:59+05:30,2.66\n4,B,2025-10-01T00:00:00+05:30,999.00\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "+05:30",
+        "start": "2025-07-01T00:00:00+05:30",
+        "end": "2025-10-01T00:00:00+05:30",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "1500",
+        "count": 2,
+        "status": "VERIFIED"
+      }
+    },
+    {
+      "id": "G08",
+      "question": "Does an approved many-to-one join preserve exact original revenue?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "3033",
+        "count": 3,
+        "status": "VERIFIED"
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      }
+    },
+    {
+      "id": "G09",
+      "question": "Does an approved one-to-one join preserve exact original revenue?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.00\n2,B,2025-08-01T00:00:00Z,20.00\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "3000",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "one_to_one",
+        "populationCount": 2
+      }
+    },
+    {
+      "id": "G10",
+      "question": "Can the engines agree exactly above JavaScript safe-integer range?",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,999999999999999.99\n2,B,2025-08-01T00:00:00Z,999999999999999.99\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "expected": {
+        "minorUnits": "199999999999999998",
+        "count": 2,
+        "status": "VERIFIED"
+      }
+    }
+  ],
+  "adversarial": [
+    {
+      "id": "A01",
+      "description": "Duplicate declared grain must not sum twice",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n1,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "GRAIN_VIOLATION"
+    },
+    {
+      "id": "A02",
+      "description": "Duplicate lookup join key must not multiply money",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\nA,duplicate\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "JOIN_CARDINALITY"
+    },
+    {
+      "id": "A03",
+      "description": "Repeated primary keys violate one-to-one",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "one_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "JOIN_CARDINALITY"
+    },
+    {
+      "id": "A04",
+      "description": "Unmatched lookup must not silently drop population",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "JOIN_CARDINALITY"
+    },
+    {
+      "id": "A05",
+      "description": "Explicit reject-null policy must reject missing amount",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "error",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "NULL_AMOUNT"
+    },
+    {
+      "id": "A06",
+      "description": "Invalid calendar date must never verify",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-02-30T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "EXECUTION_FAILED"
+    },
+    {
+      "id": "A07",
+      "description": "Fractional yen must never round into accepted evidence",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "JPY",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "INVALID_DATA"
+    },
+    {
+      "id": "A08",
+      "description": "Changed primary snapshot cannot satisfy immutable hash",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "DATASET_HASH_MISMATCH",
+      "changedHash": true
+    },
+    {
+      "id": "A09",
+      "description": "Derived join without deliberate approval must fail",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "RELATIONSHIP_APPROVAL_REQUIRED",
+      "approved": false
+    },
+    {
+      "id": "A10",
+      "description": "Incorrect expected population must fail",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 4
+      },
+      "expectedError": "POPULATION_MISMATCH"
+    },
+    {
+      "id": "A11",
+      "description": "Named DST timezone is unsupported and must fail explicitly",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00Z,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "Europe/London",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "UNSUPPORTED_OPERATION"
+    },
+    {
+      "id": "A12",
+      "description": "Mixed source offsets cannot satisfy UTC contract",
+      "csv": "order_id,customer_id,completed_at,revenue\n1,A,2025-07-01T00:00:00+05:30,10.10\n2,A,2025-08-01T00:00:00Z,20.20\n3,B,2025-09-01T00:00:00Z,0.03\n",
+      "plan": {
+        "currency": "USD",
+        "timezone": "UTC",
+        "start": "2025-07-01T00:00:00Z",
+        "end": "2025-10-01T00:00:00Z",
+        "nullPolicy": "exclude",
+        "grainKeys": ["order_id"]
+      },
+      "lookupCSV": "id,label\nA,alpha\nB,beta\n",
+      "relationship": {
+        "keyColumn": "customer_id",
+        "lookupKeyColumn": "id",
+        "cardinality": "many_to_one",
+        "populationCount": 3
+      },
+      "expectedError": "INVALID_DATA"
+    }
+  ]
+}

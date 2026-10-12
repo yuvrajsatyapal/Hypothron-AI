@@ -22,7 +22,7 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 
 - [x] T3.1 Join/period/null/currency verification, bounded correction and evidence lineage.
 - [x] T3.2 Accessible structured charts/reports, orphan citation rejection and ambiguity/causality tests.
-- [ ] T3.3 Ten golden questions and adverse fixtures; phase report.
+- [x] T3.3 Ten golden questions and adverse fixtures; phase report.
 
 ## Phase 4
 
@@ -58,3 +58,5 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 - 2026-10-12 Phase3 supersedes prior stop: T3.1 v2 exact metrics/genuine approved lookup joins/diagnostics/immutable contracts/two corrections pass backend79, scoped unit61, real v2 Chrome16fixtures and engineering ACCEPT; later Phase3 report/evaluation gates pending.
 
 - 2026-10-12 T3.2 exact claim support/strict report validators/accessible BigInt charts/deterministic fallback pass backend92, unit71 and real Chrome22; engineering/security ACCEPT after temporary-column and narrative fixes. T3.3 final build/diagram/report closure remains pending.
+
+- 2026-10-12 Phase3 completes scoped local gates: final92backend/72unit/22browser, ten golden+twelve adverse fixtures with0falseVERIFIED adverse, type/lint/format/build/OpenAPI/migration/diagrams/local links, engineering/security ACCEPT. Four diagrams and comprehensive deep dive/report exist. Stop beforePhase4; no live-provider inference or external release.

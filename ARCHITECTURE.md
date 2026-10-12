@@ -1,6 +1,6 @@
 # Hypothron AI — Architecture
 
-Status: target architecture with implemented local Phases 1–2; tested scope and remaining validation are in CURRENT_PHASE.md and the phase reports. See DECISIONS.md for rationale and docs/RISKS_AND_RESOLUTIONS.md for unresolved release gates.
+Status: target architecture with implemented local Phases 1–3; tested scope and remaining validation are in CURRENT_PHASE.md and the phase reports. See DECISIONS.md for rationale and docs/RISKS_AND_RESOLUTIONS.md for unresolved release gates.
 
 ## System shape
 
@@ -89,7 +89,7 @@ Server checks can establish authorized job issuance and a syntactically consiste
 
 ## Implemented foundation versus target system
 
-Phase 1 supplies the restricted local calculation and memory-only replay. Phase 2 integrates genuine planner/analyst/report LangGraph routing, request-scoped Gemini/OpenRouter BYOK, native PostgreSQL checkpoints, fenced business ledgers, idempotent metadata creation and results, bounded SSE and a consent-gated workspace. Three local CSV descriptors can drive conditional jobs; CSV bytes never leave the browser. Keys and bearer capabilities remain ephemeral. Reports currently check citation existence, not every free-text numerical claim. Numerical expansion, Dexie/bundles, Parquet, global abuse controls and hosted deployment remain later phases. FILE_MAP and phase reports distinguish tested code from the broader target.
+Phase 1 supplies the restricted local calculation and memory-only replay. Phase 2 integrates genuine planner/analyst/report LangGraph routing, request-scoped Gemini/OpenRouter BYOK, native PostgreSQL checkpoints, fenced business ledgers, idempotent metadata creation and results, bounded SSE and a consent-gated workspace. Three local CSV descriptors can drive conditional jobs; CSV bytes never leave the browser. Keys and bearer capabilities remain ephemeral. Phase3 adds v2 exact currency/offset/grain/approved single-lookup joins and bounded correction. Structured report claims are checked against exact evidence operands and compatible contracts; arbitrary narrative and unsupported causal/statistical claims are refused. Dexie/bundles, Parquet, general analytics, global abuse controls and hosted deployment remain later phases. FILE_MAP and phase reports distinguish tested code from the broader target.
 
 ## Implemented foundation diagrams
 
@@ -98,3 +98,13 @@ Phase 1 supplies the restricted local calculation and memory-only replay. Phase 
 ## Implemented Phase 2 diagrams
 
 [Component/data boundaries](docs/diagrams/phase-2-architecture.html), [creation/inference/execution sequence](docs/diagrams/phase-2-sequence.html) and [conditional routing/recovery](docs/diagrams/phase-2-routing.html) describe implemented code. [Phase 2 deep dive](docs/learning/PHASE_2_DEEP_DIVE.md) explains each component/arrow, SQLAlchemy transactions, native saver fencing, side-effect caches and recovery limitations. The business and checkpoint records use one PostgreSQL deployment but separate commits. The driver is recreated per segment, with tracing disabled; no credential-bearing graph is cached.
+
+## Implemented Phase 3 verification and reporting
+
+[Verification and trust boundaries](docs/diagrams/phase-3-verification.html), [evidence lineage and numerical support](docs/diagrams/phase-3-evidence.html), [conditional bounded correction](docs/diagrams/phase-3-correction.html) and [report validation and visualization](docs/diagrams/phase-3-reporting.html) depict implemented code. Read [the Phase3 deep dive](docs/learning/PHASE_3_DEEP_DIVE.md) and [phase report](docs/reports/PHASE_3_REPORT.md) for actual algorithms, tests and limitations.
+
+The credential-free worker computes approved v2 revenue sums and ephemeral LEFT JOIN views independently in SQL/Pandas from hash-bound originals. Unique declared grain, lookup keys, coverage, relationship cardinality and populations are checked before exact aggregation. Fixed offsets are explicit; named-zone/DST/FX/many-to-many semantics fail. Sources remain in browser memory; relationship approval is separate consent. Internal Pandas helper columns avoid collisions with user columns.
+
+`verification.verify_evidence` compares exact integers and bounded semantic counts before recording contract identity and CLIENT_REPORTED provenance. Disputed evidence triggers at most two original-contract reruns per identity in LangGraph, using immutable dependent jobs and the existing PostgreSQL lease/checkpoint recovery protocol. An explanation cannot rewrite results. Correction exhaustion routes to reporting with the conflict preserved.
+
+`reporting.validated_report` and browser `validateReport` reject unsupported figures, incompatible/orphan references and unverified operands. Exact percentage change uses Fraction/BigInt and an explicit baseline; supported observational totals and arithmetic changes do not establish causality. Statistical association, arithmetic decomposition and causal claims lack supporting operations and are rejected. Invalid provider drafts produce deterministic fallback without inference retries. React text/SVG charts show paired values and exact tables. Legacy evidence is enriched from issued contracts; legacy completed narrative is marked for revalidation. No new migration, provider destination, persistent raw-data store or execution privilege was introduced.

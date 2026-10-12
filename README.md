@@ -90,4 +90,11 @@ Browser tests default to the installed macOS Chrome; set HYPOTHRON_CHROME to an 
 - Deterministic replay re-executes compatible approved calculations. AI re-investigation can differ and may incur charges.
 - Free hosting is a design objective with quotas/cold starts, not a permanent availability guarantee.
 
-The current user instruction is to finish Phase2 and stop before Phase3. CURRENT_PHASE.md records final gates. No public deployment has occurred.
+The current user instruction is to finish Phase3 and stop before Phase4. CURRENT_PHASE.md records final gates. No public deployment has occurred.
+
+
+## Phase 3 exact verification and reports
+
+V1 remains the default USD/UTC calculation. Advanced v2 controls approve grain columns, USD/EUR/JPY, explicit fixed-offset timestamps and an optional memory-only lookup CSV. Approve the derived relationship separately; it supports full-coverage one-to-one/many-to-one checks and preserves original snapshots. No FX, named-zone/DST inference or many-to-many operation is implied. Independent engines compare exact values and semantic populations; contradictions retain both results and permit two unchanged-contract reruns.
+
+AI investigations now publish structured evidence-backed findings and exact chart tables. Unsupported numerical or causal claims and arbitrary prose are rejected; deterministic fallback retains observations with status/provenance. Client-reported agreement is never server attestation. Legacy narrative requires evidence revalidation. Read [Phase3 report](docs/reports/PHASE_3_REPORT.md), [deep dive](docs/learning/PHASE_3_DEEP_DIVE.md) and [measured evaluation](docs/reports/PHASE_3_EVALUATION.json). Save/export/import bundles remain Phase4.

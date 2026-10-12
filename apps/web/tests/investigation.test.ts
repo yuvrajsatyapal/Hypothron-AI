@@ -247,3 +247,94 @@ it("rejects invented chart numbers and unsupported report claims even with valid
     ),
   ).toThrow();
 });
+
+it("independently validates negative fractional percentage operands", () => {
+  const currentPlan = { ...plan, datasetHash: "c".repeat(64) };
+  const evidence = [
+    {
+      jobId: "base",
+      datasetHash: plan.datasetHash,
+      contractHash: "b".repeat(64),
+      contract: plan,
+      metricVersion: 1,
+      currency: "USD",
+      sql: { minorUnits: "10000", count: 3 },
+      python: { minorUnits: "10000", count: 3 },
+      verification: "VERIFIED",
+      classification: "AGREEMENT",
+      provenance: "CLIENT_REPORTED",
+      hypothesisId: "h1",
+      dependsOn: [],
+    },
+    {
+      jobId: "current",
+      datasetHash: currentPlan.datasetHash,
+      contractHash: "d".repeat(64),
+      contract: currentPlan,
+      metricVersion: 1,
+      currency: "USD",
+      sql: { minorUnits: "9950", count: 3 },
+      python: { minorUnits: "9950", count: 3 },
+      verification: "VERIFIED",
+      classification: "AGREEMENT",
+      provenance: "CLIENT_REPORTED",
+      hypothesisId: "h1",
+      dependsOn: ["base"],
+    },
+  ];
+  const claim = {
+    kind: "percent_change",
+    evidenceIds: ["base", "current"],
+    datasetHash: currentPlan.datasetHash,
+    contractHash: "d".repeat(64),
+    value: "-0.5",
+    unit: "percent",
+  };
+  const report = {
+    version: 1,
+    conclusion:
+      "Observed computations are client-reported; evidence states are shown below. Arithmetic agreement does not establish causality.",
+    citations: ["base", "current"],
+    source: "validated",
+    rejection: null,
+    findings: evidence.map((e, i) => ({
+      id: `finding-${i + 1}`,
+      evidenceId: e.jobId,
+      datasetHash: e.datasetHash,
+      contractHash: e.contractHash,
+      metricVersion: 1,
+      currency: "USD",
+      verification: "VERIFIED",
+      provenance: "CLIENT_REPORTED",
+      assessment: "SUPPORTED",
+      relation: "observed",
+      sql: e.sql,
+      python: e.python,
+      dependsOn: e.dependsOn,
+    })),
+    claims: [claim],
+    charts: evidence.map((e) => ({
+      kind: "engine_comparison",
+      evidenceId: e.jobId,
+      currency: "USD",
+      sqlMinorUnits: e.sql.minorUnits,
+      pythonMinorUnits: e.python.minorUnits,
+    })),
+  };
+  expect(
+    validateInvestigationState({ status: "COMPLETE", evidence, report }, [
+      plan,
+      currentPlan,
+    ]).report?.claims[0].value,
+  ).toBe("-0.5");
+  expect(() =>
+    validateInvestigationState(
+      {
+        status: "COMPLETE",
+        evidence,
+        report: { ...report, claims: [{ ...claim, value: "0.5" }] },
+      },
+      [plan, currentPlan],
+    ),
+  ).toThrow();
+});

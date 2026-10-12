@@ -11,11 +11,11 @@ Check the filesystem; planned entries are not implementation claims. Update this
 | docs/SYSTEM_DESIGN_GUIDE.md | Learning path linked to actual phase implementations | Exists |
 | docs/learning/PHASE_1_DEEP_DIVE.md | Actual foundation execution/algorithms/production/interview teaching | Phase 1 documentation gate |
 | docs/diagrams/phase-1-*.html | Validated implementation architecture and sequence | Phase 1 diagrams |
-| docs/reports/ | Per-phase gate evidence and implementation explanations | Phases 1–2 |
+| docs/reports/ | Per-phase gate evidence and implementation explanations | Phases 1–3 |
 | .planning/specs/implementation.md | Authorized roadmap scope | Exists |
 | .planning/plans/implementation.md | Sequential TDD implementation steps | Exists |
 | .planning/design/foundation.md | Foundation workspace layout/states/tokens | Exists |
-| apps/web/ | Next.js workspace; browser-memory dataset ownership and consent-gated investigation panel | Phases 1–2 |
+| apps/web/ | Next.js workspace; browser-memory datasets, approved joins and structured evidence reports | Phases 1–3 |
 | apps/executor/ | Separate credential-free static origin; bridge + fixed analytical workers | Implemented foundation |
 | services/api/src/hypothron/ | FastAPI metadata/session/readiness routes, body limits and SQLAlchemy model; authenticated investigation routes and bounded SSE | Implemented foundation |
 | services/api/src/hypothron/agents/ | Strict role/approved metadata contracts, conditional StateGraph and ephemeral role transport | Typed graph integrated with durable request-scoped driver and consent-gated UI |

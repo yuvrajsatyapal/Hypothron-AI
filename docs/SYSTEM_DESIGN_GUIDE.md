@@ -76,8 +76,20 @@ Read [http.py](../services/api/src/hypothron/providers/http.py) and [test_provid
 
 ## Mandatory phase deep dives
 
-Start with [Phase 1 deep dive](learning/PHASE_1_DEEP_DIVE.md): actual functions, complete flow, independent exact algorithms, ASGI/transactions, boundaries, tests and interview exercises. Future completed phases must add PHASE_N_DEEP_DIVE.md with implementation-based diagrams before their gate closes; link rather than duplicate prior concepts. Phase2 teaching now exists; Phase3–5 deep dives remain future gates. ADR-015 now explicitly defers mobile runtime support and scopes initial local validation to the measured desktop configuration.
+Start with [Phase 1 deep dive](learning/PHASE_1_DEEP_DIVE.md): actual functions, complete flow, independent exact algorithms, ASGI/transactions, boundaries, tests and interview exercises. Future completed phases must add PHASE_N_DEEP_DIVE.md with implementation-based diagrams before their gate closes; link rather than duplicate prior concepts. Phase2 teaching now exists; Phase3 teaching now exists; Phase4–5 deep dives remain future gates. ADR-015 now explicitly defers mobile runtime support and scopes initial local validation to the measured desktop configuration.
 
 ## Phase 2 implementation and learning
 
 [Phase2 report](reports/PHASE_2_REPORT.md) maps the genuine typed conditional graph and tests. Trace planner→clarification or analyst→issue→interrupt→bound evidence→analyst follow-up→report. Read the issue/accept separation to see why replayed interrupt nodes must not generate new IDs or perform new external side effects. Read [Phase2 deep dive](learning/PHASE_2_DEEP_DIVE.md) for native PostgreSQL saver/ledger/API/UI recovery, exact code walkthroughs, algorithms, production trade-offs and interview exercises. InMemorySaver still serves routing unit tests; separate realDB tests establish local durability/fencing evidence.
+
+## Phase 3 implementation and study sequence
+
+Start with [the Phase3 report](reports/PHASE_3_REPORT.md), then [the comprehensive deep dive](learning/PHASE_3_DEEP_DIVE.md) and [measured evaluation](reports/PHASE_3_EVALUATION.json). The deep dive links four implemented diagrams and contains actual file/function walkthroughs, algorithms, examples, failure scenarios, interview answers, two-/ten-minute explanations and practical exercises.
+
+1. Read executor `contracts.ts`/`advanced.ts`: derive exact decimal minor units, half-open fixed-offset periods and population/null counts by hand. Contrast SQL uniqueness/LEFT JOIN checks with independent Pandas validation/merge. Explain why the join must preserve original grain and why helper names must avoid source collisions.
+2. Read Python `agents/models.py` and `verification.py`: immutable versioned semantics, canonical contract identity, exact zero tolerance, semantic incompatibility versus numerical contradiction. Reproduce the forbidden-null and empty-versus-populated regressions; explain why agreement is not attestation.
+3. Read `workflow.py` correction/report nodes, then native recovery tests: preserve original evidence, append dependent jobs, enforce two corrections without inference, hydrate legacy observations and fence cancellation. Explain which writes use separate transactions and why a stable job ID survives a crash.
+4. Read `reporting.py`, `web/lib/report.ts`, `EvidenceReport.tsx`: validate 18% against10000→11800; reject20% despite existing citations; use Fraction/BigInt cross-multiplication, zero-baseline refusal, compatible semantics and deterministic fallback. Distinguish observation, arithmetic comparison, statistical association and causality.
+5. Run the ten golden questions and twelve adverse fixtures. Explain both common-mode errors and deliberate forged agreement with CLIENT_REPORTED provenance. Use exact chart tables rather than pixels as the numerical source.
+
+Before Phase4, prioritize content-addressed immutable snapshots, canonical manifests, atomic IndexedDB transactions/quota failures, runtime/compiler compatibility and zero-inference replay DAGs. Save consent and bundle persistence remain unimplemented; do not mistake the current in-memory replay for a saved investigation bundle.
