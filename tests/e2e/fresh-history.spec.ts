@@ -6,7 +6,7 @@ interface SavedFixture {
   size: number;
   origin: "local" | "imported";
 }
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 const csv = "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n";
 test("saved AI run retains unused approved input, fresh consent/link/comparison and zero inference replay", async ({
   page,

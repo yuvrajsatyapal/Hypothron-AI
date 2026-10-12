@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 const csv = "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n";
 async function calculate(page: import("@playwright/test").Page) {
   await page.goto("/");

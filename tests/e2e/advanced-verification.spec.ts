@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 test("v2 real SQL/Pandas independently compute money, periods, grain and cardinality", async ({
   page,
 }) => {

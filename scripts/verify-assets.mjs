@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
@@ -8,4 +9,9 @@ export async function verifyAssets(root, assets) {
     if (createHash("sha256").update(bytes).digest("hex") !== expected)
       throw new Error("ASSET_HASH_MISMATCH");
   }
+}
+
+export function verifyManifest(expected, actual) {
+  if (!isDeepStrictEqual(expected, actual))
+    throw new Error("RUNTIME_MANIFEST_DRIFT");
 }

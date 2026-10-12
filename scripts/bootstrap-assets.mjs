@@ -1,6 +1,12 @@
 import { readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
+import { verifyManifest } from "./verify-assets.mjs";
+const manifestPath = "packages/contracts/runtime-manifest.json";
+const update = process.argv.includes("--update-manifest");
+const expected = update
+  ? null
+  : JSON.parse(await readFile(manifestPath, "utf8"));
 const out = resolve("apps/executor/public/assets");
 await mkdir(out, { recursive: true });
 const py = resolve("apps/executor/node_modules/pyodide");
@@ -34,6 +40,7 @@ async function wheel(name) {
   } catch {
     const resp = await fetch(
       "https://cdn.jsdelivr.net/pyodide/v0.29.3/full/" + p.file_name,
+      { signal: AbortSignal.timeout(60000) },
     );
     if (!resp.ok) throw new Error("asset download failed " + p.file_name);
     data = Buffer.from(await resp.arrayBuffer());
@@ -49,23 +56,19 @@ for (const name of files)
   assets[name] = createHash("sha256")
     .update(await readFile(out + "/" + name))
     .digest("hex");
-await writeFile(
-  "packages/contracts/runtime-manifest.json",
-  JSON.stringify(
-    {
-      version: 1,
-      duckdbWasm: "1.32.0",
-      pyodide: "0.29.3",
-      pandas: lock.packages.pandas.version,
-      numpy: lock.packages.numpy.version,
-      assets,
-    },
-    null,
-    2,
-  ) + "\n",
-);
+const actual = {
+  version: 1,
+  duckdbWasm: "1.32.0",
+  pyodide: "0.29.3",
+  pandas: lock.packages.pandas.version,
+  numpy: lock.packages.numpy.version,
+  assets,
+};
+if (update)
+  await writeFile(manifestPath, JSON.stringify(actual, null, 2) + "\n");
+else verifyManifest(expected, actual);
 console.log(
-  "Mirrored " +
+  "Verified " +
     files.length +
-    " pinned runtime assets; manifest SHA-256 recorded",
+    " pinned runtime assets against runtime manifest",
 );

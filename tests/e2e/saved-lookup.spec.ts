@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 test("saved v2 lookup replay regenerates exact engines with original relationship semantics", async ({
   page,
 }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 test("execution started before iframe document load recovers without duplicate channel transfer", async ({
   page,
 }) => {

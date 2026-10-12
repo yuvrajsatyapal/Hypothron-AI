@@ -6,7 +6,7 @@ interface SavedFixture {
   size: number;
   origin: "local" | "imported";
 }
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 test("lost accepted-result ACK recovers replayable evidence with frozen creation metadata", async ({
   page,
 }) => {

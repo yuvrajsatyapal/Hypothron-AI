@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import fixtures from "../fixtures/phase3-golden.json";
@@ -161,14 +161,20 @@ test("ten golden questions and twelve adverse fixtures through genuine independe
   );
   expect(forged.provenance).toBe("CLIENT_REPORTED");
   await writeFile(
-    resolve("docs/reports/PHASE_3_EVALUATION.json"),
+    resolve(
+      process.env.HYPOTHRON_CI === "1"
+        ? "test-results/phase3-evaluation.json"
+        : "docs/reports/PHASE_3_EVALUATION.json",
+    ),
     JSON.stringify(
       {
         schemaVersion: 1,
         generatedAt: new Date().toISOString(),
         fixture: "tests/fixtures/phase3-golden.json",
         target:
-          "Local desktop Chrome; real DuckDB-WASM and Pyodide/Pandas; mocked external HTTP only",
+          process.env.HYPOTHRON_CI === "1"
+            ? "Linux CI Chromium; real DuckDB-WASM and Pyodide/Pandas; mocked external HTTP only"
+            : "Local desktop Chrome; real DuckDB-WASM and Pyodide/Pandas; mocked external HTTP only",
         browserVersion: page.context().browser()?.version(),
         elapsedMs: Date.now() - started,
         goldenQuestions: 10,
