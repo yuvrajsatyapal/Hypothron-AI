@@ -1,0 +1,123 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+  UV_PYTHON: '3.12.15'
+  UV_FROZEN: '1'
+  CI: 'true'
+defaults:
+  run:
+    shell: bash
+jobs:
+  static:
+    name: Static / workflow / contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.0'
+          enable-cache: true
+          prune-cache: true
+          cache-dependency-glob: services/api/uv.lock
+      - run: uv sync --project services/api --frozen
+      - run: bash scripts/ci/static.sh
+  backend:
+    name: Backend / PostgreSQL / migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_USER: hypothron_ci
+          POSTGRES_PASSWORD: ci-disposable-only
+          POSTGRES_DB: hypothron_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U hypothron_ci -d hypothron_ci"
+          --health-interval 2s --health-timeout 2s --health-retries 30
+    env:
+      DATABASE_URL: postgresql+psycopg://hypothron_ci:ci-disposable-only@127.0.0.1:5432/hypothron_ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.0'
+          enable-cache: true
+          prune-cache: true
+          cache-dependency-glob: services/api/uv.lock
+      - run: uv sync --project services/api --frozen
+      - run: bash scripts/ci/backend.sh
+  frontend:
+    name: Frontend / units / build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: '10.33.0'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: bash scripts/ci/frontend.sh
+  browser:
+    name: Linux Chromium / real-engine integration
+    needs: [static, backend, frontend]
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_USER: hypothron_ci
+          POSTGRES_PASSWORD: ci-disposable-only
+          POSTGRES_DB: hypothron_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U hypothron_ci -d hypothron_ci"
+          --health-interval 2s --health-timeout 2s --health-retries 30
+    env:
+      DATABASE_URL: postgresql+psycopg://hypothron_ci:ci-disposable-only@127.0.0.1:5432/hypothron_ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: '10.33.0'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.0'
+          enable-cache: true
+          prune-cache: true
+          cache-dependency-glob: services/api/uv.lock
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --project services/api --frozen
+      - name: Install locked Chromium and Linux libraries
+        run: pnpm exec playwright install --with-deps chromium
+      - run: bash scripts/ci/browser.sh
