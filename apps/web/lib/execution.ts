@@ -10,6 +10,10 @@ export type { ExecutionResult, MetricPlan };
 export class LocalExecutor {
   private port: MessagePort;
   private connected = false;
+  private bootstrapped = false;
+  private readonly ready: (event: MessageEvent<unknown>) => void;
+  private readonly frame: HTMLIFrameElement;
+  private readonly transferPort: MessagePort;
   private closed = false;
   private handshake: ReturnType<typeof setTimeout>;
   private deadline: ReturnType<typeof setTimeout> | null = null;
@@ -23,10 +27,37 @@ export class LocalExecutor {
   } | null = null;
   constructor(frame: HTMLIFrameElement) {
     const channel = new MessageChannel();
+    this.frame = frame;
     this.port = channel.port1;
+    this.transferPort = channel.port2;
+    this.ready = (event) => {
+      if (
+        this.closed ||
+        this.bootstrapped ||
+        event.origin !== "http://127.0.0.1:3001" ||
+        event.source !== this.frame.contentWindow ||
+        !event.data ||
+        typeof event.data !== "object" ||
+        Array.isArray(event.data) ||
+        Object.keys(event.data).length !== 1 ||
+        (event.data as Record<string, unknown>).type !== "HOST_READY" ||
+        event.ports.length !== 0
+      )
+        return;
+      this.bootstrapped = true;
+      window.removeEventListener("message", this.ready);
+      this.frame.contentWindow?.postMessage(
+        { type: "CONNECT" },
+        "http://127.0.0.1:3001",
+        [this.transferPort],
+      );
+    };
+    window.addEventListener("message", this.ready);
     this.handshake = setTimeout(() => {
       this.closed = true;
       this.fail("EXECUTOR_UNAVAILABLE");
+      window.removeEventListener("message", this.ready);
+      this.transferPort.close();
       this.port.close();
     }, 5000);
     this.port.onmessage = (event: MessageEvent<unknown>) => {
@@ -95,11 +126,14 @@ export class LocalExecutor {
       }
     };
     this.port.start();
-    frame.contentWindow?.postMessage(
-      { type: "CONNECT" },
-      "http://127.0.0.1:3001",
-      [channel.port2],
-    );
+    this.notifyFrameLoaded();
+  }
+  notifyFrameLoaded() {
+    if (!this.closed && !this.bootstrapped)
+      this.frame.contentWindow?.postMessage(
+        { type: "PROBE" },
+        "http://127.0.0.1:3001",
+      );
   }
   private clear() {
     this.pending = null;
@@ -172,6 +206,8 @@ export class LocalExecutor {
   close() {
     this.closed = true;
     clearTimeout(this.handshake);
+    window.removeEventListener("message", this.ready);
+    this.transferPort.close();
     if (this.pending)
       this.port.postMessage({ type: "CANCEL", id: this.pending.id });
     this.fail("EXECUTOR_CLOSED");

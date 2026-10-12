@@ -1,3 +1,11 @@
+import type { Manifest } from "../../apps/web/lib/artifacts";
+interface SavedFixture {
+  id: string;
+  digest: string;
+  manifest: Manifest;
+  size: number;
+  origin: "local" | "imported";
+}
 import { test, expect } from "@playwright/test";
 const csv = "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n";
 async function saved(page: import("@playwright/test").Page) {
@@ -75,10 +83,9 @@ test("Save/reload then actual engines replay with active inference refusal; expo
   await h
     .getByRole("button", { name: "Replay saved investigation", exact: true })
     .click();
-  await expect(h.getByTestId("replay-status")).not.toHaveText("RUNNING", {
+  await expect(h.getByTestId("replay-status")).toHaveText("MATCH", {
     timeout: 120000,
   });
-  await expect(h.getByTestId("replay-status")).toHaveText("MATCH");
   await expect(h.getByTestId("replay-differences")).toContainText("1010");
   await expect(h.getByTestId("replay-differences")).toContainText(
     "CLIENT_REPORTED",
@@ -86,6 +93,7 @@ test("Save/reload then actual engines replay with active inference refusal; expo
   await h
     .getByRole("button", { name: "Delete saved investigation", exact: true })
     .click();
+  await expect(h.getByLabel("Import investigation bundle")).toBeEnabled();
   await h.getByLabel("Import investigation bundle").setInputFiles(location!);
   await expect(h.getByTestId("import-preview")).toContainText(
     "Validated in memory",
@@ -101,6 +109,7 @@ test("Save/reload then actual engines replay with active inference refusal; expo
     .getByRole("button", { name: "Confirm local import", exact: true })
     .click();
   await expect(h.getByTestId("saved-record")).toHaveCount(1);
+  await expect(h.getByLabel("Import investigation bundle")).toBeEnabled();
   await h.getByLabel("Import investigation bundle").setInputFiles(location!);
   await h
     .getByLabel("I approve storing this validated imported bundle locally")
@@ -129,10 +138,9 @@ test("replay cancel preserves original and retry recovers; malformed bundle stay
   await h
     .getByRole("button", { name: "Replay saved investigation", exact: true })
     .click();
-  await expect(h.getByTestId("replay-status")).not.toHaveText("RUNNING", {
+  await expect(h.getByTestId("replay-status")).toHaveText("MATCH", {
     timeout: 120000,
   });
-  await expect(h.getByTestId("replay-status")).toHaveText("MATCH");
   await h.getByLabel("Import investigation bundle").setInputFiles({
     name: "hostile.zip",
     mimeType: "application/zip",
@@ -153,26 +161,31 @@ test("actual recomputation detects historical forged agreement and changed snaps
       const r = indexedDB.open("hypothron-local-v1");
       r.onsuccess = () => resolve(r.result);
     });
-    const row = await new Promise<any>((resolve) => {
+    const row = await new Promise<SavedFixture>((resolve) => {
       const r = db
         .transaction("investigations")
         .objectStore("investigations")
         .getAll();
       r.onsuccess = () => resolve(r.result[0]);
     });
-    function canonical(x: any): string {
+    function canonical(x: unknown): string {
       return x && typeof x === "object"
         ? Array.isArray(x)
           ? "[" + x.map(canonical).join(",") + "]"
           : "{" +
             Object.keys(x)
               .sort()
-              .map((k) => JSON.stringify(k) + ":" + canonical(x[k]))
+              .map(
+                (k) =>
+                  JSON.stringify(k) +
+                  ":" +
+                  canonical((x as Record<string, unknown>)[k]),
+              )
               .join(",") +
             "}"
         : JSON.stringify(x);
     }
-    async function hash(x: any) {
+    async function hash(x: unknown) {
       return Array.from(
         new Uint8Array(
           await crypto.subtle.digest(

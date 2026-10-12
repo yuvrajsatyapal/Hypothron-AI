@@ -94,7 +94,9 @@ test("failed new execution removes previous evidence and locks dataset controls"
     .getByRole("button", { name: "Execute locally", exact: true })
     .click();
   await expect(page.getByTestId("verification")).toHaveCount(0);
-  await expect(page.getByRole("status")).toContainText("MISSING_COLUMN", {
+  await expect(
+    page.locator("section.evidence").getByRole("status"),
+  ).toContainText("MISSING_COLUMN", {
     timeout: 35000,
   });
 });
@@ -131,7 +133,9 @@ test("cancellation clears work and permits a fresh calculation", async ({
     .getByRole("button", { name: "Execute locally", exact: true })
     .click();
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("CANCELLED");
+  await expect(
+    page.locator("section.evidence").getByRole("status"),
+  ).toContainText("CANCELLED");
   await expect(page.getByTestId("verification")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Execute locally", exact: true })

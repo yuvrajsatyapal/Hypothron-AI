@@ -50,7 +50,7 @@ export interface RunSummary {
   }[];
   tokens: number | null;
   providerElapsedMs: number | null;
-  attempts: number;
+  attempts: number | null;
 }
 export interface Manifest {
   version: 1;
@@ -64,6 +64,7 @@ export interface Manifest {
   parser: "csv-utf8-v1";
   tolerance: "exact-minor-units-v1";
   snapshots: { hash: string; size: number; format: "csv" }[];
+  approved: MetricPlan[];
   calculations: Calculation[];
   report: EvidenceReportData | null;
   run: RunSummary | null;
@@ -84,6 +85,7 @@ export interface ArtifactInput {
   createdAt: string;
   parentId: string | null;
   snapshots: Uint8Array[];
+  approved?: MetricPlan[];
   calculations: CalculationInput[];
   report: EvidenceReportData | null;
   run: RunSummary | null;
@@ -198,6 +200,16 @@ export async function createArtifact(input: ArtifactInput): Promise<Artifact> {
       size: s.bytes.byteLength,
       format: "csv",
     })),
+    approved: [
+      ...new Map(
+        (input.approved ?? input.calculations.map((c) => c.plan)).map((p) => [
+          canonical(p),
+          p,
+        ]),
+      ).values(),
+    ].sort((a, b) =>
+      canonical(a) < canonical(b) ? -1 : canonical(a) > canonical(b) ? 1 : 0,
+    ),
     calculations,
     report: input.report,
     run: input.run,
@@ -239,6 +251,7 @@ export async function validateArtifact(
     "parser",
     "tolerance",
     "snapshots",
+    "approved",
     "calculations",
     "report",
     "run",
@@ -309,6 +322,26 @@ export async function validateArtifact(
     throw new Error("CALCULATION_LIMIT");
   const accepted = new Set<string>(),
     referenced = new Set<string>();
+  if (
+    !Array.isArray(m.approved) ||
+    m.approved.length < 1 ||
+    m.approved.length > 3
+  )
+    throw new Error("INVALID_APPROVED");
+  const approved = new Set<string>();
+  for (const p of m.approved) {
+    const plan = validatePlan(p),
+      key = canonical(plan);
+    if (approved.has(key)) throw new Error("INVALID_APPROVED");
+    approved.add(key);
+    if (
+      !hashes.has(plan.datasetHash) ||
+      (plan.relationship && !hashes.has(plan.relationship.datasetHash))
+    )
+      throw new Error("MISSING_INPUT");
+    referenced.add(plan.datasetHash);
+    if (plan.relationship) referenced.add(plan.relationship.datasetHash);
+  }
   for (const c of m.calculations) {
     const r = exact(c, [
       "id",
@@ -332,6 +365,7 @@ export async function validateArtifact(
     )
       throw new Error("INVALID_DEPENDENCY");
     const plan = validatePlan(r.plan);
+    if (!approved.has(canonical(plan))) throw new Error("UNAPPROVED_PLAN");
     if (
       !hashes.has(plan.datasetHash) ||
       (plan.relationship && !hashes.has(plan.relationship.datasetHash))
@@ -395,9 +429,10 @@ export async function validateArtifact(
       )
         throw new Error("INVALID_RUN");
     if (
-      !Number.isSafeInteger(run.attempts) ||
-      Number(run.attempts) < 0 ||
-      Number(run.attempts) > 12
+      run.attempts !== null &&
+      (!Number.isSafeInteger(run.attempts) ||
+        Number(run.attempts) < 0 ||
+        Number(run.attempts) > 12)
     )
       throw new Error("INVALID_RUN");
   }

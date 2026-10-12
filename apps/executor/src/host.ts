@@ -17,12 +17,17 @@ window.addEventListener("message", async (event: MessageEvent) => {
   if (
     event.origin !== "http://127.0.0.1:3000" ||
     event.source !== parent ||
-    event.data?.type !== "CONNECT" ||
-    Object.keys(event.data).length !== 1 ||
-    event.ports.length !== 1 ||
-    port
+    !event.data ||
+    typeof event.data !== "object" ||
+    Array.isArray(event.data) ||
+    Object.keys(event.data).length !== 1
   )
     return;
+  if (event.data.type === "PROBE" && event.ports.length === 0) {
+    parent.postMessage({ type: "HOST_READY" }, "http://127.0.0.1:3000");
+    return;
+  }
+  if (event.data.type !== "CONNECT" || event.ports.length !== 1 || port) return;
   port = event.ports[0];
   port.onmessage = (message: MessageEvent<unknown>) => {
     if (

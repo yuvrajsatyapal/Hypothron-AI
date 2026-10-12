@@ -1,5 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import {
+  type Artifact,
+  type ArtifactInput,
+  type CalculationInput,
+  createArtifact,
+} from "../lib/artifacts";
+import { compareInvestigations } from "../lib/comparison";
 import { EvidenceReport } from "./EvidenceReport";
 import {
   contentHash,
@@ -23,8 +30,12 @@ export function Investigation({
   execute,
   onBusy,
   cancelLocal,
+  original,
+  onArtifact,
 }: {
   primary: Snapshot;
+  original?: Artifact | null;
+  onArtifact?: (input: ArtifactInput | null) => void;
   execute: (
     plan: MetricPlan,
     bytes: Uint8Array,
@@ -34,10 +45,90 @@ export function Investigation({
   cancelLocal: () => void;
 }) {
   const [question, setQuestion] = useState(
-    "Investigate the approved revenue evidence.",
+    original?.manifest.question ?? "Investigate the approved revenue evidence.",
   );
-  const [provider, setProvider] = useState("gemini"),
-    [model, setModel] = useState("gemini-2.5-flash");
+  const [provider, setProvider] = useState(
+      original?.manifest.run?.provider ?? "gemini",
+    ),
+    [model, setModel] = useState(
+      original?.manifest.run?.model ?? "gemini-2.5-flash",
+    );
+  const runContext = useRef<{
+    question: string;
+    provider: string;
+    model: string;
+  } | null>(null);
+  const calculations = useRef<CalculationInput[]>([]),
+    createdAt = useRef("");
+  const [comparison, setComparison] = useState<ReturnType<
+    typeof compareInvestigations
+  > | null>(null);
+  async function capture(
+    id: string,
+    next: InvestigationState,
+    signal: AbortSignal,
+  ) {
+    if (!onArtifact || !calculations.current.length) return;
+    let tokens: number | null = null,
+      providerElapsedMs: number | null = null,
+      attempts: number | null = null;
+    try {
+      const viewed = await apiJSON(
+        `/v1/investigations/${id}`,
+        token.current,
+        undefined,
+        signal,
+      );
+      const m = viewed.measurements as Record<string, unknown>;
+      if (
+        m &&
+        Number.isSafeInteger(m.attempts) &&
+        Number(m.attempts) >= 0 &&
+        Number(m.attempts) <= 12
+      ) {
+        attempts = Number(m.attempts);
+        if (Number.isSafeInteger(m.tokens) && Number(m.tokens) >= 0)
+          tokens = Number(m.tokens);
+        if (
+          Number.isSafeInteger(m.providerElapsedMs) &&
+          Number(m.providerElapsedMs) >= 0
+        )
+          providerElapsedMs = Number(m.providerElapsedMs);
+      }
+    } catch {
+      /* Measurements unavailable; never estimate or request inference. */
+    }
+    if (signal.aborted) throw new Error("CANCELLED");
+    const context = runContext.current;
+    if (!context) throw new Error("MISSING_RUN_CONTEXT");
+    const input: ArtifactInput = {
+      id,
+      question: context.question,
+      createdAt: createdAt.current,
+      parentId: original?.manifest.id ?? null,
+      approved: snapshots.current.map((s) => s.plan),
+      snapshots: snapshots.current.flatMap((s) => [
+        s.bytes,
+        ...(s.lookup ? [s.lookup] : []),
+      ]),
+      calculations: calculations.current.filter((c) =>
+        next.evidence.some((e) => e.jobId === c.id),
+      ),
+      report: next.report ?? null,
+      run: {
+        provider: context.provider,
+        model: context.model,
+        hypotheses: next.hypotheses ?? [],
+        tokens,
+        providerElapsedMs,
+        attempts,
+      },
+    };
+    const artifact = await createArtifact(input);
+    if (signal.aborted) throw new Error("CANCELLED");
+    if (original) setComparison(compareInvestigations(original, artifact));
+    onArtifact(input);
+  }
   const keyInput = useRef<HTMLInputElement>(null),
     token = useRef<string | null>(null),
     runId = useRef<string | null>(null),
@@ -138,6 +229,7 @@ export function Investigation({
     for (let jobs = 0; jobs <= 6; jobs++) {
       if (signal.aborted) throw new Error("CANCELLED");
       if (next.status !== "WAITING_RESULT") {
+        if (next.status === "COMPLETE") await capture(id, next, signal);
         setMessage(next.error || next.status);
         return;
       }
@@ -156,6 +248,14 @@ export function Investigation({
           : undefined,
       );
       if (signal.aborted) throw new Error("CANCELLED");
+      if (!calculations.current.some((c) => c.id === job.id))
+        calculations.current.push({
+          id: job.id,
+          hypothesisId: job.hypothesisId,
+          dependsOn: [...job.dependsOn],
+          plan: job.plan,
+          result,
+        });
       await apiJSON(
         `/v1/investigations/${id}/results`,
         token.current,
@@ -199,6 +299,11 @@ export function Investigation({
     const deadline = setTimeout(() => controller.abort(), 600000);
     if (!resume) {
       runId.current = null;
+      runContext.current = null;
+      calculations.current = [];
+      createdAt.current = new Date().toISOString();
+      onArtifact?.(null);
+      setComparison(null);
       snapshots.current = [];
       setState(null);
       setActiveRun(null);
@@ -236,6 +341,8 @@ export function Investigation({
             current.status,
           )
         ) {
+          if (current.status === "COMPLETE")
+            await capture(runId.current, current, controller.signal);
           setState(current);
           setMessage(current.error || current.status);
           return;
@@ -253,7 +360,29 @@ export function Investigation({
         snapshots.current = [primary];
         if (primary.plan.relationship && extra.length)
           throw new Error("UNAPPROVED_PLAN");
-        for (const file of extra) {
+        if (original) {
+          snapshots.current = [];
+          for (const plan of original.manifest.approved) {
+            const bytes = original.snapshots.find(
+              (s) => s.hash === plan.datasetHash,
+            )!.bytes;
+            const lookup = plan.relationship
+              ? original.snapshots.find(
+                  (s) => s.hash === plan.relationship!.datasetHash,
+                )!.bytes
+              : undefined;
+            const result = await execute(
+              plan,
+              bytes,
+              lookup
+                ? { bytes: lookup, approvedRelationship: true }
+                : undefined,
+            );
+            controller.signal.throwIfAborted();
+            snapshots.current.push({ plan, bytes, lookup, result });
+          }
+        }
+        for (const file of original ? [] : extra) {
           if (file.size > 10 * 1024 * 1024) throw new Error("INPUT_LIMIT");
           controller.signal.throwIfAborted();
           const bytes = new Uint8Array(await file.arrayBuffer());
@@ -273,6 +402,7 @@ export function Investigation({
         controller.signal.throwIfAborted();
         const identifier = crypto.randomUUID();
         runId.current = identifier;
+        runContext.current = { provider, model, question };
         setActiveRun({ provider, model, question });
         const response = await apiJSON(
           "/v1/investigations",
@@ -346,6 +476,64 @@ export function Investigation({
   return (
     <section className="controls" aria-label="Autonomous investigation">
       <h2>Hypothesis-driven investigation</h2>
+      {original && (
+        <p>
+          Separate fresh AI run linked to {original.manifest.id}. Fresh provider
+          consent and BYOK are required. Reasoning may change; original evidence
+          remains immutable.
+        </p>
+      )}
+      {comparison && (
+        <div data-testid="fresh-comparison">
+          <h3>Fresh run comparison</h3>
+          <p>
+            Structural comparison; matching text does not prove equivalent
+            reasoning. Provider elapsed time is measured request time, not
+            end-to-end runtime or price.
+          </p>
+          <div
+            style={{ overflowX: "auto" }}
+            tabIndex={0}
+            role="region"
+            aria-label="Fresh investigation comparison"
+          >
+            <table style={{ minWidth: 640 }}>
+              <caption>Original versus fresh AI run</caption>
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Original</th>
+                  <th>Fresh</th>
+                  <th>Comparison</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(comparison).map(([name, c]) => (
+                  <tr key={name}>
+                    <th>{name}</th>
+                    <td>
+                      {c.saved === null
+                        ? "unavailable"
+                        : typeof c.saved === "number"
+                          ? c.saved
+                          : JSON.stringify(c.saved)}
+                    </td>
+                    <td>
+                      {c.current === null
+                        ? "unavailable"
+                        : typeof c.current === "number"
+                          ? c.current
+                          : JSON.stringify(c.current)}
+                    </td>
+                    <td>{c.matches ? "same representation" : "changed"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       <p>
         Approved metric: {primary.plan.amountColumn}, [{primary.plan.start},{" "}
         {primary.plan.end}), {primary.plan.currency} / {primary.plan.timezone} /
@@ -366,7 +554,7 @@ export function Investigation({
           type="file"
           multiple
           accept=".csv,text/csv"
-          disabled={busy || !!primary.plan.relationship}
+          disabled={busy || !!primary.plan.relationship || !!original}
           onChange={(e) => {
             const files = Array.from(e.target.files || []);
             if (files.length > 2) {

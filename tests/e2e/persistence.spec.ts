@@ -2,13 +2,11 @@ import { test, expect } from "@playwright/test";
 const csv = "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n";
 async function calculate(page: import("@playwright/test").Page) {
   await page.goto("/");
-  await page
-    .getByLabel("Dataset CSV", { exact: true })
-    .setInputFiles({
-      name: "sensitive.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from(csv),
-    });
+  await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
+    name: "sensitive.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv),
+  });
   await page
     .getByRole("button", { name: "Execute locally", exact: true })
     .click();
@@ -126,4 +124,30 @@ test("real IndexedDB abort rolls back snapshots and manifest; quota failure leav
     .click();
   await expect(h.getByTestId("storage-status")).toContainText("QUOTA_EXCEEDED");
   await expect(h.getByTestId("saved-record")).toHaveCount(0);
+});
+
+test("real browser storage eviction exposes missing history without recreating a database", async ({
+  page,
+  context,
+}) => {
+  await calculate(page);
+  const h = page.getByRole("region", { name: "Local investigation history" });
+  await h
+    .getByLabel(
+      "I approve saving these snapshots and artifacts on this browser",
+    )
+    .check();
+  await h
+    .getByRole("button", { name: "Save investigation", exact: true })
+    .click();
+  await expect(h.getByTestId("saved-record")).toHaveCount(1);
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Storage.clearDataForOrigin", {
+    origin: "http://127.0.0.1:3000",
+    storageTypes: "indexeddb",
+  });
+  await cdp.detach();
+  await page.reload();
+  await expect(h.getByTestId("saved-record")).toHaveCount(0);
+  expect(await page.evaluate(() => indexedDB.databases())).toHaveLength(0);
 });

@@ -38,9 +38,9 @@ Independent engines reduce accidental implementation errors; they share contract
 - Preserve missing/NaN/Infinity/signed-zero distinctions where meaningful. Empty input is not automatically a zero. Rounding only occurs at contractual stages; display rounding does not alter comparison.
 - Grouped result comparison sorts by declared keys, checks multiplicity/null policy and compares typed values, not formatted text/chart pixels. Ties need explicit tie-breaking. Seed supported stochastic statistics and record algorithm/seed; unsupported nondeterministic operations cannot claim deterministic replay.
 
-## Investigation bundle v1 (proposed)
+## Investigation bundle v1 (implemented scoped subset)
 
-Logical format: validated manifest JSON plus source snapshot blobs and bounded structured artifacts in an export archive. Local Dexie representation need not be identical to the export container, but both use the same manifest. Reject excessive archive expansion, unsafe paths and unrecognized executable payloads.
+Normative implemented format: [INVESTIGATION_BUNDLE_V1.md](INVESTIGATION_BUNDLE_V1.md). Stored-only ZIP contains canonical manifest JSON and original CSV snapshot blobs; future richer logical fields below remain target concepts unless present in the strict schema. Local Dexie representation need not be identical to the export container, but both use the same manifest. Reject excessive archive expansion, unsafe paths and unrecognized executable payloads.
 
 | Section | Required contents |
 |---|---|
@@ -54,7 +54,7 @@ Logical format: validated manifest JSON plus source snapshot blobs and bounded s
 | Inference | Provider/model/config metadata, prompt/template version, measured tokens/cost source and duration; no credentials |
 | Presentation | Final structured findings/report/chart specs and source calculation references |
 
-Hash original file bytes for source identity and separately hash parse options/schema/derived operation identity. Canonical manifest hashing defines key order, Unicode policy, decimal/timestamp encoding and excludes volatile timing fields from numerical comparison. JSON insertion order alone is not a cross-language canonicalization contract. Finalize canonicalization implementation during Phase 1 with test vectors.
+Hash original file bytes for source identity and separately hash parse options/schema/derived operation identity. Canonical manifest hashing defines key order, Unicode policy, decimal/timestamp encoding and excludes volatile timing fields from numerical comparison. JSON insertion order alone is not a cross-language canonicalization contract. Implemented Phase4 canonicalization and test vectors are in `apps/web/lib/artifacts.ts` and its tests.
 
 A saved replay-capable bundle includes dataset bytes. A metadata-only export is allowed only if labeled “requires exact dataset reattachment.” Never claim complete replay from a hash alone. Exports contain sensitive data and are not automatically encrypted; sharing is a deliberate user action. No backend upload by default.
 
@@ -93,3 +93,7 @@ Every observed finding binds original evidence ID, dataset/metric contract/versi
 Total/count assertions compare exact integer operands. A percentage change binds baseline then current evidence and checks `(current-baseline)*100/baseline` with Python Fraction and browser BigInt cross-multiplication. Changing source/period may be intentional; other business semantics must match. Zero baselines are undefined. Bounded exact decimal assertions are supported; no float tolerance or silent rounding is applied to a nonterminating ratio. Unsupported causal, correlation or contribution assertions are rejected because current calculations do not support those relations.
 
 Model narrative has no publication authority: only a fixed qualitative grammar is accepted, and even then published conclusions are deterministic. Invalid proposals, orphan/incompatible citations and unavailable report inference produce an evidence-backed fallback with a stable rejection code, preserving both disputed figures. Legacy checkpoint observations hydrate from original jobs; legacy completed free-text playback displays a revalidation notice. No provider call is added to fallback or local replay.
+
+## Implemented Phase 4 boundary
+
+Explicit Dexie Save/confirmed Import now retain original snapshots, unused approved contracts, accepted evidence, exact tolerance, runtime/compiler/asset-lock identity and grounded report. Strict stored-only ZIP validation includes path/size/CRC/offset/hash/schema/IR compatibility. LocalStore owns atomic writes, quota, deletion and bounded history. Replay reconstructs only approved IR, executes existing isolated engines and re-establishes current verification without any provider/API/planner call. Volatile runtime measurements are excluded from exact result equality; originals remain immutable. Fresh AI uses distinct parent-linked IDs and fresh consent/key/budget, freezes creation attribution, and compares real ledger measurements or unavailable values. Historical imported labels are not attestation. See [deep dive](learning/PHASE_4_DEEP_DIVE.md) and [report](reports/PHASE_4_REPORT.md). The Phase2 exit paragraph above remains historical evidence.

@@ -1,7 +1,5 @@
-# Phase 4 active handoff
-Main only, Phase 4 only. Preserve untracked services/api/.env.example. No push/PR/deploy/paid inference.
-T4.1 commit6bc489e:10units/2Chrome43.2s/TS/design+engineering ACCEPT.
-T4.2 complete:20units/3Chrome1.2m/TS/build; engineering ACCEPT. bundles.ts stored ZIP bounded parser; replay.ts local-only executor, active provider denial, immutable original; hydration lazy init and same-file picker reset fixed. Task commit next.
-T4.3 RED tests exist fresh-artifacts (temporarily /tmp/hypothron-fresh-artifacts.test.ts for T4.2 typecheck), comparison nowGREEN, backend measurementsGREEN implemented uncommitted in ledger.py/investigations.py/test_investigations_api.py. These files excludedT4.2commit. Need full AI artifact capture, approvedunusedsnapshots, separatelyconsented parentfresh,comparisonUI, browsertests, six diagrams/deepdive/report/docs,fullgates/reviews.
-Local ephemeral postgres17 container hypothron-phase4-fixture uses55433, migratedhead; use DATABASE_URL postgres fixture55433. Port55432 belongsunrelated QueryCure preserve. Userauthorized stoppingPortfolio20870/25912on3000/3001, done. Browser tests requireescalatedlocal sockets; Playwright cleans servers normally, CtrlC canleavestaleNextdev restartonlyours. pnpmstore existing /Users/yuvrajsatyapal/Library/pnpm/store.
-No credentials/rawuserdatasets inhandoff. Runtimeassets ignored. Restore generated next-env.d.ts fromHEADbeforecommit ifNextdevchangedit.
+# Phase 4 completed handoff
+Phase4 only, existing main; stop beforePhase5. T4.1 6bc489e; T4.2 26c0e95; T4.3 tested task hash recorded in Phase4 report after commit. No push/PR/deploy/paid inference. Preserve untracked services/api/.env.example.
+All required gates pass:93backend2.65s,98unit6.39s,32realChrome6.1min, type/Ruff31/mypy18/format/OpenAPI/migration0002/builds/sixdiagramselfchecks+Chrome/local links. Independent engineering/security and design ACCEPT. Final report/deepdive/diagrams/ADR019+020 documented. Historical Phase3 evaluation preserved; new Phase4 regression JSON has actual ten golden+twelve adverse observations.
+Docker stopped during interruption and removed original ephemeral fixture; recreated cachedpostgres17-alpine on55433, migrated0002, reranbackend thencompleteChrome. The task-owned fixture is hypothron-phase4-fixture. ProviderHTTP mocked. Runtimeassets/test-results ignored and excluded. No userdatasets or credentials recorded here.
+Next action is outside scope: Phase5 requires new user instruction. No unfinished Phase4 source work or mandatory blocked gate.

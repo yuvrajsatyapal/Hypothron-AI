@@ -38,6 +38,12 @@ export interface InvestigationState {
   evidence: Evidence[];
   report?: EvidenceReportData;
   error?: string;
+  hypotheses?: {
+    id: string;
+    datasetHash: string;
+    statement: string;
+    priority: number;
+  }[];
 }
 export function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -98,6 +104,34 @@ export function validateInvestigationState(
       dependsOn: strings(job.dependsOn, 6),
       reason: text(job.reason),
     };
+  }
+  if (raw.hypotheses !== undefined) {
+    if (!Array.isArray(raw.hypotheses) || raw.hypotheses.length > 6)
+      throw new Error("INVALID_RESPONSE");
+    const ids = new Set<string>();
+    output.hypotheses = raw.hypotheses.map((value) => {
+      const h = record(value),
+        id = text(h.id, 3),
+        datasetHash = text(h.datasetHash, 64);
+      if (
+        Object.keys(h).sort().join(",") !==
+          "datasetHash,id,priority,statement" ||
+        !/^h[1-6]$/.test(id) ||
+        ids.has(id) ||
+        !approved.some((p) => p.datasetHash === datasetHash) ||
+        !Number.isSafeInteger(h.priority) ||
+        Number(h.priority) < 1 ||
+        Number(h.priority) > 6
+      )
+        throw new Error("INVALID_RESPONSE");
+      ids.add(id);
+      return {
+        id,
+        datasetHash,
+        statement: text(h.statement),
+        priority: Number(h.priority),
+      };
+    });
   }
   if (raw.clarification !== undefined && raw.clarification !== null)
     output.clarification = text(raw.clarification);

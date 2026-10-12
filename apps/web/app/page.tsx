@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { approvedMetric, executionVerdict } from "../components/metricApproval";
 import { LocalHistory } from "../components/LocalHistory";
 import { Investigation } from "../components/Investigation";
@@ -9,8 +9,17 @@ import {
   type MetricPlan,
   type ExecutionResult,
 } from "../lib/execution";
+import type { Artifact, ArtifactInput } from "../lib/artifacts";
 import { replayMatches } from "../../executor/src/contracts";
 export default function Page() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+  const [investigationArtifact, setInvestigationArtifact] =
+      useState<ArtifactInput | null>(null),
+    [freshArtifact, setFreshArtifact] = useState<Artifact | null>(null);
+  const [freshGeneration, setFreshGeneration] = useState(0);
   const localId = useRef<string | null>(null);
   const localCreated = useRef<string>("");
   const frame = useRef<HTMLIFrameElement | null>(null);
@@ -63,6 +72,8 @@ export default function Page() {
       return;
     }
     setBusy(true);
+    setInvestigationArtifact(null);
+    setFreshArtifact(null);
     setResult(null);
     setReplay("");
     setStatus("Loading isolated runtimes and computing locally…");
@@ -153,12 +164,14 @@ export default function Page() {
               <input
                 type="file"
                 accept=".csv,text/csv"
-                disabled={busy}
+                disabled={busy || !hydrated}
                 onChange={async (e) => {
                   if (busy) return;
                   const generation = ++uploadGeneration.current;
                   const f = e.target.files?.[0];
                   setResult(null);
+                  setInvestigationArtifact(null);
+                  setFreshArtifact(null);
                   setExecutedLookup(undefined);
                   setLookupApproved(false);
                   saved.current = null;
@@ -404,7 +417,19 @@ export default function Page() {
             </div>
           </section>
           <section className="evidence">
-            <h2>Independent numerical evidence</h2>
+            <h2>
+              {freshArtifact
+                ? "Historical saved input evidence"
+                : "Independent numerical evidence"}
+            </h2>
+            {freshArtifact && (
+              <p>
+                Historical CLIENT_REPORTED playback from the saved parent. These
+                displayed values, runtime and timing have not been recomputed by
+                this pane. Fresh investigation jobs establish their own separate
+                evidence below.
+              </p>
+            )}
             <p role="status" aria-live="polite">
               {status}
             </p>
@@ -419,7 +444,9 @@ export default function Page() {
                   contract.
                 </p>
                 <p data-testid="verification" className="verdict">
-                  {executedPlan && executionVerdict(executedPlan, result).state}{" "}
+                  {freshArtifact && "HISTORICAL "}
+                  {executedPlan &&
+                    executionVerdict(executedPlan, result).state}{" "}
                   · CLIENT_REPORTED
                 </p>
                 <p>
@@ -520,7 +547,9 @@ export default function Page() {
         </div>
         {result && executedPlan && bytes.current && (
           <Investigation
-            key={hash}
+            key={hash + "/" + freshGeneration}
+            original={freshArtifact}
+            onArtifact={setInvestigationArtifact}
             primary={{
               bytes: bytes.current,
               plan: executedPlan,
@@ -528,6 +557,8 @@ export default function Page() {
               lookup: executedLookup,
             }}
             execute={async (plan, data, derivedLookup) => {
+              if (!executor.current && frame.current)
+                executor.current = new LocalExecutor(frame.current);
               if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
               return executor.current.execute(plan, data, derivedLookup);
             }}
@@ -536,6 +567,33 @@ export default function Page() {
           />
         )}
         <LocalHistory
+          onFresh={(artifact) => {
+            const c = artifact.manifest.calculations[0],
+              primary = artifact.snapshots.find(
+                (s) => s.hash === c.plan.datasetHash,
+              )!;
+            bytes.current = new Uint8Array(primary.bytes);
+            setHash(c.plan.datasetHash);
+            setFilename("Saved approved snapshot");
+            setExecutedPlan(c.plan);
+            setResult(c.result);
+            setExecutedLookup(
+              c.plan.relationship
+                ? new Uint8Array(
+                    artifact.snapshots.find(
+                      (s) => s.hash === c.plan.relationship!.datasetHash,
+                    )!.bytes,
+                  )
+                : undefined,
+            );
+            setFreshArtifact(artifact);
+            setFreshGeneration((v) => v + 1);
+            setInvestigationArtifact(null);
+            localId.current = null;
+            setStatus(
+              "Saved inputs restored to memory for a separate fresh AI run. Consent and key required.",
+            );
+          }}
           execute={async (plan, data, derivedLookup) => {
             if (!executor.current && frame.current)
               executor.current = new LocalExecutor(frame.current);
@@ -546,7 +604,8 @@ export default function Page() {
           onBusy={setBusy}
           disabled={busy}
           input={
-            result && executedPlan && bytes.current && localId.current
+            investigationArtifact ??
+            (result && executedPlan && bytes.current && localId.current
               ? {
                   id: localId.current,
                   question: "Local approved revenue calculation",
@@ -568,7 +627,7 @@ export default function Page() {
                   report: null,
                   run: null,
                 }
-              : null
+              : null)
           }
         />
         <iframe
@@ -578,8 +637,9 @@ export default function Page() {
           sandbox="allow-scripts allow-same-origin"
           hidden
           onLoad={(e) => {
-            executor.current?.close();
-            executor.current = new LocalExecutor(e.currentTarget);
+            if (!executor.current)
+              executor.current = new LocalExecutor(e.currentTarget);
+            else executor.current.notifyFrameLoaded();
           }}
         />
       </main>

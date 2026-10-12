@@ -22,7 +22,17 @@ class Port {
   start() {}
   close() {}
 }
-function setup(handshake = true) {
+function setup(handshake = true, documentReady = true) {
+  let listener: ((event: unknown) => void) | null = null;
+  let connections = 0;
+  vi.stubGlobal("window", {
+    addEventListener(_type: string, handler: (event: unknown) => void) {
+      listener = handler;
+    },
+    removeEventListener() {
+      listener = null;
+    },
+  });
   let peer: Port;
   vi.stubGlobal(
     "MessageChannel",
@@ -37,7 +47,18 @@ function setup(handshake = true) {
   );
   const frame = {
     contentWindow: {
-      postMessage(_data: unknown, _origin: string, ports: Port[]) {
+      postMessage(data: { type: string }, _origin: string, ports: Port[] = []) {
+        if (data.type === "PROBE") {
+          if (documentReady)
+            listener?.({
+              data: { type: "HOST_READY" },
+              origin: "http://127.0.0.1:3001",
+              source: frame.contentWindow,
+              ports: [],
+            });
+          return;
+        }
+        connections++;
         peer = ports[0];
         if (handshake) peer.postMessage({ type: "CONNECTED" });
       },
@@ -46,6 +67,15 @@ function setup(handshake = true) {
   const executor = new LocalExecutor(frame);
   return {
     executor,
+    ready(
+      origin = "http://127.0.0.1:3001",
+      source: unknown = frame.contentWindow,
+    ) {
+      listener?.({ data: { type: "HOST_READY" }, origin, source, ports: [] });
+    },
+    get connections() {
+      return connections;
+    },
     get peer() {
       return peer!;
     },
@@ -139,6 +169,23 @@ test("joining local snapshots requires deliberate caller approval and freezes pl
     lookupBytes: new Uint8Array([2]),
     approvedRelationship: true,
   });
+  fixture.executor.cancel();
+  await assertion;
+  fixture.executor.close();
+});
+
+test("early calculation waits for verified document readiness and transfers one channel", async () => {
+  const fixture = setup(false, false);
+  const run = fixture.executor.execute(plan, new Uint8Array([1]));
+  const assertion = expect(run).rejects.toThrow("CANCELLED");
+  fixture.executor.notifyFrameLoaded();
+  fixture.ready("http://evil.invalid");
+  fixture.ready("http://127.0.0.1:3001", {});
+  expect(fixture.connections).toBe(0);
+  fixture.ready();
+  fixture.ready();
+  fixture.executor.notifyFrameLoaded();
+  expect(fixture.connections).toBe(1);
   fixture.executor.cancel();
   await assertion;
   fixture.executor.close();

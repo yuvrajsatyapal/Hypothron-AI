@@ -232,9 +232,9 @@ test("advanced workspace requires explicit join approval, shows diagnostics and 
   await page
     .getByRole("button", { name: "Execute locally", exact: true })
     .click();
-  await expect(page.getByRole("status")).toContainText(
-    "RELATIONSHIP_APPROVAL_REQUIRED",
-  );
+  await expect(
+    page.locator("section.evidence").getByRole("status"),
+  ).toContainText("RELATIONSHIP_APPROVAL_REQUIRED");
   await page.getByLabel("I approve this derived join").check();
   await page
     .getByRole("button", { name: "Execute locally", exact: true })

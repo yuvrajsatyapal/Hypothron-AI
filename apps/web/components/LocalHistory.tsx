@@ -80,7 +80,25 @@ export function LocalHistory({
     try {
       await work();
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : "STORAGE_UNAVAILABLE");
+      const code = e instanceof Error ? e.message : "STORAGE_UNAVAILABLE";
+      const recovery: Record<string, string> = {
+        QUOTA_EXCEEDED:
+          "Export records you need, delete saved investigations to free space, then retry. Nothing from this failed Save was committed.",
+        STORAGE_UNAVAILABLE:
+          "Retry or reopen this application; browser settings may prevent local storage. Your unsaved data remains in memory until reload.",
+        MISSING_INPUT:
+          "Saved data may have been deleted or evicted. Re-import an exact exported bundle with explicit consent, or select the original data again.",
+        SNAPSHOT_HASH_MISMATCH:
+          "Stored bytes are missing or damaged. Preserve an exported original if available; delete damaged history and explicitly import a validated exact bundle.",
+        IDENTIFIER_COLLISION:
+          "This identifier already has different content. Import cannot overwrite its history; keep the original record and use a separately identified investigation.",
+      };
+      setMessage(
+        code +
+          (recovery[code]
+            ? ": " + recovery[code]
+            : ". The action did not complete; inspect the input and retry."),
+      );
     } finally {
       setBusy(false);
       onBusy?.(false);
@@ -249,7 +267,13 @@ export function LocalHistory({
             <summary>
               Inspect stored manifest, lineage and compiled source
             </summary>
-            <pre>{JSON.stringify(selected.manifest, null, 2)}</pre>
+            <pre
+              tabIndex={0}
+              role="region"
+              aria-label="Stored manifest and compiled source"
+            >
+              {JSON.stringify(selected.manifest, null, 2)}
+            </pre>
           </details>
           <div className="actions">
             <button

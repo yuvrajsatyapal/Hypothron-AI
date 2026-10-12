@@ -276,3 +276,56 @@ async def test_cancel_during_initial_inference_fences_late_reply():
             "status"
         ] == "CANCELLED"
         assert len(calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_run_measurements_are_owned_measured_and_unknown_is_not_zero():
+    from hypothron.ledger import Ledger
+    from hypothron.records import AttemptRecord
+
+    app = create_app(database_url=os.environ["DATABASE_URL"])
+    ledger = Ledger(app.state.sessions)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        session = (await client.post("/v1/sessions")).json()
+        run = await ledger.create(session["id"], request(), "gemini", "gemini-test")
+        async with app.state.sessions.begin() as db:
+            db.add(
+                AttemptRecord(
+                    run_id=run.id,
+                    ordinal=1,
+                    role="planner",
+                    context_hash="a" * 64,
+                    status="COMPLETE",
+                    usage={"total_tokens": 17},
+                    elapsed_ms=21,
+                )
+            )
+        assert await ledger.measurements(session["id"], run.id) == {
+            "attempts": 1,
+            "tokens": 17,
+            "providerElapsedMs": 21,
+        }
+        with pytest.raises(Exception, match="NOT_FOUND"):
+            await ledger.measurements("other-owner", run.id)
+        async with app.state.sessions.begin() as db:
+            db.add(
+                AttemptRecord(
+                    run_id=run.id,
+                    ordinal=2,
+                    role="analyst",
+                    context_hash="b" * 64,
+                    status="UNKNOWN",
+                )
+            )
+        assert await ledger.measurements(session["id"], run.id) == {
+            "attempts": 2,
+            "tokens": None,
+            "providerElapsedMs": None,
+        }
+        response = await client.get(
+            f"/v1/investigations/{run.id}", headers={"Authorization": "Bearer " + session["token"]}
+        )
+        assert response.json()["measurements"]["tokens"] is None
+        assert "response" not in response.json()["measurements"]

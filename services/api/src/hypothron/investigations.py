@@ -125,7 +125,12 @@ def mount_routes(
             )
         state = public_state(dict(snapshot.values))
         state["status"] = row.status
-        return {"id": run_id, "attempts": row.attempts, "state": state}
+        return {
+            "id": run_id,
+            "attempts": row.attempts,
+            "state": state,
+            "measurements": await ledger.measurements(owner["id"], run_id),
+        }
 
     @app.get("/v1/investigations/{run_id}")
     async def read(run_id: str, owner: dict[str, str] = authenticated) -> dict[str, Any]:

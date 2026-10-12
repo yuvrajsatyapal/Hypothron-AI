@@ -122,6 +122,35 @@ class Ledger:
         async with self.sessions() as db:
             return await self.owned(db, owner, run_id)
 
+    async def measurements(self, owner: str, run_id: str) -> dict[str, int | None]:
+        """Owned, bounded ledger observations; unknown billing is never zero."""
+        async with self.sessions() as db:
+            await self.owned(db, owner, run_id)
+            rows = list(
+                await db.scalars(
+                    select(AttemptRecord)
+                    .where(AttemptRecord.run_id == run_id)
+                    .order_by(AttemptRecord.ordinal)
+                    .limit(12)
+                )
+            )
+
+            def known(value: object) -> bool:
+                return type(value) is int and 0 <= value <= 1_000_000_000
+
+            tokens = [r.usage.get("total_tokens") if r.usage else None for r in rows]
+            times = [r.elapsed_ms for r in rows]
+            complete = all(r.status == "COMPLETE" for r in rows)
+            return {
+                "attempts": len(rows),
+                "tokens": sum(int(v) for v in tokens if v is not None)
+                if complete and all(known(v) for v in tokens)
+                else None,
+                "providerElapsedMs": sum(int(v) for v in times if v is not None)
+                if complete and all(known(v) for v in times)
+                else None,
+            }
+
     async def claim(self, owner: str, run_id: str) -> Lease:
         async with self.sessions.begin() as db:
             row = await self.owned(db, owner, run_id, lock=True)

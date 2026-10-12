@@ -90,3 +90,49 @@ test("replay history quota rejects a valid record and rejects unknown credential
   ).rejects.toThrow("INVALID_MANIFEST");
   store.close();
 });
+
+test("unknown database schema is refused without downgrade or record interpretation", async () => {
+  const db = new Dexie(DB_NAME);
+  db.version(2).stores({
+    investigations: "id",
+    snapshots: "hash",
+    replays: "id,investigationId",
+  });
+  await db.open();
+  db.close();
+  await expect(new LocalStore().list()).rejects.toThrow(
+    "UNSUPPORTED_STORAGE_SCHEMA",
+  );
+  const inspect = new Dexie(DB_NAME);
+  await inspect.open();
+  expect(inspect.verno).toBe(2);
+  inspect.close();
+});
+test("replay comparison flags cannot be forged and history never rewrites evidence", async () => {
+  const a = await createArtifact(await fixture()),
+    store = new LocalStore();
+  await store.save(a, true);
+  const { replayArtifact } = await import("../lib/replay");
+  const outcome = await replayArtifact(
+    a,
+    { execute: async () => a.manifest.calculations[0].result, cancel() {} },
+    new AbortController().signal,
+  );
+  const record = {
+    id: "history",
+    investigationId: a.manifest.id,
+    manifestDigest: a.digest,
+    createdAt: new Date().toISOString(),
+    ...outcome,
+  };
+  const forged = structuredClone(record);
+  forged.comparisons[0].matches = false;
+  forged.status = "MISMATCH";
+  await expect(store.recordReplay(forged)).rejects.toThrow(
+    "INVALID_REPLAY_RECORD",
+  );
+  await store.recordReplay(record);
+  expect((await store.load(a.manifest.id)).digest).toBe(a.digest);
+  expect(await store.replayHistory(a.manifest.id)).toHaveLength(1);
+  store.close();
+});

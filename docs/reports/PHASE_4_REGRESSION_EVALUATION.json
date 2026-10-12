@@ -1,0 +1,763 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-12T17:26:15.641Z",
+  "fixture": "tests/fixtures/phase3-golden.json",
+  "target": "Local desktop Chrome; real DuckDB-WASM and Pyodide/Pandas; mocked external HTTP only",
+  "browserVersion": "154.0.8037.99",
+  "elapsedMs": 46757,
+  "goldenQuestions": 10,
+  "adverseFixtures": 12,
+  "passed": 22,
+  "falseVerifiedAdverse": 0,
+  "privacy": {
+    "rawPostRequests": 0,
+    "indexedDBDatabases": 0
+  },
+  "contradictionProbe": {
+    "state": "DISPUTED",
+    "provenance": "CLIENT_REPORTED"
+  },
+  "forgeryBoundaryProbe": {
+    "state": "VERIFIED",
+    "provenance": "CLIENT_REPORTED"
+  },
+  "observations": [
+    {
+      "id": "G01",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "3033",
+        "count": 3,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "3033",
+          "count": 3
+        },
+        "python": {
+          "minorUnits": "3033",
+          "count": 3
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "7f3a9fc787c371dbfbdb0481a0555a05e5de67ef74161f05f9dc4b6521d29b60",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 3,
+            "periodRows": 3,
+            "nullAmounts": 0,
+            "grainUniqueRows": 3,
+            "joinUniqueRows": 3
+          },
+          "python": {
+            "populationRows": 3,
+            "periodRows": 3,
+            "nullAmounts": 0,
+            "grainUniqueRows": 3,
+            "joinUniqueRows": 3
+          }
+        }
+      },
+      "elapsedMs": 4277.700000047684,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G02",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "1007",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "1007",
+          "count": 2
+        },
+        "python": {
+          "minorUnits": "1007",
+          "count": 2
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "440e07142a071af29415d55a076c05da4f6934beb049c86fc30c8cce027daf51",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "EUR",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          },
+          "python": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          }
+        }
+      },
+      "elapsedMs": 4171.200000047684,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G03",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "7",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "7",
+          "count": 2
+        },
+        "python": {
+          "minorUnits": "7",
+          "count": 2
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "959ad88ec41d57aa942959104cac7b52885ef9cb827b530b7b6a6f307dc7dc51",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "JPY",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          },
+          "python": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          }
+        }
+      },
+      "elapsedMs": 4036.2000000476837,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G04",
+      "category": "golden",
+      "expected": {
+        "minorUnits": null,
+        "count": 0,
+        "status": "INCONCLUSIVE"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": null,
+          "count": 0
+        },
+        "python": {
+          "minorUnits": null,
+          "count": 0
+        },
+        "status": "INCONCLUSIVE",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "8d486c64ac783a7bb845a174cbc3b2575cb8726f7bb705818c83e9585a55769b",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 1,
+            "periodRows": 0,
+            "nullAmounts": 0,
+            "grainUniqueRows": 1,
+            "joinUniqueRows": 1
+          },
+          "python": {
+            "populationRows": 1,
+            "periodRows": 0,
+            "nullAmounts": 0,
+            "grainUniqueRows": 1,
+            "joinUniqueRows": 1
+          }
+        }
+      },
+      "elapsedMs": 3987.4000000953674,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G05",
+      "category": "golden",
+      "expected": {
+        "minorUnits": null,
+        "count": 0,
+        "status": "INCONCLUSIVE"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": null,
+          "count": 0
+        },
+        "python": {
+          "minorUnits": null,
+          "count": 0
+        },
+        "status": "INCONCLUSIVE",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "88db5260352665c45a53c79b130ee1d02cf5870ea9f5d59c8e7167b1bccc996f",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 2,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          },
+          "python": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 2,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          }
+        }
+      },
+      "elapsedMs": 3957.600000143051,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G06",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "3000",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "3000",
+          "count": 2
+        },
+        "python": {
+          "minorUnits": "3000",
+          "count": 2
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "7d2fb316d1fb42e6c57c20ed89da14cd3daffc865c78b257c59182f5c09d2e9e",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 4,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 4,
+            "joinUniqueRows": 4
+          },
+          "python": {
+            "populationRows": 4,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 4,
+            "joinUniqueRows": 4
+          }
+        }
+      },
+      "elapsedMs": 3950,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G07",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "1500",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "1500",
+          "count": 2
+        },
+        "python": {
+          "minorUnits": "1500",
+          "count": 2
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "bb6e78d6ae404c2bd1afe2201a6643b0a1708fbd93f225955aca98895a8c5ca4",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "+05:30",
+            "start": "2025-07-01T00:00:00+05:30",
+            "end": "2025-10-01T00:00:00+05:30",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 4,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 4,
+            "joinUniqueRows": 4
+          },
+          "python": {
+            "populationRows": 4,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 4,
+            "joinUniqueRows": 4
+          }
+        }
+      },
+      "elapsedMs": 3955.9000000953674,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G08",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "3033",
+        "count": 3,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "3033",
+          "count": 3
+        },
+        "python": {
+          "minorUnits": "3033",
+          "count": 3
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "5f92b3f3f4d55753f39e4177a8ee8eb89b44db993ad768d7ba6ac9f7d12dfd3d",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": {
+              "datasetHash": "7d07a7dc90caa3339dad9364a715bad1e863e2fefc31f3dd269d79d7e463dc20",
+              "keyColumn": "customer_id",
+              "lookupKeyColumn": "id",
+              "cardinality": "many_to_one",
+              "populationCount": 3
+            }
+          },
+          "sql": {
+            "populationRows": 3,
+            "periodRows": 3,
+            "nullAmounts": 0,
+            "grainUniqueRows": 3,
+            "joinUniqueRows": 3
+          },
+          "python": {
+            "populationRows": 3,
+            "periodRows": 3,
+            "nullAmounts": 0,
+            "grainUniqueRows": 3,
+            "joinUniqueRows": 3
+          }
+        }
+      },
+      "elapsedMs": 4251.400000095367,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G09",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "3000",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "3000",
+          "count": 2
+        },
+        "python": {
+          "minorUnits": "3000",
+          "count": 2
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "31268f61e4f032a0bd4af75ce271a5abe0c60d25845c3408d7c6719731fcae79",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": {
+              "datasetHash": "7d07a7dc90caa3339dad9364a715bad1e863e2fefc31f3dd269d79d7e463dc20",
+              "keyColumn": "customer_id",
+              "lookupKeyColumn": "id",
+              "cardinality": "one_to_one",
+              "populationCount": 2
+            }
+          },
+          "sql": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          },
+          "python": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          }
+        }
+      },
+      "elapsedMs": 3974.399999856949,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "G10",
+      "category": "golden",
+      "expected": {
+        "minorUnits": "199999999999999998",
+        "count": 2,
+        "status": "VERIFIED"
+      },
+      "actual": {
+        "sql": {
+          "minorUnits": "199999999999999998",
+          "count": 2
+        },
+        "python": {
+          "minorUnits": "199999999999999998",
+          "count": 2
+        },
+        "status": "VERIFIED",
+        "provenance": "CLIENT_REPORTED",
+        "diagnostics": {
+          "contract": {
+            "version": 2,
+            "kind": "revenue_sum",
+            "datasetHash": "1051c8f9d04eb56f29e6aefa5281ce41077d04e6b7e754a049af2ba8693f916c",
+            "amountColumn": "revenue",
+            "dateColumn": "completed_at",
+            "currency": "USD",
+            "timezone": "UTC",
+            "start": "2025-07-01T00:00:00Z",
+            "end": "2025-10-01T00:00:00Z",
+            "nullPolicy": "exclude",
+            "grainKeys": [
+              "order_id"
+            ],
+            "relationship": null
+          },
+          "sql": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          },
+          "python": {
+            "populationRows": 2,
+            "periodRows": 2,
+            "nullAmounts": 0,
+            "grainUniqueRows": 2,
+            "joinUniqueRows": 2
+          }
+        }
+      },
+      "elapsedMs": 4041.199999809265,
+      "runtime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "pass": true
+    },
+    {
+      "id": "A01",
+      "category": "adversarial",
+      "expectedError": "GRAIN_VIOLATION",
+      "actualError": "GRAIN_VIOLATION",
+      "status": "FAILED",
+      "elapsedMs": 666.0999999046326,
+      "pass": true
+    },
+    {
+      "id": "A02",
+      "category": "adversarial",
+      "expectedError": "JOIN_CARDINALITY",
+      "actualError": "JOIN_CARDINALITY",
+      "status": "FAILED",
+      "elapsedMs": 810.5,
+      "pass": true
+    },
+    {
+      "id": "A03",
+      "category": "adversarial",
+      "expectedError": "JOIN_CARDINALITY",
+      "actualError": "JOIN_CARDINALITY",
+      "status": "FAILED",
+      "elapsedMs": 722.7000000476837,
+      "pass": true
+    },
+    {
+      "id": "A04",
+      "category": "adversarial",
+      "expectedError": "JOIN_CARDINALITY",
+      "actualError": "JOIN_CARDINALITY",
+      "status": "FAILED",
+      "elapsedMs": 710.0999999046326,
+      "pass": true
+    },
+    {
+      "id": "A05",
+      "category": "adversarial",
+      "expectedError": "NULL_AMOUNT",
+      "actualError": "NULL_AMOUNT",
+      "status": "FAILED",
+      "elapsedMs": 563.5,
+      "pass": true
+    },
+    {
+      "id": "A06",
+      "category": "adversarial",
+      "expectedError": "EXECUTION_FAILED",
+      "actualError": "EXECUTION_FAILED",
+      "status": "FAILED",
+      "elapsedMs": 595.8999998569489,
+      "pass": true
+    },
+    {
+      "id": "A07",
+      "category": "adversarial",
+      "expectedError": "INVALID_DATA",
+      "actualError": "INVALID_DATA",
+      "status": "FAILED",
+      "elapsedMs": 569.0999999046326,
+      "pass": true
+    },
+    {
+      "id": "A08",
+      "category": "adversarial",
+      "expectedError": "DATASET_HASH_MISMATCH",
+      "actualError": "DATASET_HASH_MISMATCH",
+      "status": "FAILED",
+      "elapsedMs": 46.299999952316284,
+      "pass": true
+    },
+    {
+      "id": "A09",
+      "category": "adversarial",
+      "expectedError": "RELATIONSHIP_APPROVAL_REQUIRED",
+      "actualError": "RELATIONSHIP_APPROVAL_REQUIRED",
+      "status": "FAILED",
+      "elapsedMs": 0.2999999523162842,
+      "pass": true
+    },
+    {
+      "id": "A10",
+      "category": "adversarial",
+      "expectedError": "POPULATION_MISMATCH",
+      "actualError": "POPULATION_MISMATCH",
+      "status": "FAILED",
+      "elapsedMs": 550.6000001430511,
+      "pass": true
+    },
+    {
+      "id": "A11",
+      "category": "adversarial",
+      "expectedError": "UNSUPPORTED_OPERATION",
+      "actualError": "UNSUPPORTED_OPERATION",
+      "status": "FAILED",
+      "elapsedMs": 0.20000004768371582,
+      "pass": true
+    },
+    {
+      "id": "A12",
+      "category": "adversarial",
+      "expectedError": "INVALID_DATA",
+      "actualError": "INVALID_DATA",
+      "status": "FAILED",
+      "elapsedMs": 533.4000000953674,
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "Finite synthetic honest-client fixture suite, not adversarial execution attestation",
+    "Empty and null-only periods remain INCONCLUSIVE",
+    "No paid inference or live provider compatibility measurements"
+  ],
+  "phase": 4,
+  "regressionOf": "Phase 3 golden/adversarial suite"
+}

@@ -1,6 +1,6 @@
 # System-Design and Interview Preparation
 
-The overview describes the target design. Phase1 foundation and Phase2 investigation code/tests now exist; study its report and code links below. Say “designed” for unimplemented phases and “measured” only for recorded artifacts.
+The overview describes the target design. Phases 1–4 have scoped local implementations and tests; study their reports and code links below. Say “designed” for unimplemented phases and “measured” only for recorded artifacts.
 
 ## Explain the system in ninety seconds
 
@@ -76,7 +76,7 @@ Read [http.py](../services/api/src/hypothron/providers/http.py) and [test_provid
 
 ## Mandatory phase deep dives
 
-Start with [Phase 1 deep dive](learning/PHASE_1_DEEP_DIVE.md): actual functions, complete flow, independent exact algorithms, ASGI/transactions, boundaries, tests and interview exercises. Future completed phases must add PHASE_N_DEEP_DIVE.md with implementation-based diagrams before their gate closes; link rather than duplicate prior concepts. Phase2 teaching now exists; Phase3 teaching now exists; Phase4–5 deep dives remain future gates. ADR-015 now explicitly defers mobile runtime support and scopes initial local validation to the measured desktop configuration.
+Start with [Phase 1 deep dive](learning/PHASE_1_DEEP_DIVE.md): actual functions, complete flow, independent exact algorithms, ASGI/transactions, boundaries, tests and interview exercises. Future completed phases must add PHASE_N_DEEP_DIVE.md with implementation-based diagrams before their gate closes; link rather than duplicate prior concepts. Phases 1–4 teaching now exists; Phase5 remains a future gate. ADR-015 now explicitly defers mobile runtime support and scopes initial local validation to the measured desktop configuration.
 
 ## Phase 2 implementation and learning
 
@@ -92,4 +92,16 @@ Start with [the Phase3 report](reports/PHASE_3_REPORT.md), then [the comprehensi
 4. Read `reporting.py`, `web/lib/report.ts`, `EvidenceReport.tsx`: validate 18% against10000→11800; reject20% despite existing citations; use Fraction/BigInt cross-multiplication, zero-baseline refusal, compatible semantics and deterministic fallback. Distinguish observation, arithmetic comparison, statistical association and causality.
 5. Run the ten golden questions and twelve adverse fixtures. Explain both common-mode errors and deliberate forged agreement with CLIENT_REPORTED provenance. Use exact chart tables rather than pixels as the numerical source.
 
-Before Phase4, prioritize content-addressed immutable snapshots, canonical manifests, atomic IndexedDB transactions/quota failures, runtime/compiler compatibility and zero-inference replay DAGs. Save consent and bundle persistence remain unimplemented; do not mistake the current in-memory replay for a saved investigation bundle.
+Before Phase4, prioritize content-addressed immutable snapshots, canonical manifests, atomic IndexedDB transactions/quota failures, runtime/compiler compatibility and zero-inference replay DAGs. At the historical Phase3 exit Save/bundles were unimplemented; Phase4 below supersedes that boundary.
+
+## Phase 4 implementation and learning progression
+
+Read [Phase4 report](reports/PHASE_4_REPORT.md), [comprehensive deep dive](learning/PHASE_4_DEEP_DIVE.md) and [bundle format](INVESTIGATION_BUNDLE_V1.md). The guide explains all six diagrams, complete Save/Reload/Replay/Export/Import/Delete/fresh flows, function-level examples, algorithms/complexities, failure tests, interview answers and two-/ten-minute explanations.
+
+1. Study `artifacts.ts`: canonical supported JSON, original-byte SHA256, approved IR, immutable result digests and asset-lock compatibility. Explain identity versus honest computation with the rehashed forged-agreement fixture.
+2. Study `storage.ts`: lazy opening, IndexedDB transaction lifetime, detached hashing, atomic quota/deduplication/last-reference deletion and bounded replay history. Reproduce abort and eviction; distinguish local commit from permanent backup.
+3. Study `bundles.ts`: exact stored ZIP subset, bounded offset/count/path validation and fail-closed import. Explain why no decompressor or arbitrary source execution exists, and why preview is separate from persistent confirmation.
+4. Study `replay.ts`/LocalExecutor: serial approved dependency order, exact recomputation, semantic diagnostics, active inference guards, cancellation/retry and immutable originals. Separate CLIENT_REPORTED verification from attestation.
+5. Study Investigation capture and Ledger.measurements: pre-submission local retention plus accepted-ID filtering, frozen creation attribution, new parent-linked consent/key/budget, unknown usage versus zero and structural comparisons.
+
+Before Phase5 prioritize canonical identity/trust, transaction failure semantics, runtime refusal, archive safety, zero-inference enforcement and privacy/retention. Then learn migration design, resource/observability limitations and reproducibility across supported platforms. Phase5 remains unimplemented and external release is unauthorized.
