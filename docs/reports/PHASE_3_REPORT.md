@@ -91,7 +91,9 @@ Existing `main` only:
 
 - T3.1: `9259104` — `feat(verification): validate exact metrics and bounded evidence corrections`.
 - T3.2: `a42919f` — `feat(reports): ground numerical claims and render accessible evidence`.
-- T3.3 evaluation/diagrams/learning completion: recorded in the subsequent completion-ledger update after its local commit; no history amendment.
+- T3.3: `42dc291` — `test(verification): complete golden evaluation and phase 3 learning gates`.
+
+This completion-ledger documentation update records the already-created task hashes without amending history.
 
 No push, publish, deployment, PR, branch/worktree or paid inference occurred. Unrelated untracked `services/api/.env.example` was preserved and excluded.
 
