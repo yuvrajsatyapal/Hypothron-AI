@@ -37,7 +37,7 @@ Dependency direction: API routes → domain/policies/repositories; domain never 
 | docs/reports/PHASE_1_REPORT.md / PHASE_1_BROWSER_MEASUREMENT.json | Gate status, code-based learning, measured evidence and exact resume |
 | compose.yaml / services/api/.env.example | Local PostgreSQL development setup; no hosted credentials |
 
-Not implemented: Parquet/general multi-dataset analytics and hosted deployment. CI is implemented in Phase4.5; hosted verification remains pending. Explicit persistence/bundles/replay are implemented in Phase4. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
+Not implemented: Parquet/general multi-dataset analytics and hosted deployment. CI is implemented in Phase4.5; the first hosted main-push run is independently verified in docs/reports/PHASE_4_5_CI_REPORT.md. Explicit persistence/bundles/replay are implemented in Phase4. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
 
 | Path | Responsibility |
 |---|---|

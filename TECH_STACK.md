@@ -22,7 +22,7 @@ The table describes the target stack. The deterministic foundation is installed 
 | SHA-256 / versioned manifests | Snapshot integrity and replay identity | Integrity is not authorship, execution attestation or anonymization |
 | pytest / Vitest / Playwright | Numerical, protocol, unit and real-browser verification | Live LLM tests optional; fixture/double suites run without paid inference |
 | Structured logs / OpenTelemetry | Redacted latency, state-transition and budget visibility | No payload tracing by default; external collector/Langfuse optional later |
-| GitHub Actions | Phase4.5 read-only validation; hosted verification pending | Standard Linux x64 fast gates/arm64 browser; account quotas remain external; see docs/CI_CD.md |
+| GitHub Actions | Phase4.5 read-only validation; first hosted main-push run verified | Standard Linux x64 fast gates/arm64 browser; account quotas remain external; see docs/CI_CD.md |
 
 ## Providers
 

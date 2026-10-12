@@ -1,6 +1,6 @@
 # Phase 4.5 — GitHub Actions CI
 
-Date: 2026-10-12. Local implementation and required validation complete; hosted GitHub execution unverified. Scope supersedes the Phase4 stop only for CI. Phases1–4 remain complete for the local ADR015 target; Phase5 remains unstarted. See [spec](../../.planning/specs/phase-4-5-ci.md), [plan](../../.planning/plans/phase-4-5-ci.md), [CI guide](../CI_CD.md) and [deep dive](../learning/PHASE_4_5_CI_DEEP_DIVE.md).
+Original local closure: 2026-10-12. Hosted acceptance verified on 2026-10-13; Phase4.5 is complete for the recorded CI target. Scope supersedes the Phase4 stop only for CI. Phases1–4 remain complete for the local ADR015 target; Phase5 remains unstarted. See [spec](../../.planning/specs/phase-4-5-ci.md), [plan](../../.planning/plans/phase-4-5-ci.md), [CI guide](../CI_CD.md) and [deep dive](../learning/PHASE_4_5_CI_DEEP_DIVE.md).
 
 ## Implementation and workflow
 
@@ -56,6 +56,35 @@ Real provider wire is MockTransport; active Python refusal plus audit catches sw
 
 - T4.5.1: `f60dd25c2567154e82fb63a24188569c4271af40` — test harness integrity and active network refusal, scoped spec/plan.
 - T4.5.2: `0c986a542659392b11a13c0d27f4114b8f6d6ab3` — isolated pinned workflows/gates, complete native Linux validation.
-- T4.5.3: documentation/validated diagram/final ACCEPT completion commit; its hash is available from local Git history and the final response (a commit cannot include its own final hash).
+- T4.5.3: `8bd118c5b6c6c297ea385b3cd7e0355ab3ed470e` — documentation/validated diagram/final ACCEPT local completion; this is the commit tested by the first hosted run.
 
-No push, PR, release, paid inference or deployment occurred. Hosted workflow status: **not executed; awaiting authorized push and actual GitHub run**. Actions setup/cache/merge-ref/service behavior cannot be claimed verified from local Linux gates. CI timeout/resource budgets are configured, not measured hosted costs. Product support remains ADR015 local desktop; Linux CI does not expand release support or attest client numerical honesty. Phase5 must not start as a consequence of this work.
+Historical status at the original 2026-10-12 local closure: no agent push, PR, release, paid inference or deployment occurred. Hosted workflow status then: **not executed; awaiting authorized push and actual GitHub run**. Actions setup/cache/merge-ref/service behavior cannot be claimed verified from local Linux gates. CI timeout/resource budgets are configured, not measured hosted costs. Product support remains ADR015 local desktop; Linux CI does not expand release support or attest client numerical honesty. Phase5 must not start as a consequence of this work.
+
+## Hosted acceptance — independently verified 2026-10-13
+
+Scope and acceptance criteria: inspect the supplied run, job metadata and logs through authenticated read-only GitHub tooling; confirm revision, runner targets, full suites and active integrity/security gates; update acceptance documentation and stale linked CI-status summaries, validate links/consistency and create one local conventional commit on existing main. No workflow/application changes or full-suite rerun are required. Preserve the preceding local evidence; stop before Phase5.
+
+[GitHub Actions run38290929211](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211) is **completed / success**, workflow `CI`, run number1 / attempt1, event `push`, branch `main`, tested commit `8bd118c5b6c6c297ea385b3cd7e0355ab3ed470e`. Independently inspected using `gh run view --json`, `gh run view --log`, and the read-only run/jobs REST endpoints; this is API/log evidence, not merely user-reported results. The run began on2026-10-12 at23:56:35 IST and completed on2026-10-13 at00:06:49 IST. Job durations below are computed from API start/completion timestamps, not billing measurements.
+
+| Hosted job | Conclusion | Job elapsed | Runner and evidence |
+|---|---|---|---|
+| [Static / workflow / contracts](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211/job/114950557715) | SUCCESS | 21s | Ubuntu24.04 x64; actionlint/shellcheck and OpenAPI gate exited successfully; Ruff35files, strict Mypy18files, four network-guard tests pass |
+| [Backend / PostgreSQL / migrations](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211/job/114950557186) | SUCCESS | 28s | Ubuntu24.04 x64; isolated PostgreSQL17.11 ready, migration cycle completes, 93pytest tests pass in4.47s, single head/application/native saver schema inspection passes |
+| [Frontend / units / build](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211/job/114950557545) | SUCCESS | 58s | Ubuntu24.04 x64; frozen pnpm install, 12runtime asset hashes verified, 99tests/15files pass (Vitest7.06s), strict types/format/production build and drift gate succeed |
+| [Linux Chromium / real-engine integration](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211/job/114950928643) | SUCCESS | 9m8s | `ubuntu-24.04-arm`; log reports `Linux CI linux arm64 Chromium 156.0.8078.4`; separate PostgreSQL17.11 aarch64 service, 12runtime assets verified, build/startup/guard probe succeed, all32real browser tests pass in7.8min |
+
+Runner job API labels and image logs identify GitHub-hosted runners: fast gates image `ubuntu-24.04` version20261004.327.1; browser image `ubuntu-24.04-arm` version20261004.142.1. x64 is corroborated by the Python/uv x86_64 downloads and backend PostgreSQL architecture; browser arm64 is explicitly printed by Node and corroborated by aarch64 Python/PostgreSQL. Python3.12.15 and application Node22.22.3 are recorded in the logs. These are actual hosted assignments, not an inference solely from workflow labels.
+
+Every reported job and step concludes success; no skipped job/step appears. Test totals match local acceptance (93backend, 99unit, 32browser); the browser log lists each of32distinct passing test IDs once, with one worker and no retry/flaky/skip summary. The tested configuration has retries0/forbidOnly and the gates run full suites without a name filter; inspected sources have no skip/fixme/only markers. The separate intentionally failing provider-request probe is expected negative-control evidence, not a failed integration test or weakened assertion. Frozen-install messages that dependency resolution was skipped describe lockfile reuse, not test exclusion. No unexpected test exclusion or retry was found in the available logs and tested configuration.
+
+Runtime bootstrap reports all12committed hashes verified in frontend and browser; executor/production builds and generated-source/lock drift gates exit successfully. The browser provider guard negative probe passes; static subprocess guard tests pass; backend/browser scripts activate the Python guard and finish their EXIT audits successfully. Real worker egress/privacy, denied operations, IndexedDB, zero-inference replay and API/LangGraph/PostgreSQL integration appear among the32passing tests. Logs show `Contents: read` for all four jobs. No failed/bypassed security or integrity gate was found in this run; that finding is bounded by the available logs and tested source, not a blanket network-sandbox guarantee.
+
+One non-blocking backend post-step warning: uv cache reservation failed because another parallel job was creating the same x64 lock-keyed cache. Static saved that key; backend installation/tests had already passed, and the post-step still concluded success. This is an optimization race, not an integrity-check bypass. No workflow change is warranted for this acceptance-only task; future warm-cache behavior remains unmeasured.
+
+### Evidence boundaries and final disposition
+
+- **Local macOS acceptance:** prior Phases1–4 remain scoped to Chrome154/macOSarm64 under ADR015; their results are preserved.
+- **Local Linux validation:** the preceding native arm64 Docker container32-test pass and separate fresh-DB probe remain distinct; the failed x64 emulation attempt is retained.
+- **GitHub-hosted validation:** this main-push run proves execution of the four recorded gates, including native Linuxarm64 real-engine integration, at the exact tested commit. It closes Phase4.5 hosted-CI acceptance. PR/manual-trigger behavior, cancellation under concurrent runs and future cache hits were not exercised by this single push run.
+
+This run does not prove production deployment readiness, live Gemini/OpenRouter compatibility, universal browsers/mobile support, complete network sandboxing or server attestation of client calculations. Product support and CLIENT_REPORTED provenance do not change. Phase5 is ready for separately scoped planning/authorization with the CI prerequisite satisfied, but remains **unstarted**. No agent push, deployment, publication or full9-minute rerun occurred during this documentation task. Its local acceptance commit hash is available from Git history and the final response; it cannot be included in its own committed content. Validation for this task is API/log evidence assertions, Markdown link/consistency checks and `git diff --check`.
