@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { approvedMetric, executionVerdict } from "../components/metricApproval";
+import { LocalHistory } from "../components/LocalHistory";
 import { Investigation } from "../components/Investigation";
 import {
   LocalExecutor,
@@ -10,6 +11,8 @@ import {
 } from "../lib/execution";
 import { replayMatches } from "../../executor/src/contracts";
 export default function Page() {
+  const localId = useRef<string | null>(null);
+  const localCreated = useRef<string>("");
   const frame = useRef<HTMLIFrameElement | null>(null);
   const executor = useRef<LocalExecutor | null>(null);
   const bytes = useRef<Uint8Array | null>(null);
@@ -111,7 +114,11 @@ export default function Page() {
         setReplay(
           replayMatches(saved.current.result, computed) ? "MATCH" : "MISMATCH",
         );
-      else saved.current = { plan, result: computed, lookup: lookupBytes };
+      else {
+        saved.current = { plan, result: computed, lookup: lookupBytes };
+        localId.current = crypto.randomUUID();
+        localCreated.current = new Date().toISOString();
+      }
     } catch (error) {
       setResult(null);
       setStatus(
@@ -528,6 +535,34 @@ export default function Page() {
             cancelLocal={() => executor.current?.cancel()}
           />
         )}
+        <LocalHistory
+          disabled={busy}
+          input={
+            result && executedPlan && bytes.current && localId.current
+              ? {
+                  id: localId.current,
+                  question: "Local approved revenue calculation",
+                  createdAt: localCreated.current,
+                  parentId: null,
+                  snapshots: [
+                    bytes.current,
+                    ...(executedLookup ? [executedLookup] : []),
+                  ],
+                  calculations: [
+                    {
+                      id: "local-1",
+                      hypothesisId: "H1",
+                      dependsOn: [],
+                      plan: executedPlan,
+                      result,
+                    },
+                  ],
+                  report: null,
+                  run: null,
+                }
+              : null
+          }
+        />
         <iframe
           ref={frame}
           title="Restricted analytical executor"

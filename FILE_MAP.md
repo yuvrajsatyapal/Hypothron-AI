@@ -66,3 +66,10 @@ Not implemented: persistent replay/export/import/Dexie, Parquet/general multi-da
 | tests/fixtures/phase3-golden.json / tests/e2e/phase3-evaluation.spec.ts | Ten hand-derived golden questions and twelve adverse real-engine fixtures |
 | docs/reports/PHASE_3_EVALUATION.json | Actual browser observations, exact expected/observed values and limited trust probes |
 | docs/learning/PHASE_3_DEEP_DIVE.md / docs/diagrams/phase-3-*.html | Actual verification/report algorithms, trust/routing/lineage diagrams and interview preparation |
+
+| Path | Phase 4 responsibility |
+|---|---|
+| apps/web/lib/artifacts.ts | Strict canonical v1 manifests, original snapshot/evidence integrity, compiler/runtime identity |
+| apps/web/lib/storage.ts | Explicit lazy Dexie atomic Save/quota/idempotence/shared snapshot deletion |
+| apps/web/components/LocalHistory.tsx | Disclosed consent, existing saved metadata inventory and explicit historical playback |
+| apps/web/tests/artifacts.test.ts / storage.test.ts / tests/e2e/persistence.spec.ts | Canonical/tamper/report bindings, real IndexedDB consent/reload/abort/quota acceptance |

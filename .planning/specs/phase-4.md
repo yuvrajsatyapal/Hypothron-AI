@@ -1,0 +1,16 @@
+# Phase 4 — Explicit local persistence and deterministic replay
+Created: 2026-10-12. Status: accepted under explicit autonomous Phase4 instruction. Epic: implementation.
+
+Problem: memory-only evidence cannot survive reload or travel with exact source inputs. Analysts need inspectable reproducibility without another provider request.
+Goal: complete T4.1–T4.3 and all scoped ADR-015 desktop gates, then stop before Phase5.
+User story: as an analyst I explicitly save sensitive snapshots/evidence locally, reload, validate/recompute and compare without a key; I can export/import/delete and separately authorize a linked fresh AI run.
+
+Requirements: explicit disclosed Save; lazy Dexie opening only after Save/import confirmation (history checks existing database inventory without creating a database); immutable v1 manifests, SHA256 canonical identity, original content-addressed CSV blobs, atomic storage quota/save/reference cleanup, no credentials/capabilities; bounded stored-ZIP portable bundles; exact runtime/compiler/source/IR validation; serial zero-inference replay/cancel/differences preserving originals; read-only playback labelled; fresh consent/key/budget for linked re-investigation, measured usage/timing and plan/report comparisons. Import validation stays in memory until confirmation. Unknown schema/database versions fail closed; no automatic interpretation/migration. No encryption or external storage.
+
+Data model: Dexie investigations(id,digest,manifest,size,origin), snapshots(hash,bytes), replay records(id,investigationId,manifestDigest,status,comparisons). Snapshots shared by content; deleting last referencing investigation removes blob. Metadata is app-origin sensitive. Server only adds sanitized comparison metadata if needed; no raw upload or new database migration for local snapshots.
+UI: native labelled controls within existing tokens; Save disclosure/checkbox; history list, explicit Load playback, Replay/Cancel, Export/Delete, preview/confirm Import; separate fresh AI action resets consent/key and links parent. Storage eviction and partial failure shown as errors, never permanent-storage claims.
+
+Limits: 10MiB/snapshot, 3 snapshots/30MiB raw, 6 calculations, bounded 1MiB manifest, 32MiB archive, 64MiB local logical quota, 20 investigations, bounded replay history, existing executor resource/time limits. Stored ZIP only: no decompression algorithm, reject compressed/encrypted/extra/unknown/unsafe/duplicate entries and trailing content.
+Testing: first fail meaningful unit/browser tests, then implement. Real Chrome IndexedDB/engines; provider HTTP mocked, active request rejection during replay. Atomic rollback/quota/eviction/delete, corruption/version/IR/path/compression/size/collision, agreement/disagreement/cancel/recovery, secret exclusion, Phase1–3 regressions. Full backend/unit/browser/type/lint/format/build/migration/schema/diagram/link checks and independent engineering/security review.
+Dependencies: existing immutable v1/v2 contracts, fixed compiler/templates, runtime asset lock and local fixtures. Outside scope: Phase5, Parquet, new metrics/infrastructure, encrypted storage, deployment/inference/push/PR.
+Gate1: problem/story/scope/model/UI/failure/testing/dependencies covered. Repository ROADMAP and normative replay contracts own acceptance.

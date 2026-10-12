@@ -26,7 +26,7 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 
 ## Phase 4
 
-- [ ] T4.1 Explicit Dexie Save, atomic quota/delete and local history.
+- [x] T4.1 Explicit Dexie Save, atomic quota/delete and local history.
 - [ ] T4.2 Validated export/import, runtime/hash compatibility and zero-inference execution replay.
 - [ ] T4.3 Linked fresh AI runs/comparisons and phase report.
 
@@ -60,3 +60,5 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 - 2026-10-12 T3.2 exact claim support/strict report validators/accessible BigInt charts/deterministic fallback pass backend92, unit71 and real Chrome22; engineering/security ACCEPT after temporary-column and narrative fixes. T3.3 final build/diagram/report closure remains pending.
 
 - 2026-10-12 Phase3 completes scoped local gates: final92backend/72unit/22browser, ten golden+twelve adverse fixtures with0falseVERIFIED adverse, type/lint/format/build/OpenAPI/migration/diagrams/local links, engineering/security ACCEPT. Four diagrams and comprehensive deep dive/report exist. Stop beforePhase4; no live-provider inference or external release.
+
+- 2026-10-12 T4.1: explicit Dexie Save/history/atomic quota/shared deletion and strict canonical manifests pass10unit/2realChrome43.2s/TypeScript; Design+engineering ACCEPT. T4.2 remains pending. Unrelated ports identified; user authorized pausing Personal_Portfolio3000/3001. Backend fixture isolated to55433 to preserve unrelated55432.
