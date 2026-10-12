@@ -135,3 +135,115 @@ it("rejects false verified v2 grain agreement and accepts honest disputed semant
     ),
   ).toThrow();
 });
+
+it("rejects invented chart numbers and unsupported report claims even with valid citations", () => {
+  const e = {
+    jobId: "e",
+    datasetHash: plan.datasetHash,
+    contractHash: "b".repeat(64),
+    contract: plan,
+    metricVersion: 1,
+    currency: "USD",
+    sql: { minorUnits: "3033", count: 3 },
+    python: { minorUnits: "3033", count: 3 },
+    verification: "VERIFIED",
+    classification: "AGREEMENT",
+    provenance: "CLIENT_REPORTED",
+    hypothesisId: "h1",
+    dependsOn: [],
+  };
+  const f = {
+    id: "finding-1",
+    evidenceId: "e",
+    datasetHash: e.datasetHash,
+    contractHash: e.contractHash,
+    metricVersion: 1,
+    currency: "USD",
+    verification: "VERIFIED",
+    provenance: "CLIENT_REPORTED",
+    assessment: "SUPPORTED",
+    relation: "observed",
+    sql: e.sql,
+    python: e.python,
+    dependsOn: [],
+  };
+  const report = {
+    version: 1,
+    conclusion:
+      "Observed computations are client-reported; evidence states are shown below. Arithmetic agreement does not establish causality.",
+    citations: ["e"],
+    source: "validated",
+    rejection: null,
+    findings: [f],
+    claims: [],
+    charts: [
+      {
+        kind: "engine_comparison",
+        evidenceId: "e",
+        currency: "USD",
+        sqlMinorUnits: "3033",
+        pythonMinorUnits: "3033",
+      },
+    ],
+  };
+  expect(() =>
+    validateInvestigationState(
+      {
+        status: "COMPLETE",
+        evidence: [e],
+        report: { ...report, source: ["validated"] },
+      },
+      [plan],
+    ),
+  ).toThrow();
+  expect(() =>
+    validateInvestigationState(
+      {
+        status: "COMPLETE",
+        evidence: [e],
+        report: { ...report, conclusion: [report.conclusion] },
+      },
+      [plan],
+    ),
+  ).toThrow();
+  expect(
+    validateInvestigationState({ status: "COMPLETE", evidence: [e], report }, [
+      plan,
+    ]).report,
+  ).toBeDefined();
+  expect(() =>
+    validateInvestigationState(
+      {
+        status: "COMPLETE",
+        evidence: [e],
+        report: {
+          ...report,
+          charts: [{ ...report.charts[0], sqlMinorUnits: "99999" }],
+        },
+      },
+      [plan],
+    ),
+  ).toThrow();
+  expect(() =>
+    validateInvestigationState(
+      {
+        status: "COMPLETE",
+        evidence: [e],
+        report: {
+          ...report,
+          claims: [
+            {
+              kind: "causal",
+              evidenceIds: ["e"],
+              datasetHash: e.datasetHash,
+              contractHash: e.contractHash,
+              value: "20",
+              unit: "percent",
+            },
+          ],
+        },
+      },
+      [plan],
+    ),
+  ).toThrow();
+});

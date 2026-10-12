@@ -59,6 +59,7 @@ def verify_evidence(plan: MetricPlan, evidence: EvidenceInput) -> dict[str, Any]
         "classification": classification,
         "provenance": "CLIENT_REPORTED",
         "contractHash": contract_hash(plan),
+        "contract": plan.model_dump(mode="json", by_alias=True),
         "metricVersion": plan.version,
         "currency": plan.currency,
         "tolerance": {"policy": "exact-minor-units-v1", "absolute": "0", "relative": "0"},

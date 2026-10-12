@@ -162,9 +162,21 @@ class AnalystReply(StrictModel):
         return self
 
 
+class NumericalClaim(StrictModel):
+    kind: Literal["total", "count", "percent_change", "correlation", "contribution", "causal"]
+    evidence_ids: Annotated[list[str], Field(min_length=1, max_length=2)] = Field(
+        alias="evidenceIds"
+    )
+    dataset_hash: Hash = Field(alias="datasetHash")
+    contract_hash: Hash = Field(alias="contractHash")
+    value: Annotated[str, Field(pattern=r"^-?(0|[1-9][0-9]{0,30})(\.[0-9]{1,12})?$")]
+    unit: Literal["minor_units", "rows", "percent"]
+
+
 class ReportReply(StrictModel):
     conclusion: Annotated[str, Field(min_length=1, max_length=2000)]
     citations: Annotated[list[str], Field(max_length=6)]
+    claims: Annotated[list[NumericalClaim], Field(max_length=12)] = Field(default_factory=list)
 
 
 class Numeric(StrictModel):

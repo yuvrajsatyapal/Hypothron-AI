@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { EvidenceReport } from "./EvidenceReport";
 import {
   contentHash,
   type ExecutionResult,
@@ -489,22 +490,15 @@ export function Investigation({
           {e.sql.minorUnits ?? "undefined"}{" "}
           {primary.plan.currency === "JPY" ? "yen" : "minor units"} ·{" "}
           {e.verification} · {e.provenance}
+          {e.classification && ` · ${e.classification}`}
         </p>
       ))}
-      {state?.report && (
-        <div data-testid="investigation-report">
-          <h3>Investigation report</h3>
-          <p>{state.report.conclusion}</p>
-          <p>
-            Citations:{" "}
-            {state.report.citations.join(", ") ||
-              "No numerical evidence collected."}
-          </p>
-          <p>
-            Client-reported agreement is local verification; it does not attest
-            execution or establish causality.
-          </p>
-        </div>
+      {state?.report && <EvidenceReport report={state.report} />}
+      {state?.status === "COMPLETE" && !state.report && (
+        <p>
+          Legacy report requires evidence revalidation before structured
+          findings can be displayed.
+        </p>
       )}
       <details>
         <summary>Investigation event ledger</summary>

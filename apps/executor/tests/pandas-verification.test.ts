@@ -1,4 +1,5 @@
-import { beforeAll, expect, test } from "vitest";
+import { beforeAll, expect, test, vi } from "vitest";
+vi.setConfig({ testTimeout: 30000 });
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import type { PyodideInterface } from "pyodide";
@@ -120,3 +121,16 @@ test.each([
     compute(text as string, lookup as string, p as MetricPlan),
   ).rejects.toThrow(code as string);
 });
+
+test.each(["__joined", "__lookup_key", "_left_indicator", "_right_indicator"])(
+  "Pandas joins preserve user grain columns named %s",
+  async (column) => {
+    const value = await compute(
+      csv.replace("order_id", column),
+      "id,label\nA,alpha\nB,beta\n",
+      { ...plan, grainKeys: [column] },
+    );
+    expect(value.minorUnits).toBe("1007");
+    expect(value.count).toBe(2);
+  },
+);

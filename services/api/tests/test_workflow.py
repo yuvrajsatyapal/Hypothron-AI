@@ -186,7 +186,9 @@ async def test_report_cannot_cite_nonexistent_evidence():
         ),
         cfg,
     )
-    assert final["status"] == "FAILED" and final["error"] == "ORPHAN_CITATION"
+    assert final["status"] == "COMPLETE"
+    assert final["report"]["rejection"] == "ORPHAN_CITATION"
+    assert final["report"]["source"] == "deterministic_fallback"
 
 
 @pytest.mark.asyncio

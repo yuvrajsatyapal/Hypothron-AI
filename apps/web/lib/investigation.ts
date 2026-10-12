@@ -6,6 +6,8 @@ import {
   type NumericResult,
 } from "../../executor/src/contracts";
 import { evidenceVerdict } from "./verification";
+import { validateReport } from "./report";
+import type { EvidenceReportData } from "../components/EvidenceReport";
 export interface Job {
   kind: "execution";
   id: string;
@@ -27,13 +29,14 @@ export interface Evidence {
   dependsOn?: string[];
   currency?: string;
   metricVersion?: number;
+  contract?: MetricPlan;
 }
 export interface InvestigationState {
   status: string;
   pending?: Job;
   clarification?: string;
   evidence: Evidence[];
-  report?: { conclusion: string; citations: string[] };
+  report?: EvidenceReportData;
   error?: string;
 }
 export function record(value: unknown): Record<string, unknown> {
@@ -116,7 +119,13 @@ export function validateInvestigationState(
           evidenceVerdict(plan, r).classification !== r.classification)
       )
         throw new Error("INVALID_RESPONSE");
+      if (
+        r.contract !== undefined &&
+        !samePlan(validatePlan(r.contract), plan!)
+      )
+        throw new Error("INVALID_RESPONSE");
       return {
+        contract: plan!,
         jobId: text(r.jobId, 64),
         datasetHash: hash,
         sql,
@@ -138,12 +147,25 @@ export function validateInvestigationState(
       };
     });
   }
-  if (raw.report !== undefined) {
-    const report = record(raw.report),
-      citations = strings(report.citations, 6);
-    if (citations.some((id) => !output.evidence.some((e) => e.jobId === id)))
+  const accepted = new Set<string>();
+  for (const e of output.evidence) {
+    if (
+      accepted.has(e.jobId) ||
+      (e.dependsOn || []).some((id) => !accepted.has(id))
+    )
       throw new Error("INVALID_RESPONSE");
-    output.report = { conclusion: text(report.conclusion, 2000), citations };
+    accepted.add(e.jobId);
+  }
+  if (raw.report !== undefined) {
+    const report = record(raw.report);
+    if (report.version === 1)
+      output.report = validateReport(report, output.evidence);
+    // Legacy Phase 2 playback is refused numerical authority; re-investigate for grounded output.
+    else {
+      const citations = strings(report.citations, 6);
+      if (citations.some((id) => !accepted.has(id)))
+        throw new Error("INVALID_RESPONSE");
+    }
   }
   return output;
 }

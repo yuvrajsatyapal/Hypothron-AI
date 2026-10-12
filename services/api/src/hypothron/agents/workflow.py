@@ -23,6 +23,7 @@ from hypothron.agents.models import (
     RunInput,
 )
 from hypothron.providers.http import ProviderError
+from hypothron.reporting import ReportError, fallback_report, validated_report
 from hypothron.verification import contract_hash, verify_evidence
 
 Role = Literal["planner", "analyst", "report"]
@@ -229,27 +230,40 @@ def build_workflow(
         return "correction" if state["evidence"][-1]["verification"] == "DISPUTED" else "analyst"
 
     async def report(state: State) -> State:
-        if not state["evidence"]:
-            return {
-                "status": "COMPLETE",
-                "report": {
-                    "conclusion": "No calculation evidence was collected; no numerical claim is supported.",
-                    "citations": [],
-                },
-            }
+        # Rehydrate Phase 2 checkpoints under exact current verification without mutating
+        # accepted business results; missing old fields are derived from their issued jobs.
+        evidence = []
+        for old in state["evidence"]:
+            job = next(j for j in state["jobs"] if j["id"] == old["jobId"])
+            payload = {k: old[k] for k in ("jobId", "datasetHash", "sql", "python")}
+            if old.get("diagnostics") is not None:
+                payload["diagnostics"] = old["diagnostics"]
+            verdict = verify_evidence(
+                MetricPlan.model_validate(job["plan"]), EvidenceInput.model_validate(payload)
+            )
+            evidence.append(old | verdict | {"dependsOn": job["dependsOn"]})
+        if not evidence:
+            return {"status": "COMPLETE", "report": fallback_report([])}
         try:
             reply = await ask(state, "report", ReportReply)
             assert isinstance(reply, ReportReply)
-            known = {e["jobId"] for e in state["evidence"]}
-            if not reply.citations or any(ref not in known for ref in reply.citations):
-                raise RoleFailure("ORPHAN_CITATION")
+            try:
+                result = validated_report(reply.model_dump(mode="json", by_alias=True), evidence)
+            except ReportError as error:
+                result = fallback_report(evidence, str(error))
             return {
                 "calls": state["calls"] + 1,
                 "status": "COMPLETE",
-                "report": reply.model_dump(mode="json", by_alias=True),
+                "report": result,
+                "evidence": evidence,
             }
         except RoleFailure as error:
-            return failed(state, error)
+            return {
+                "calls": state["calls"] + (0 if str(error) == "BUDGET_EXHAUSTED" else 1),
+                "status": "COMPLETE",
+                "report": fallback_report(evidence, str(error)),
+                "evidence": evidence,
+            }
 
     def route_planner(state: State) -> str:
         if state["status"] in {"FAILED", "BUDGET_EXHAUSTED"}:

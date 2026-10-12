@@ -217,7 +217,7 @@ test("advanced workspace requires explicit join approval, shows diagnostics and 
     ),
   });
   await page.getByLabel("Use advanced v2 contract").check();
-  await page.getByRole("combobox", {name:/^Currency/}).selectOption("EUR");
+  await page.getByRole("combobox", { name: /^Currency/ }).selectOption("EUR");
   await page.getByLabel("Unique dataset grain keys").fill("order_id");
   await page.getByLabel("Optional lookup CSV").setInputFiles({
     name: "customers.csv",

@@ -37,7 +37,7 @@ Dependency direction: API routes → domain/policies/repositories; domain never 
 | docs/reports/PHASE_1_REPORT.md / PHASE_1_BROWSER_MEASUREMENT.json | Gate status, code-based learning, measured evidence and exact resume |
 | compose.yaml / services/api/.env.example | Local PostgreSQL development setup; no hosted credentials |
 
-Not implemented: persistent replay/export/import/Dexie, Parquet/multi-dataset analysis, chart/report generation, CI and hosted deployment. FILE_MAP is a responsibility map, not a phase completion claim.
+Not implemented: persistent replay/export/import/Dexie, Parquet/general multi-dataset analysis, CI and hosted deployment. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
 
 | Path | Responsibility |
 |---|---|
@@ -61,3 +61,8 @@ Not implemented: persistent replay/export/import/Dexie, Parquet/multi-dataset an
 | services/api/src/hypothron/verification.py | Canonical immutable contract identity, exact comparison and deterministic contradiction classes |
 | services/api/tests/test_verification.py | Semantic incompatibility/null/grain/numerical fixtures, two-correction bound and native recovery/cancel tests |
 | tests/e2e/advanced-verification.spec.ts | Actual DuckDB-WASM/Pyodide v2 exact values, joins and adversarial rejection |
+| services/api/src/hypothron/reporting.py / tests/test_reporting.py | Exact claim/citation/semantic support checks, controlled narrative and deterministic evidence report fallback |
+| apps/web/lib/report.ts / components/EvidenceReport.tsx | Independent strict report validation, exact BigInt presentation, rational SVG and accessible tables |
+| tests/fixtures/phase3-golden.json / tests/e2e/phase3-evaluation.spec.ts | Ten hand-derived golden questions and twelve adverse real-engine fixtures |
+| docs/reports/PHASE_3_EVALUATION.json | Actual browser observations, exact expected/observed values and limited trust probes |
+| docs/learning/PHASE_3_DEEP_DIVE.md / docs/diagrams/phase-3-*.html | Actual verification/report algorithms, trust/routing/lineage diagrams and interview preparation |

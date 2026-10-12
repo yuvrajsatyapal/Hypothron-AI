@@ -474,8 +474,10 @@ if r is not None:
     if (df[r['keyColumn']]=='').any() or (lookup[r['lookupKeyColumn']]=='').any(): raise ValueError('JOIN_CARDINALITY')
     if lookup[r['lookupKeyColumn']].duplicated().any(): raise ValueError('JOIN_CARDINALITY')
     if r['cardinality']=='one_to_one' and df[r['keyColumn']].duplicated().any(): raise ValueError('JOIN_CARDINALITY')
-    merged=df.merge(lookup[[r['lookupKeyColumn']]].rename(columns={r['lookupKeyColumn']:'__lookup_key'}),left_on=r['keyColumn'],right_on='__lookup_key',how='left',validate='one_to_one' if r['cardinality']=='one_to_one' else 'many_to_one',indicator='__joined')
-    if len(merged)!=len(df) or (merged['__joined']!='both').any(): raise ValueError('JOIN_CARDINALITY')
+    lookup_temp='__lookup_key'
+    while lookup_temp in df.columns: lookup_temp+='_'
+    merged=df.merge(lookup[[r['lookupKeyColumn']]].rename(columns={r['lookupKeyColumn']:lookup_temp}),left_on=r['keyColumn'],right_on=lookup_temp,how='left',validate='one_to_one' if r['cardinality']=='one_to_one' else 'many_to_one')
+    if len(merged)!=len(df) or merged[lookup_temp].isna().any(): raise ValueError('JOIN_CARDINALITY')
     join_unique=int(len(merged.drop_duplicates(subset=p['grainKeys'])))
 if p['nullPolicy']=='error' and (amounts=='').any(): raise ValueError('NULL_AMOUNT')
 period=(dates>=pd.Timestamp(p['start'])) & (dates<pd.Timestamp(p['end']))

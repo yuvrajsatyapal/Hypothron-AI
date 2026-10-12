@@ -51,7 +51,10 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
   await page
     .getByLabel("BYOK provider key", { exact: true })
     .fill("browser-test-key-never-persist");
-  await page.getByRole("checkbox").check();
+  await page
+    .getByRole("region", { name: "Autonomous investigation" })
+    .getByRole("checkbox")
+    .check();
   await page
     .getByRole("button", { name: "Start AI investigation", exact: true })
     .click();
@@ -94,6 +97,18 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
   await expect(page.getByTestId("investigation-report")).toContainText(
     "client-reported",
   );
+  await expect(page.getByTestId("investigation-report")).toContainText(
+    "UNTRUSTED_NARRATIVE",
+  );
+  await expect(
+    page.getByTestId("investigation-report").getByRole("table"),
+  ).toHaveCount(2);
+  await expect(
+    page.getByTestId("investigation-report").getByRole("img"),
+  ).toHaveCount(2);
+  await expect(page.getByTestId("investigation-report")).toContainText(
+    "30.33 USD",
+  );
   expect(
     await page.getByTestId("investigation-report").locator("img").count(),
   ).toBe(0);
@@ -108,14 +123,20 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
   }
   const started = posts.find((p) => p.url.endsWith("/v1/investigations"));
   expect(JSON.parse(started!.body).request.datasets.length).toBe(3);
-  await page.getByRole("checkbox").uncheck();
+  await page
+    .getByRole("region", { name: "Autonomous investigation" })
+    .getByRole("checkbox")
+    .uncheck();
   await expect(
     page.getByRole("button", {
       name: "Resume original investigation",
       exact: true,
     }),
   ).toBeDisabled();
-  await page.getByRole("checkbox").check();
+  await page
+    .getByRole("region", { name: "Autonomous investigation" })
+    .getByRole("checkbox")
+    .check();
   await page
     .getByLabel("LLM provider", { exact: true })
     .selectOption("openrouter");

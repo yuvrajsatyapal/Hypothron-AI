@@ -459,7 +459,7 @@ test("same-origin sibling cannot seize executor bootstrap channel", async ({
   });
   expect(connected).toBe(true);
 });
-test("missing independent numerical result is inconclusive", async ({
+test("empty versus populated independent result is disputed", async ({
   page,
 }) => {
   await page.goto("/");
@@ -487,7 +487,7 @@ test("missing independent numerical result is inconclusive", async ({
       original(data);
     }) as typeof self.postMessage;
   });
-  await expect(page.getByTestId("verification")).toContainText("INCONCLUSIVE", {
+  await expect(page.getByTestId("verification")).toContainText("DISPUTED", {
     timeout: 35000,
   });
 });
