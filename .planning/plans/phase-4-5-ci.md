@@ -21,6 +21,6 @@ Files: .github/workflows/ci.yml, scripts/ci/*.sh, .nvmrc, workflow test/policy c
 
 ## T4.5.3 Documentation and final review
 Files: docs/CI_CD.md, learning/PHASE_4_5_CI_DEEP_DIVE.md, reports/PHASE_4_5_CI_REPORT.md, diagrams/phase-4-5-ci.html, CURRENT_PHASE.md, TASKS.md, FILE_MAP.md, ARCHITECTURE.md, DECISIONS.md, SYSTEM_DESIGN_GUIDE.md, ROADMAP.md.
-- [ ] Explain actual code flow, trust boundaries, commands, learning/interview/trade-offs and remaining hosted/runtime limits.
-- [ ] Diagram skill self-check plus browser geometry/scroll validation; local doc links.
-- [ ] Independent engineering/security Gate3.5 review, fix and rerun affected gates; record task hashes and local conventional commit. Stop beforePhase5.
+- [x] Explain actual code flow, trust boundaries, commands, learning/interview/trade-offs and remaining hosted/runtime limits.
+- [x] Diagram skill self-check plus browser geometry/scroll validation; local doc links.
+- [x] Independent engineering/security Gate3.5 review, fix and rerun affected gates; record task hashes and local conventional commit. Stop beforePhase5.

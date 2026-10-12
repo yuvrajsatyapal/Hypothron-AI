@@ -1,6 +1,6 @@
 # Current Phase
 
-Updated 2026-10-12. **Phase 4 is complete for the scoped local desktop target. Stop before Phase 5.** Existing main only; tested-task local commits are authorized. No branches, worktrees, PRs, push, history rewriting, deployment, publication or paid resources.
+Updated 2026-10-12. **Phase 4.5 CI is locally complete; hosted execution is unverified; Phases 1–4 remain complete for the scoped local desktop target. Stop before Phase 5.** Existing main only; tested-task local commits are authorized. No branches, worktrees, PRs, push, history rewriting, deployment, publication or paid resources.
 
 | Phase | Status | Evidence |
 |---|---|---|
@@ -9,6 +9,7 @@ Updated 2026-10-12. **Phase 4 is complete for the scoped local desktop target. S
 | 2 durable LangGraph investigation | Complete for scoped local desktop | Phase2 report/deep dive |
 | 3 verification/evidence expansion | Complete for scoped local desktop | Phase3 report/deep dive/evaluation |
 | 4 opt-in persistence/replay bundles | Complete for scoped local desktop | T4.1 6bc489e; T4.2 26c0e95; T4.3 27caaed; full hashes in Phase4 report |
+| 4.5 GitHub Actions CI | Locally complete; hosted unverified | docs/reports/PHASE_4_5_CI_REPORT.md |
 | 5 local release/evaluation | Not started; outside current scope | No hosted release authorization |
 
 Explicit Dexie Save/import consent owns immutable snapshots/manifests and atomic quota/deletion. Strict stored-only bundles validate untrusted paths, bounds, hashes, schema, IR and runtime. Saved replay makes zero inference requests and preserves original evidence while recording deterministic comparisons. Fresh AI requires separate consent/key/budget and creates a distinct parent-linked run with measured-or-unavailable comparisons. Completed AI capture retains accepted local results before ACK, unused approved inputs and frozen creation attribution. Credentials/capabilities remain ephemeral; raw uploads remain memory-only before Save.
@@ -18,3 +19,5 @@ Final gates: 93 backend tests, 98 unit tests, 32 real Chrome tests (6.1min), Typ
 Limits: ADR015 Chrome154/macOSarm64/fixed127.0.0.1 origins; revenue IR1/2, USD/EUR/JPY, fixed offsets and one approved lookup. No Parquet/general analytics, encryption, cloud sync, automatic migration, mobile runtime or hosted support. IndexedDB is accessible to app-origin scripts and evictable. CLIENT_REPORTED is never server attestation. Logical limits do not guarantee permanent retention or a hard peak heap ceiling. Final manifestv1 supersedes unsupported unreleased task-development records.
 
 Fixture tests used isolated PostgreSQL55433, preserving unrelated55432. External provider HTTP was mocked. Unrelated services/api/.env.example is preserved and excluded. No Phase5 implementation follows this completion.
+
+Phase4.5 adds read-only static/backend/frontend/browser CI, disposable PostgreSQL17, frozen toolchains/assets and active inference refusal. Fast gates use Ubuntu24 x64; browser uses standard Ubuntu24 arm64 after local x64 emulation exceeded the unchanged35s UI deadline. Local gates93backend/99unit/build/static and all32native Linux browser tests pass (8.7min); separate fresh-DB API/graph/engines flow passes (1.1min). Final engineering/security review and documentation checks are recorded in the CI report. Hosted execution awaits authorized push and actual GitHub run. No push/deployment or Phase5 work. See [CI guide](docs/CI_CD.md), [deep dive](docs/learning/PHASE_4_5_CI_DEEP_DIVE.md), [CI report](docs/reports/PHASE_4_5_CI_REPORT.md).

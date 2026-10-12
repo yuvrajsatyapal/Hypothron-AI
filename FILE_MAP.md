@@ -37,7 +37,7 @@ Dependency direction: API routes → domain/policies/repositories; domain never 
 | docs/reports/PHASE_1_REPORT.md / PHASE_1_BROWSER_MEASUREMENT.json | Gate status, code-based learning, measured evidence and exact resume |
 | compose.yaml / services/api/.env.example | Local PostgreSQL development setup; no hosted credentials |
 
-Not implemented: Parquet/general multi-dataset analytics, CI and hosted deployment. Explicit persistence/bundles/replay are implemented in Phase4. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
+Not implemented: Parquet/general multi-dataset analytics and hosted deployment. CI is implemented in Phase4.5; hosted verification remains pending. Explicit persistence/bundles/replay are implemented in Phase4. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
 
 | Path | Responsibility |
 |---|---|
@@ -86,3 +86,13 @@ Not implemented: Parquet/general multi-dataset analytics, CI and hosted deployme
 | `docs/learning/PHASE_4_DEEP_DIVE.md`, `docs/reports/PHASE_4_REPORT.md` | Comprehensive teaching and executed acceptance evidence. |
 | `apps/web/lib/execution.ts`, `apps/executor/src/host.ts`, `tests/e2e/executor-startup.spec.ts` | Exact frame/origin readiness bootstrap, once-only channel handoff and delayed-document real-engine regression. |
 | `docs/reports/PHASE_4_REGRESSION_EVALUATION.json` | Final Phase4 run of ten Phase3 golden questions/twelve adverse fixtures; preserves original Phase3 measurement artifact. |
+
+| Path | Phase 4.5 responsibility |
+|---|---|
+| .github/workflows/ci.yml | Read-only main push/PR/manual static/backend/frontend/Linux Chromium validation; no deployment |
+| scripts/ci/*.sh, database.py, check-migrations.py | Reproducible gates, SHA-verified actionlint, test DB/readiness/migration policy, isolated Linux reproduction |
+| scripts/ci/python/sitecustomize.py, test_network_guard.py | Test-only loopback socket guard with caught-violation audit and negative probes |
+| tests/e2e/fixtures.ts, tests/ci/, scripts/ci/probe-browser-guard.mjs | Browser provider refusal/independent request audit with active negative proof |
+| playwright.config.ts | Explicit CI bundled Chromium/production fresh services; separate prior macOS local mode |
+| docs/CI_CD.md, learning/PHASE_4_5_CI_DEEP_DIVE.md, reports/PHASE_4_5_CI_REPORT.md | Operations, teaching, exact local evidence and hosted limits |
+| docs/diagrams/phase-4-5-ci.html | Validated parallel gate and isolated integration architecture |

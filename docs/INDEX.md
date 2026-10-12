@@ -25,3 +25,5 @@ Phase 2 evidence: [report](reports/PHASE_2_REPORT.md), [deep dive](learning/PHAS
 Phase4: [report](reports/PHASE_4_REPORT.md), [comprehensive deep dive](learning/PHASE_4_DEEP_DIVE.md), [bundle v1 contract](INVESTIGATION_BUNDLE_V1.md), [persistence/trust](diagrams/phase-4-persistence.html), [Save transaction](diagrams/phase-4-save.html), [manifest model](diagrams/phase-4-manifest.html), [replay sequence](diagrams/phase-4-replay.html), [import/export failure paths](diagrams/phase-4-bundles.html), [fresh AI versus replay](diagrams/phase-4-modes.html). Phase3: [report](reports/PHASE_3_REPORT.md), [deep dive](learning/PHASE_3_DEEP_DIVE.md).
 
 [Phase4 numerical regression observations](reports/PHASE_4_REGRESSION_EVALUATION.json) preserve the final measured fixture run separately from historical Phase3 results.
+
+Phase4.5 CI: [operations](CI_CD.md), [engineering deep dive](learning/PHASE_4_5_CI_DEEP_DIVE.md), [local/hosted evidence](reports/PHASE_4_5_CI_REPORT.md) and [gate architecture](diagrams/phase-4-5-ci.html). Phases1–4 completion remains scoped; Phase5 has not started.

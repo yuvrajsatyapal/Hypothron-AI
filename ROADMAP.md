@@ -63,9 +63,13 @@ Exit deliverables:
 - Quota interruption leaves no half-saved bundle; deleting last snapshot reference removes its blob.
 - New AI run is linked to original, never overwrites it; comparison records measured tokens/timing and plan differences.
 
+## Phase 4.5 — GitHub Actions CI
+
+Authorized 2026-10-12 after scoped Phases1–4. Implement locked read-only static/backend/PostgreSQL/frontend/browser gates, separate Linux target, active inference refusal, local isolated validation and educational documentation. No deployment/push/PR. Hosted execution awaits separate authorization; Phase5 remains unstarted. See docs/CI_CD.md and docs/reports/PHASE_4_5_CI_REPORT.md.
+
 ## Phase 5 — Public demo release and measured evaluation
 
-Dependencies: Phases 1–4 gates. Finish responsive dashboard/explorer/history/provider settings. Expand to CSV + Parquet, three datasets, multiple supported metrics and 20 golden questions. Run single-agent baseline under equal budgets. Add redacted telemetry, retention purge, CI and deploy probes.
+Dependencies: Phases 1–4 gates. Finish responsive dashboard/explorer/history/provider settings. Expand to CSV + Parquet, three datasets, multiple supported metrics and 20 golden questions. Run single-agent baseline under equal budgets. Add redacted telemetry, retention purge and deploy probes. CI is now separately scoped Phase4.5 above.
 
 Exit deliverables:
 

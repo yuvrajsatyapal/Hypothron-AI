@@ -90,7 +90,7 @@ Browser tests default to the installed macOS Chrome; set HYPOTHRON_CHROME to an 
 - Deterministic replay re-executes compatible approved calculations. AI re-investigation can differ and may incur charges.
 - Free hosting is a design objective with quotas/cold starts, not a permanent availability guarantee.
 
-The current user instruction is to complete Phase4 and stop before Phase5. CURRENT_PHASE.md records final gates. No public deployment has occurred.
+The current user instruction is to complete Phase4.5 CI and stop before Phase5. CURRENT_PHASE.md records final gates. No public deployment has occurred.
 
 
 ## Phase 3 exact verification and reports
@@ -104,3 +104,7 @@ AI investigations now publish structured evidence-backed findings and exact char
 Explicit Save stores disclosed snapshots/artifacts in unencrypted browser IndexedDB; unsaved data remains memory-only. Saved history supports historical playback, provider-free deterministic replay, bounded evidence comparisons, explicit ZIP export, validated import preview/confirmation and atomic Delete. Fresh AI preparation restores inputs to a separate consent/key form; it creates a distinct linked run only on Start. Browser storage can be evicted; exports are independent sensitive copies. See [Phase4 report](docs/reports/PHASE_4_REPORT.md), [deep dive](docs/learning/PHASE_4_DEEP_DIVE.md) and [bundle contract](docs/INVESTIGATION_BUNDLE_V1.md).
 
 Phase4 validation used an isolated local PostgreSQL fixture on55433 because unrelated software occupied default55432. Set DATABASE_URL to your migrated local test fixture for backend/e2e. External provider HTTP is mocked by the browser test server; no real keys or paid inference are needed. Scoped origins remain3000/3001/8000. Phase5 is outside this work.
+
+## CI validation
+
+[GitHub Actions CI](docs/CI_CD.md) adds read-only static/backend/database/frontend/browser gates with locked tools and verified runtimes. The browser job has a separate Linuxarm64 Chromium target; earlier macOS product acceptance is preserved. Read the [Phase4.5 report](docs/reports/PHASE_4_5_CI_REPORT.md) for actual local results and hosted verification status, and [learning guide](docs/learning/PHASE_4_5_CI_DEEP_DIVE.md) before Phase5. No push/deployment or live provider inference is part of CI.

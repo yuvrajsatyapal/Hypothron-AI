@@ -105,3 +105,7 @@ Read [Phase4 report](reports/PHASE_4_REPORT.md), [comprehensive deep dive](learn
 5. Study Investigation capture and Ledger.measurements: pre-submission local retention plus accepted-ID filtering, frozen creation attribution, new parent-linked consent/key/budget, unknown usage versus zero and structural comparisons.
 
 Before Phase5 prioritize canonical identity/trust, transaction failure semantics, runtime refusal, archive safety, zero-inference enforcement and privacy/retention. Then learn migration design, resource/observability limitations and reproducibility across supported platforms. Phase5 remains unimplemented and external release is unauthorized.
+
+## Phase 4.5 CI learning progression
+
+Read [CI guide](CI_CD.md), [engineering deep dive](learning/PHASE_4_5_CI_DEEP_DIVE.md), [evidence report](reports/PHASE_4_5_CI_REPORT.md) and [gate architecture](diagrams/phase-4-5-ci.html). Study workflow job/service isolation, frozen toolchains/runtime hashes, native saver migration ownership, production browser startup, mocked wire plus active inference refusal, PR authority and sensitive artifact risks. Reproduce in disposable Linux containers; distinguish recorded local target evidence from an actual hosted Actions run. Phase5 remains unstarted; prioritize hosted evidence, resource/retention/cancellation reasoning and actual-origin release probes before any authorized release.

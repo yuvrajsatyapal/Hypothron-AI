@@ -30,10 +30,18 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 - [x] T4.2 Validated export/import, runtime/hash compatibility and zero-inference execution replay.
 - [x] T4.3 Linked fresh AI runs/comparisons and phase report.
 
+## Phase 4.5 — GitHub Actions CI
+
+- [x] T4.5.1 Scoped spec/plan, immutable runtime bootstrap, active Python/browser provider refusal and probes.
+- [x] T4.5.2 Pinned read-only workflow, isolated PostgreSQL/migrations, all static/frontend/backend/native Linux browser gates.
+- [x] T4.5.3 CI guide, educational deep dive, validated diagram, final engineering/security review and report.
+
+Hosted Actions execution awaits separately authorized push; local validation does not satisfy hosted evidence. Phase5 remains unstarted.
+
 ## Phase 5
 
 - [ ] T5.1 CSV/Parquet/multi-dataset UI, 20 golden questions and equal-budget baseline evaluation.
-- [ ] T5.2 CI, full lint/type/build/security/browser suite, retention and cancellation/resource probes.
+- [ ] T5.2 Full release lint/type/build/security/browser suite, retention and cancellation/resource probes. CI implementation moved to Phase4.5; hosted CI evidence remains pending.
 - [ ] T5.3 Local run guide, integration report and learning documentation.
 - [ ] T5.4 External deployment gates (requires separate authorization); never label passed from localhost.
 
@@ -68,3 +76,7 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 - 2026-10-12 T4.3 and Phase4 complete for ADR015 local desktop:93backend/98unit/32realChrome(6.1min), strict TypeScript/Ruff/mypy/format/OpenAPI/migration/build/security/corruption/active zero-inference gates pass. Six diagrams and comprehensive learning/report exist; independent engineering/security and design ACCEPT. Task hashes in Phase4 report. Stop beforePhase5; no push/deploy/paid inference; unrelated .env.example preserved.
 
 - Phase4 tested local task commits: T4.1 `6bc489e`, T4.2 `26c0e95`, T4.3 `27caaed`; full hashes and validation in docs/reports/PHASE_4_REPORT.md. Main only; Phase5 not started.
+
+- 2026-10-12 Phase4.5 explicit authorization supersedes Phase4 stop only for CI. Main/local tested commits, no push/PR/deploy; preserve .env.example and unrelated services. T4.5.1 `f60dd25`; x64 Linux fast gates pass, unchanged35s browser deadline exceeded under emulation; native Linuxarm64 browser target independently validated before completion. Phase5 remains unstarted.
+
+- 2026-10-12 Phase4.5: 93backend/99unit/static/types/format/build/migrations and32native Linuxarm64 Chromium tests pass; separate fresh-DB API/LangGraph/engines check passes. Read-only CI and active provider refusal implemented; no push, hosted run or Phase5 work. See docs/reports/PHASE_4_5_CI_REPORT.md for local task hashes and review evidence.

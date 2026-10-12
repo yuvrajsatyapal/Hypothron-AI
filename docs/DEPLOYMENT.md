@@ -25,3 +25,7 @@ Backend: DATABASE_URL, allowed app origin, execution origin, provider endpoint a
 ## Release evidence
 
 Publish selected provider plans/date, measured cold-start and SSE behavior, supported browser/device matrix, runtime/package locks, privacy/provider policy links, exact backup retention and fixture/evaluation results. Security controls require live-host verification; localhost success is insufficient.
+
+## CI is a validation prerequisite
+
+[Phase4.5 CI](CI_CD.md) contains no deployment job. Frozen dependency/static/migration/unit/build/real-browser checks run against synthetic fixtures, disposable PostgreSQL and mocked external HTTP. Local Linux evidence and still-unverified hosted execution are recorded in [the CI report](reports/PHASE_4_5_CI_REPORT.md). Passing CI does not satisfy the actual-origin, cold-start, TLS/CSP/SSE, provider or retention release probes above. Push, publication and deployment require separate authorization; Phase5 remains unstarted.
