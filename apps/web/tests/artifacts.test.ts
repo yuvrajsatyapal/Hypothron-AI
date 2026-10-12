@@ -98,3 +98,12 @@ test("a real structured report binds the immutable metric hash", async () => {
     report,
   );
 });
+
+test("unavailable runtime is explicit and unknown storage schema is not interpreted", async () => {
+  const a = await createArtifact(await fixture());
+  a.manifest.runtimeLockDigest = "0".repeat(64);
+  const { checkCompatibility } = await import("../lib/artifacts");
+  await expect(checkCompatibility(a.manifest)).rejects.toThrow(
+    "INCOMPATIBLE_RUNTIME",
+  );
+});

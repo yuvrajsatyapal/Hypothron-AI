@@ -66,3 +66,27 @@ test("idempotent Save repairs missing bytes atomically and rejects corrupted his
   expect((await store.load(a.manifest.id)).digest).toBe(a.digest);
   store.close();
 });
+
+test("replay history quota rejects a valid record and rejects unknown credential fields", async () => {
+  const a = await createArtifact(await fixture()),
+    store = new LocalStore(a.size + 50);
+  await store.save(a, true);
+  const { replayArtifact } = await import("../lib/replay");
+  const result = await replayArtifact(
+    a,
+    { execute: async () => a.manifest.calculations[0].result, cancel() {} },
+    new AbortController().signal,
+  );
+  const record = {
+    id: "replay-1",
+    investigationId: a.manifest.id,
+    manifestDigest: a.digest,
+    createdAt: new Date().toISOString(),
+    ...result,
+  };
+  await expect(store.recordReplay(record)).rejects.toThrow("QUOTA_EXCEEDED");
+  await expect(
+    store.recordReplay({ ...record, key: "secret" } as typeof record),
+  ).rejects.toThrow("INVALID_MANIFEST");
+  store.close();
+});

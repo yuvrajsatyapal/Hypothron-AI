@@ -73,3 +73,8 @@ Not implemented: persistent replay/export/import/Dexie, Parquet/general multi-da
 | apps/web/lib/storage.ts | Explicit lazy Dexie atomic Save/quota/idempotence/shared snapshot deletion |
 | apps/web/components/LocalHistory.tsx | Disclosed consent, existing saved metadata inventory and explicit historical playback |
 | apps/web/tests/artifacts.test.ts / storage.test.ts / tests/e2e/persistence.spec.ts | Canonical/tamper/report bindings, real IndexedDB consent/reload/abort/quota acceptance |
+
+| `apps/web/lib/bundles.ts` | Bounded stored-only ZIP encoder/parser, canonical envelope, import compatibility/integrity validation. |
+| `apps/web/lib/replay.ts` | Provider-free approved-IR execution, deterministic comparisons, cancellation and failures. |
+| `apps/web/tests/bundles.test.ts`, `replay.test.ts`, `tests/e2e/replay-bundles.spec.ts` | Hostile archives, active provider refusal, actual Chrome engines and immutable history. |
+| `docs/INVESTIGATION_BUNDLE_V1.md` | Normative bundle layout, canonical representation, compatibility and privacy boundaries. |

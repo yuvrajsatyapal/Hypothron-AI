@@ -536,6 +536,14 @@ export default function Page() {
           />
         )}
         <LocalHistory
+          execute={async (plan, data, derivedLookup) => {
+            if (!executor.current && frame.current)
+              executor.current = new LocalExecutor(frame.current);
+            if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
+            return executor.current.execute(plan, data, derivedLookup);
+          }}
+          cancelLocal={() => executor.current?.cancel()}
+          onBusy={setBusy}
           disabled={busy}
           input={
             result && executedPlan && bytes.current && localId.current
