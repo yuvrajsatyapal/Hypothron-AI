@@ -1,5 +1,7 @@
 # Phase 4 completed handoff
-Phase4 only, existing main; stop beforePhase5. T4.1 6bc489e; T4.2 26c0e95; T4.3 tested task hash recorded in Phase4 report after commit. No push/PR/deploy/paid inference. Preserve untracked services/api/.env.example.
+Phase4 only, existing main; stop beforePhase5. T4.1 6bc489e; T4.2 26c0e95; T4.3 27caaed; full hashes recorded in Phase4 report. No push/PR/deploy/paid inference. Preserve untracked services/api/.env.example.
 All required gates pass:93backend2.65s,98unit6.39s,32realChrome6.1min, type/Ruff31/mypy18/format/OpenAPI/migration0002/builds/sixdiagramselfchecks+Chrome/local links. Independent engineering/security and design ACCEPT. Final report/deepdive/diagrams/ADR019+020 documented. Historical Phase3 evaluation preserved; new Phase4 regression JSON has actual ten golden+twelve adverse observations.
 Docker stopped during interruption and removed original ephemeral fixture; recreated cachedpostgres17-alpine on55433, migrated0002, reranbackend thencompleteChrome. The task-owned fixture is hypothron-phase4-fixture. ProviderHTTP mocked. Runtimeassets/test-results ignored and excluded. No userdatasets or credentials recorded here.
 Next action is outside scope: Phase5 requires new user instruction. No unfinished Phase4 source work or mandatory blocked gate.
+
+Portfolio development servers restored on3000/3001 after tests (HTTP200), sessions71678/72847. They are unrelated to Hypothron. Local test fixture remains55433.

@@ -8,7 +8,7 @@ Updated 2026-10-12. **Phase 4 is complete for the scoped local desktop target. S
 | 1 deterministic browser foundation | Complete for ADR015 local desktop | Phase1 report/deep dive/runtime measurements |
 | 2 durable LangGraph investigation | Complete for scoped local desktop | Phase2 report/deep dive |
 | 3 verification/evidence expansion | Complete for scoped local desktop | Phase3 report/deep dive/evaluation |
-| 4 opt-in persistence/replay bundles | Complete for scoped local desktop | T4.1 6bc489e; T4.2 26c0e95; T4.3 hash in Phase4 report |
+| 4 opt-in persistence/replay bundles | Complete for scoped local desktop | T4.1 6bc489e; T4.2 26c0e95; T4.3 27caaed; full hashes in Phase4 report |
 | 5 local release/evaluation | Not started; outside current scope | No hosted release authorization |
 
 Explicit Dexie Save/import consent owns immutable snapshots/manifests and atomic quota/deletion. Strict stored-only bundles validate untrusted paths, bounds, hashes, schema, IR and runtime. Saved replay makes zero inference requests and preserves original evidence while recording deterministic comparisons. Fresh AI requires separate consent/key/budget and creates a distinct parent-linked run with measured-or-unavailable comparisons. Completed AI capture retains accepted local results before ACK, unused approved inputs and frozen creation attribution. Credentials/capabilities remain ephemeral; raw uploads remain memory-only before Save.

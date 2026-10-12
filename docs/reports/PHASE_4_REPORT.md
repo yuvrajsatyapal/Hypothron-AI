@@ -39,7 +39,7 @@ Logical limits: snapshot10MiB/three snapshots/raw30MiB,metadata1MiB,bundle32MiB,
 
 ## Validation
 
-Environment: ADR015Chrome154.0.8037.99/macOSarm64/local127.0.0.1:3000web/3001executor/8000API. All external provider HTTP in automation is mocked. PostgreSQL17fixture on55433, Alembic0002head; unrelated55432 preserved. User authorized temporarily stopping unrelated Portfolio servers3000/3001. Only task-owned local main commits; unrelated services/api/.env.example remains untracked and excluded.
+Environment: ADR015Chrome154.0.8037.99/macOSarm64/local127.0.0.1:3000web/3001executor/8000API. All external provider HTTP in automation is mocked. PostgreSQL17fixture on55433, Alembic0002head; unrelated55432 preserved. User authorized temporarily stopping unrelated Portfolio servers3000/3001; both development servers were restored after tests and returned HTTP200. Only task-owned local main commits; unrelated services/api/.env.example remains untracked and excluded.
 
 | Command | Actual result | Scope |
 |---|---|---|
@@ -81,8 +81,10 @@ Browser-local records are unencrypted and readable by application-origin scripts
 
 ## Resume and task commits
 
-- T4.1 `6bc489e` — explicit local persistence;10unit/2Chrome/TypeScript/design+engineering.
-- T4.2 `26c0e95` — validated bundles/zero-inference replay;20unit/3Chrome/TypeScript/build/engineering.
-- T4.3 — linked fresh runs/measurements/learning/diagrams/final acceptance; tested task commit hash is recorded in the follow-up documentation ledger.
+- T4.1 `6bc489e94c36e3b103f389f2b71e2917d2fdc74a` — explicit local persistence;10unit/2Chrome/TypeScript/design+engineering.
+- T4.2 `26c0e959cd2092721fe00189f13e212f2b4b8595` — validated bundles/zero-inference replay;20unit/3Chrome/TypeScript/build/engineering.
+- T4.3 `27caaed24ae04c37ad1627b6b29eb5b021d1d7ed` — linked fresh runs, measurements, diagrams/learning and all final acceptance gates.
 
 Phase4 acceptance gates pass. Stop before Phase5; no push, PR, deployment, publication or paid inference. The historical Phase3 evaluation is preserved byte-for-byte; [Phase4 regression observations](PHASE_4_REGRESSION_EVALUATION.json) retain the final ten golden/twelve adverse fixtures, 22 passes and zero false VERIFIED adverse outcomes. These fixtures are finite honest-client evidence, not execution attestation or universal accuracy.
+
+All three tested tasks are locally committed on main. The completion-ledger update records their immutable hashes without amending them.
