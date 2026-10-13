@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   type Artifact,
   type ArtifactInput,
+  type SourceInput,
   type CalculationInput,
   createArtifact,
 } from "../lib/artifacts";
+import { validateInputSet, type LocalInput } from "../lib/ingestion";
 import { compareInvestigations } from "../lib/comparison";
 import { EvidenceReport } from "./EvidenceReport";
 import {
@@ -24,9 +26,11 @@ interface Snapshot {
   plan: MetricPlan;
   result: ExecutionResult;
   lookup?: Uint8Array;
+  sources?: SourceInput[];
 }
 export function Investigation({
   primary,
+  ingest,
   execute,
   onBusy,
   cancelLocal,
@@ -34,6 +38,7 @@ export function Investigation({
   onArtifact,
 }: {
   primary: Snapshot;
+  ingest: (file: File) => Promise<LocalInput>;
   original?: Artifact | null;
   onArtifact?: (input: ArtifactInput | null) => void;
   execute: (
@@ -111,6 +116,7 @@ export function Investigation({
         s.bytes,
         ...(s.lookup ? [s.lookup] : []),
       ]),
+      sources: snapshots.current.flatMap((s) => s.sources ?? []),
       calculations: calculations.current.filter((c) =>
         next.evidence.some((e) => e.jobId === c.id),
       ),
@@ -135,7 +141,7 @@ export function Investigation({
     snapshots = useRef<Snapshot[]>([]),
     operation = useRef<AbortController | null>(null),
     eventsAbort = useRef<AbortController | null>(null);
-  const [extra, setExtra] = useState<File[]>([]),
+  const [extra, setExtra] = useState<(LocalInput & { name: string })[]>([]),
     [consent, setConsent] = useState(false),
     [busy, setBusy] = useState(false),
     [state, setState] = useState<InvestigationState | null>(null),
@@ -358,8 +364,7 @@ export function Investigation({
       } else {
         if (!consent) throw new Error("CONSENT_REQUIRED");
         snapshots.current = [primary];
-        if (primary.plan.relationship && extra.length)
-          throw new Error("UNAPPROVED_PLAN");
+
         if (original) {
           snapshots.current = [];
           for (const plan of original.manifest.approved) {
@@ -379,20 +384,63 @@ export function Investigation({
                 : undefined,
             );
             controller.signal.throwIfAborted();
-            snapshots.current.push({ plan, bytes, lookup, result });
+            snapshots.current.push({
+              plan,
+              bytes,
+              lookup,
+              result,
+              sources: (original.manifest.sources ?? [])
+                .filter(
+                  (source) =>
+                    source.datasetHash === plan.datasetHash ||
+                    source.datasetHash === plan.relationship?.datasetHash,
+                )
+                .map((source) => ({
+                  ...source,
+                  bytes: original.snapshots.find(
+                    (s) => s.hash === source.sourceHash,
+                  )!.bytes,
+                })),
+            });
           }
         }
-        for (const file of original ? [] : extra) {
-          if (file.size > 10 * 1024 * 1024) throw new Error("INPUT_LIMIT");
+        const allInputs = snapshots.current.flatMap((s) => [
+          {
+            bytes: s.bytes,
+            hash: s.plan.datasetHash,
+            source: s.sources?.find(
+              (source) => source.datasetHash === s.plan.datasetHash,
+            ),
+          },
+          ...(s.lookup
+            ? [
+                {
+                  bytes: s.lookup,
+                  hash: s.plan.relationship!.datasetHash,
+                  source: s.sources?.find(
+                    (source) =>
+                      source.datasetHash === s.plan.relationship!.datasetHash,
+                  ),
+                },
+              ]
+            : []),
+        ]);
+        validateInputSet([...allInputs, ...(original ? [] : extra)]);
+        for (const input of original ? [] : extra) {
           controller.signal.throwIfAborted();
-          const bytes = new Uint8Array(await file.arrayBuffer());
+          const plan = {
+            ...primary.plan,
+            datasetHash: input.hash,
+            ...(primary.plan.version === 2 ? { relationship: null } : {}),
+          };
+          const result = await execute(plan, input.bytes);
           controller.signal.throwIfAborted();
-          const hash = await contentHash(bytes);
-          controller.signal.throwIfAborted();
-          const plan = { ...primary.plan, datasetHash: hash };
-          const result = await execute(plan, bytes);
-          controller.signal.throwIfAborted();
-          snapshots.current.push({ bytes, plan, result });
+          snapshots.current.push({
+            bytes: input.bytes,
+            plan,
+            result,
+            sources: input.source ? [input.source] : [],
+          });
         }
         const descriptors = snapshots.current.map((s) => ({
           datasetHash: s.plan.datasetHash,
@@ -553,14 +601,49 @@ export function Investigation({
         <input
           type="file"
           multiple
-          accept=".csv,text/csv"
-          disabled={busy || !!primary.plan.relationship || !!original}
-          onChange={(e) => {
+          accept=".csv,.parquet,text/csv,application/vnd.apache.parquet"
+          disabled={busy || !!original}
+          onChange={async (e) => {
             const files = Array.from(e.target.files || []);
-            if (files.length > 2) {
-              setMessage("DATASET_LIMIT: Select at most two additional CSVs.");
-              setExtra([]);
-            } else setExtra(files);
+            setConsent(false);
+            setExtra([]);
+            onArtifact?.(null);
+            if (files.length > (primary.lookup ? 1 : 2)) {
+              setMessage(
+                "DATASET_LIMIT: Three sources total, including the approved lookup.",
+              );
+              return;
+            }
+            setBusy(true);
+            onBusy(true);
+            try {
+              const inputs = [];
+              for (const file of files)
+                inputs.push({ ...(await ingest(file)), name: file.name });
+              validateInputSet([
+                { bytes: primary.bytes, hash: primary.plan.datasetHash },
+                ...(primary.lookup
+                  ? [
+                      {
+                        bytes: primary.lookup,
+                        hash: primary.plan.relationship!.datasetHash,
+                      },
+                    ]
+                  : []),
+                ...inputs,
+              ]);
+              setExtra(inputs);
+              setMessage(
+                "Additional versions loaded locally. Approve their displayed metric semantics and provider disclosure to start.",
+              );
+            } catch (error) {
+              setMessage(
+                error instanceof Error ? error.message : "INPUT_READ_FAILED",
+              );
+            } finally {
+              setBusy(false);
+              onBusy(false);
+            }
           }}
         />
       </label>
@@ -568,6 +651,26 @@ export function Investigation({
         {extra.map((f) => f.name).join(", ") ||
           "Primary dataset only. Extra datasets use the displayed approved metric; derived join contracts use only the original source and approved lookup."}
       </p>
+      <p>
+        CSV or Parquet. Additional inputs use the displayed contract
+        independently, without the primary lookup relationship. Selecting new
+        versions clears consent.
+      </p>
+      {extra.map((input) => (
+        <p className="hash" key={input.hash}>
+          {input.name}: canonical dataset {input.hash}
+          {input.source && (
+            <>
+              ; original Parquet {input.source.sourceHash};{" "}
+              {input.source.normalization}; {input.source.rows} rows;{" "}
+              {input.source.schema
+                .map((c) => c.name + ": " + c.type)
+                .join(", ")}
+              . Shared DuckDB decoding, independent arithmetic.
+            </>
+          )}
+        </p>
+      ))}
       <label htmlFor="investigation-provider">LLM provider</label>
       <select
         id="investigation-provider"
@@ -622,7 +725,8 @@ export function Investigation({
         Metadata expires after 24 hours; cleanup is opportunistic locally. My
         key stays in short-lived memory and is cleared after completion,
         cancellation or a clarification pause (maximum ten minutes). No raw rows
-        are sent.
+        are sent. I approve these displayed dataset versions and the displayed
+        metric contract for each independent input.
       </label>
       {state?.status === "CLARIFYING" && (
         <label>

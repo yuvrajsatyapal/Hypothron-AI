@@ -1,3 +1,4 @@
+import { convertParquet, parquetEnvelope } from "./ingestion";
 import { sqlDiagnostics } from "./advanced";
 import { loadPyodide } from "pyodide";
 import { installAssetReader } from "./assets";
@@ -23,6 +24,7 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
   let nestedWorker: Worker | null = null;
   try {
     const request = event.data as {
+      mode?: unknown;
       id?: unknown;
       plan?: unknown;
       bytes?: unknown;
@@ -38,6 +40,48 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
       throw new Error("INVALID_JOB");
     if (!request.assets) throw new Error("INVALID_JOB");
     installAssetReader(request.assets);
+    if (request.mode === "PARQUET") {
+      parquetEnvelope(request.bytes);
+      nestedWorker = new Worker("/duckdb-worker.js");
+      const wasm = request.assets["duckdb-eh.wasm"],
+        extension = request.assets["parquet.duckdb_extension.wasm"];
+      nestedWorker.postMessage(
+        {
+          type: "ASSET_BOOTSTRAP",
+          assets: {
+            "duckdb-eh.wasm": wasm,
+            "parquet.duckdb_extension.wasm": extension,
+          },
+        },
+        [wasm, extension],
+      );
+      const db = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), nestedWorker);
+      activeDB = db;
+      stage = "PARQUET_LOAD";
+      await db.instantiate("/assets/duckdb-eh.wasm");
+      await db.open({ query: { castBigIntToDouble: false } });
+      const conn = await db.connect();
+      activeConnection = conn;
+      await conn.query("SET autoinstall_known_extensions=false");
+      await conn.query("SET autoload_known_extensions=false");
+      await conn.query(
+        "SET custom_extension_repository='http://127.0.0.1:3001/assets'",
+      );
+      await conn.query("LOAD parquet");
+      await db.registerFileBuffer(
+        "source.parquet",
+        new Uint8Array(request.bytes),
+      );
+      stage = "PARQUET_CONVERSION";
+      const result = await convertParquet(
+        conn as unknown as Parameters<typeof convertParquet>[0],
+        request.bytes,
+      );
+      scope.postMessage({ id: request.id, ok: true, result }, [
+        result.bytes.buffer,
+      ]);
+      return;
+    }
     const plan = validatePlan(request.plan);
     const bytes = request.bytes;
     const relationship = plan.version === 2 ? plan.relationship : null;
@@ -234,6 +278,9 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
     scope.postMessage({ id: request.id, ok: true, result });
   } catch (error) {
     const allowed = [
+      "INVALID_PARQUET",
+      "UNSUPPORTED_PARQUET_TYPE",
+      "UNSUPPORTED_PARQUET_VALUE",
       "INVALID_JOB",
       "INVALID_PLAN",
       "INVALID_HASH",

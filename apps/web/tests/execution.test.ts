@@ -82,9 +82,40 @@ function setup(handshake = true, documentReady = true) {
   };
 }
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
+test.each(["cancel", "close"] as const)(
+  "Parquet reserves before hashing and %s settles it",
+  async (action) => {
+    const { executor } = setup();
+    const bytes = new Uint8Array(13);
+    bytes.set(new TextEncoder().encode("PAR1"));
+    bytes.set(new TextEncoder().encode("PAR1"), 9);
+    bytes[5] = 1;
+    let finish!: (value: ArrayBuffer) => void;
+    vi.spyOn(crypto.subtle, "digest").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const run = executor.ingest(bytes);
+    const assertion = expect(run).rejects.toThrow(
+      action === "cancel" ? "CANCELLED" : "EXECUTOR_CLOSED",
+    );
+    try {
+      expect(() => executor.execute(plan, new Uint8Array([1]))).toThrow("BUSY");
+      await expect(executor.ingest(bytes)).rejects.toThrow("BUSY");
+      executor[action]();
+      await assertion;
+    } finally {
+      executor.close();
+      finish?.(new ArrayBuffer(32));
+    }
+  },
+);
 test("rejects malformed result instead of casting it into evidence", async () => {
   const fixture = setup();
   fixture.peer.onmessage = (event) => {
@@ -188,5 +219,54 @@ test("early calculation waits for verified document readiness and transfers one 
   expect(fixture.connections).toBe(1);
   fixture.executor.cancel();
   await assertion;
+  fixture.executor.close();
+});
+
+test("cancelled reply hashing cannot settle a later calculation", async () => {
+  const fixture = setup();
+  const bytes = new Uint8Array(13);
+  bytes.set(new TextEncoder().encode("PAR1"));
+  bytes.set(new TextEncoder().encode("PAR1"), 9);
+  bytes[5] = 1;
+  const finishes: ((value: ArrayBuffer) => void)[] = [];
+  vi.spyOn(crypto.subtle, "digest").mockImplementation(
+    () => new Promise((resolve) => finishes.push(resolve)),
+  );
+  fixture.peer.onmessage = (event) => {
+    const message = event.data as { id: string; type: string };
+    if (message.type === "PARQUET")
+      fixture.peer.postMessage({
+        id: message.id,
+        ok: true,
+        result: {
+          bytes: new TextEncoder().encode("id\n1\n"),
+          sourceHash: "0".repeat(64),
+          datasetHash: "0".repeat(64),
+          normalization: "parquet-csv-v1",
+          decoder: "duckdb-v1.4.3",
+          rows: 1,
+          schema: [{ name: "id", type: "INTEGER" }],
+        },
+      });
+  };
+  const old = fixture.executor.ingest(bytes);
+  const oldAssertion = expect(old).rejects.toThrow("CANCELLED");
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(finishes).toHaveLength(2);
+  fixture.executor.cancel();
+  await oldAssertion;
+  const next = fixture.executor.execute(plan, new Uint8Array([1]));
+  const nextAssertion = expect(next).rejects.toThrow("CANCELLED");
+  for (const finish of finishes) finish(new ArrayBuffer(32));
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+  expect(() => fixture.executor.execute(plan, new Uint8Array([1]))).toThrow(
+    "BUSY",
+  );
+  fixture.executor.cancel();
+  await nextAssertion;
   fixture.executor.close();
 });

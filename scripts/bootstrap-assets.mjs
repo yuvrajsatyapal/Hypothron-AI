@@ -72,3 +72,23 @@ console.log(
     files.length +
     " pinned runtime assets against runtime manifest",
 );
+
+// Separate ingestion lock leaves historical calculation runtime identities unchanged.
+const parquet = JSON.parse(
+  await readFile("packages/contracts/parquet-runtime.json", "utf8"),
+);
+const parquetPath = out + "/parquet.duckdb_extension.wasm";
+let parquetBytes;
+try {
+  parquetBytes = await readFile(parquetPath);
+} catch {
+  const response = await fetch(parquet.url, {
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!response.ok) throw new Error("PARQUET_ASSET_LOAD_FAILED");
+  parquetBytes = Buffer.from(await response.arrayBuffer());
+}
+if (createHash("sha256").update(parquetBytes).digest("hex") !== parquet.sha256)
+  throw new Error("PARQUET_ASSET_HASH_MISMATCH");
+await writeFile(parquetPath, parquetBytes);
+console.log("Verified pinned Parquet ingestion extension");

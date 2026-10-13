@@ -6,6 +6,7 @@ import {
   type MetricPlan,
   type ExecutionResult,
 } from "../../executor/src/contracts";
+import { parquetEnvelope, supportedSchema } from "../../executor/src/ingestion";
 import runtimeLock from "../../../packages/contracts/runtime-manifest.json";
 import { evidenceVerdict } from "./verification";
 import { validateReport } from "./report";
@@ -53,7 +54,7 @@ export interface RunSummary {
   attempts: number | null;
 }
 export interface Manifest {
-  version: 1;
+  version: 1 | 2;
   id: string;
   question: string;
   createdAt: string;
@@ -63,11 +64,23 @@ export interface Manifest {
   runtimeLockDigest: string;
   parser: "csv-utf8-v1";
   tolerance: "exact-minor-units-v1";
-  snapshots: { hash: string; size: number; format: "csv" }[];
+  snapshots: { hash: string; size: number; format: "csv" | "parquet" }[];
+  sources?: SourceLineage[];
   approved: MetricPlan[];
   calculations: Calculation[];
   report: EvidenceReportData | null;
   run: RunSummary | null;
+}
+export interface SourceLineage {
+  sourceHash: string;
+  datasetHash: string;
+  normalization: "parquet-csv-v1";
+  decoder: "duckdb-v1.4.3";
+  rows: number;
+  schema: { name: string; type: string }[];
+}
+export interface SourceInput extends SourceLineage {
+  bytes: Uint8Array;
 }
 export interface SnapshotBlob {
   hash: string;
@@ -85,6 +98,7 @@ export interface ArtifactInput {
   createdAt: string;
   parentId: string | null;
   snapshots: Uint8Array[];
+  sources?: SourceInput[];
   approved?: MetricPlan[];
   calculations: CalculationInput[];
   report: EvidenceReportData | null;
@@ -156,7 +170,10 @@ function digest(value: unknown): string {
 }
 export async function createArtifact(input: ArtifactInput): Promise<Artifact> {
   const snapshots: SnapshotBlob[] = [];
-  for (const bytes of input.snapshots) {
+  for (const bytes of [
+    ...input.snapshots,
+    ...(input.sources ?? []).map((s) => s.bytes),
+  ]) {
     if (!(bytes instanceof Uint8Array) || bytes.byteLength > LIMITS.snapshot)
       throw new Error("SNAPSHOT_LIMIT");
     const copy = new Uint8Array(bytes),
@@ -185,7 +202,14 @@ export async function createArtifact(input: ArtifactInput): Promise<Artifact> {
     });
   }
   const manifest: Manifest = {
-    version: 1,
+    version: input.sources?.length ? 2 : 1,
+    ...(input.sources?.length
+      ? {
+          sources: input.sources
+            .map(({ bytes: _bytes, ...source }) => source)
+            .sort((a, b) => a.sourceHash.localeCompare(b.sourceHash)),
+        }
+      : {}),
     id: input.id,
     question: input.question,
     createdAt: input.createdAt,
@@ -198,7 +222,9 @@ export async function createArtifact(input: ArtifactInput): Promise<Artifact> {
     snapshots: snapshots.map((s) => ({
       hash: s.hash,
       size: s.bytes.byteLength,
-      format: "csv",
+      format: input.sources?.some((source) => source.sourceHash === s.hash)
+        ? "parquet"
+        : "csv",
     })),
     approved: [
       ...new Map(
@@ -255,8 +281,9 @@ export async function validateArtifact(
     "calculations",
     "report",
     "run",
+    ...((value as Manifest).version === 2 ? ["sources"] : []),
   ]);
-  if (m.version !== 1) throw new Error("UNSUPPORTED_SCHEMA");
+  if (m.version !== 1 && m.version !== 2) throw new Error("UNSUPPORTED_SCHEMA");
   id(m.id);
   string(m.question, 2000);
   if (m.parentId !== null) id(m.parentId);
@@ -281,7 +308,7 @@ export async function validateArtifact(
   if (
     !Array.isArray(m.snapshots) ||
     m.snapshots.length < 1 ||
-    m.snapshots.length > 3 ||
+    m.snapshots.length > (m.version === 2 ? 6 : 3) ||
     !Array.isArray(blobs) ||
     blobs.length !== m.snapshots.length
   )
@@ -297,7 +324,7 @@ export async function validateArtifact(
       !Number.isSafeInteger(r.size) ||
       Number(r.size) < 1 ||
       Number(r.size) > LIMITS.snapshot ||
-      r.format !== "csv"
+      (r.format !== "csv" && !(m.version === 2 && r.format === "parquet"))
     )
       throw new Error("INVALID_SNAPSHOT");
     hashes.add(hash);
@@ -310,8 +337,57 @@ export async function validateArtifact(
       (await contentHash(b.bytes)) !== hash
     )
       throw new Error("SNAPSHOT_HASH_MISMATCH");
-    preflightCSV(b.bytes);
+    if (r.format === "csv") preflightCSV(b.bytes);
+    else parquetEnvelope(b.bytes);
     snapshots.push({ hash, bytes: new Uint8Array(b.bytes) });
+  }
+  const originalHashes = new Set<string>();
+  if (m.version === 2) {
+    if (!Array.isArray(m.sources) || !m.sources.length || m.sources.length > 3)
+      throw new Error("INVALID_LINEAGE");
+    const derived = new Set<string>();
+    for (const source of m.sources) {
+      const r = exact(source, [
+        "sourceHash",
+        "datasetHash",
+        "normalization",
+        "decoder",
+        "rows",
+        "schema",
+      ]);
+      const original = digest(r.sourceHash),
+        target = digest(r.datasetHash);
+      if (
+        original === target ||
+        originalHashes.has(original) ||
+        derived.has(target) ||
+        r.normalization !== "parquet-csv-v1" ||
+        r.decoder !== "duckdb-v1.4.3" ||
+        !Number.isSafeInteger(r.rows) ||
+        Number(r.rows) < 0 ||
+        Number(r.rows) > 100000
+      )
+        throw new Error("INVALID_LINEAGE");
+      if (
+        !m.snapshots.some(
+          (s) => s.hash === original && s.format === "parquet",
+        ) ||
+        !m.snapshots.some((s) => s.hash === target && s.format === "csv")
+      )
+        throw new Error("INVALID_LINEAGE");
+      supportedSchema(r.schema as SourceLineage["schema"]);
+      originalHashes.add(original);
+      derived.add(target);
+    }
+    if (
+      m.snapshots.some(
+        (s) => s.format === "parquet" && !originalHashes.has(s.hash),
+      ) ||
+      m.snapshots.length - originalHashes.size > 3
+    )
+      throw new Error("INVALID_LINEAGE");
+    // Original source blobs are retained lineage, never executable dataset identities.
+    for (const hash of originalHashes) hashes.delete(hash);
   }
   if (rawSize > LIMITS.raw) throw new Error("SNAPSHOT_LIMIT");
   if (

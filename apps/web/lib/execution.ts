@@ -1,4 +1,9 @@
 import {
+  validateIngestion,
+  parquetEnvelope,
+  type IngestionResult,
+} from "../../executor/src/ingestion";
+import {
   contentHash,
   validatePlan,
   validateExecutionResult,
@@ -19,11 +24,12 @@ export class LocalExecutor {
   private deadline: ReturnType<typeof setTimeout> | null = null;
   private pending: {
     id: string;
-    plan: MetricPlan;
+    plan: MetricPlan | null;
     bytes: Uint8Array;
     lookupBytes?: Uint8Array;
-    resolve: (r: ExecutionResult) => void;
+    resolve: (r: ExecutionResult | IngestionResult) => void;
     reject: (e: Error) => void;
+    validate?: (result: IngestionResult) => Promise<void>;
   } | null = null;
   constructor(frame: HTMLIFrameElement) {
     const channel = new MessageChannel();
@@ -83,18 +89,34 @@ export class LocalExecutor {
       if (data.ok === true) {
         try {
           if (Object.keys(data).length !== 3) throw new Error("INVALID_RESULT");
-          const result = validateExecutionResult(
-            data.result,
-            this.pending.plan,
-          );
+          const result = this.pending.plan
+            ? validateExecutionResult(data.result, this.pending.plan)
+            : validateIngestion(data.result);
           const pending = this.pending;
-          this.clear();
-          pending.resolve(result);
+          if (pending.validate) {
+            void pending.validate(result as IngestionResult).then(
+              () => {
+                if (this.pending !== pending) return;
+                this.clear();
+                pending.resolve(result);
+              },
+              () => {
+                if (this.pending === pending)
+                  this.fail("DATASET_HASH_MISMATCH");
+              },
+            );
+          } else {
+            this.clear();
+            pending.resolve(result);
+          }
         } catch {
           this.fail("INVALID_RESULT");
         }
       } else {
         const allowed = [
+          "INVALID_PARQUET",
+          "UNSUPPORTED_PARQUET_TYPE",
+          "UNSUPPORTED_PARQUET_VALUE",
           "CANCELLED",
           "TIMEOUT",
           "INVALID_JOB",
@@ -150,9 +172,9 @@ export class LocalExecutor {
       const p = this.pending;
       this.port.postMessage(
         {
-          type: "EXECUTE",
+          type: p.plan ? "EXECUTE" : "PARQUET",
           id: p.id,
-          plan: p.plan,
+          ...(p.plan ? { plan: p.plan } : {}),
           bytes: p.bytes,
           ...(p.lookupBytes
             ? { lookupBytes: p.lookupBytes, approvedRelationship: true }
@@ -186,8 +208,40 @@ export class LocalExecutor {
         plan: JSON.parse(JSON.stringify(plan)) as MetricPlan,
         bytes: copy,
         ...(lookup ? { lookupBytes: new Uint8Array(lookup.bytes) } : {}),
-        resolve,
+        resolve: (r) => resolve(r as ExecutionResult),
         reject,
+      };
+      this.deadline = setTimeout(() => {
+        if (this.pending)
+          this.port.postMessage({ type: "CANCEL", id: this.pending.id });
+        this.fail("TIMEOUT");
+      }, 35000);
+      this.send();
+    });
+  }
+  async ingest(bytes: Uint8Array): Promise<IngestionResult> {
+    parquetEnvelope(bytes);
+    if (this.pending) throw new Error("BUSY");
+    if (this.closed) throw new Error("EXECUTOR_CLOSED");
+    const original = new Uint8Array(bytes);
+    return new Promise<IngestionResult>((resolve, reject) => {
+      this.pending = {
+        id: crypto.randomUUID(),
+        plan: null,
+        bytes: new Uint8Array(original),
+        resolve: (r) => resolve(r as IngestionResult),
+        reject,
+        validate: async (result) => {
+          const [sourceHash, datasetHash] = await Promise.all([
+            contentHash(original),
+            contentHash(result.bytes),
+          ]);
+          if (
+            result.sourceHash !== sourceHash ||
+            result.datasetHash !== datasetHash
+          )
+            throw new Error("DATASET_HASH_MISMATCH");
+        },
       };
       this.deadline = setTimeout(() => {
         if (this.pending)

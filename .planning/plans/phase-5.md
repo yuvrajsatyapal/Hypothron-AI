@@ -1,0 +1,31 @@
+# Phase 5 task plan
+
+Spec: `.planning/specs/phase-5.md`. Execute autonomously, sequential implementation milestones, TDD and independent review. Existing main only. User authorization overrides routine approval/branch defaults. Root coordinates documentation and integration; task workers own bounded files and must preserve others' edits. No runtime agent additions.
+
+## Task 1 — ingestion, identity and final data workspace (T5.1a)
+
+Ownership: apps/executor/src and tests; apps/web/lib ingestion/artifacts/bundles/replay/storage, components and page/CSS; tests/e2e Phase5 ingestion/multi-dataset tests; synthetic fixtures as needed; scoped ADR022 and design/phase-5.md. Preserve existing IR/compiler sources and historical v1 manifest/ZIP acceptance.
+
+RED tests: real Parquet import versus unsupported/malformed/oversized/types; explicit derived lineage original SHA and canonical CSV hash; v1 unchanged; new version strict fields/path/hash; Save/reload/export/import/zero-inference replay; three distinct datasets including approved lookup+independent dataset; >3/duplicate identities; missing column/cardinality/grain/timezone/decimal refusal. GREEN smallest credential-free conversion worker/bridge with pinned DuckDB and bounded materialization, new versioned artifact lineage and explicit approval. Inspect browser runtime library capabilities locally; do not download new unpinned parsers. UI keeps existing tokens/native components, local preview/schema/type/source hashes and accessible status/cancel; revoke stale approvals on input changes. Preserve30s/35s timers and128MiB estimates. Expose totals/counts/exact existing comparisons; no arbitrary analytic IR. Focused Vitest/typecheck/build/real Chromium integration; review before task commit.
+
+## Task 2 — deterministic evaluation and equal-budget baseline (T5.1b)
+
+Ownership: tests/fixtures/phase5-golden.json, tests/e2e/phase5-evaluation.spec.ts; services/api evaluation domain/test harness and tests; docs/EVALUATION.md, docs/reports/PHASE_5_EVALUATION.json and baseline JSON. Preserve prior fixtures/reports. RED twenty-question coverage/ground truth, unsupported rejection, equal ceilings and shared verifier, real graph single-role baseline parity; GREEN versioned deterministic evaluation harness using mock external HTTP only. Include held-out terminology honestly (scripted fixtures are regression, not live holdout quality). Record denominators correctness/agreement/false VERIFIED/coverage/completion/refusal/recovery/latency/allocations/calls/tokens unknown. Same input/model fixture/contracts/budgets and reporting validator for both; no new production baseline route. Real browser observations must not fabricate metrics. Focused suites, independent review and local task commit.
+
+## Task 3 — diagnostics, purge and local release probes (T5.2a)
+
+Ownership: services/api diagnostics/retention/lifespan/test modules; scripts release probes/config; deployment/security docs and ADR as needed. RED allowlist logging excluding key/prompt/raw/headers/aggregates, bounded ID/stage/code/latency; lifecycle/node/provider/budget/checkpoint diagnostic coverage. RED scheduled purge realDB expired checkpoint/ledger/session cleanup, cooperative shutdown and failures without secrets. GREEN privacy-safe structured logs and bounded schedule using existing transaction/caps, no paid service. Add environment/proxy/origin prerequisites and read-only health/header/SSE deployment probes; do not pretend fixed-local bridge can be publicly deployed. Focused pytest/Ruff/mypy/OpenAPI drift/realDB tests; review and local commit.
+
+## Task 4 — full gates, learning and release candidate (T5.2b/T5.3)
+
+Ownership: required documentation, Phase5 diagrams, repeatable measurements/security review results, CURRENT_PHASE/TASKS/FILE_MAP/README/ARCHITECTURE/docs guide. Run full backend pytest, Vitest, strictTS,Ruff,mypy,format,OpenAPI,PostgreSQL17 up/down/up/schema checks, assets,production builds,actual Chromium all flows/engines/privacy/replay and workflow lint. Use isolated task-owned DB/ports; preserve unrelated services and.env.example. Measure CSV/Parquet/three-dataset/worker/save/export/import/replay startup/latency/tracked allocations and process-tree RSS where possible, record sample count/environment. Validate desktop/laptop/tablet/narrow viewport and accessible charts/forms/overflow; no physical mobile support inference.
+
+Read actual code and report artifacts to write comprehensive PHASE_5_REPORT and PHASE_5_DEEP_DIVE per template. Use diagram-design existing accepted provisional palette; reuse earlier validated diagrams and add ingestion/lifecycle/release visuals only where new meaning warrants. Skill self-check plus real browser geometry/fonts/scroll and visual inspection. Final independent actual-diff engineering/security review; reproduce/fix blocking findings with RED/GREEN; rerun affected/full gates. Local task commit and record all hashes. Mark local release candidate only if local mandatory gates pass; Phase5 external T5.4 stays BLOCKED, full roadmap completion unclaimed.
+
+## Review focus and rulings
+
+Check shared parser versus independent arithmetic distinction; source/version/lineage identity and old artifact immutability; Parquet expansion before allocation; dataset count includes lookup; stale input consent; consent/key lifecycle; tracing data exhaust; transactional purge racing fenced saver; no hidden hosted readiness assumptions. Any changed trust/persistence/execution/replay boundary receives an ADR. No weakening existing tests/timeouts/semantics to make gates pass.
+
+## Progress ledger
+
+- 2026-10-13 baseline: HEAD32f3e1e, existingmain; unrelated untracked services/api/.env.example preserved. No Phase5 tests run yet. Spec/plan preflight: Tasks1/2 share runtime/canonical snapshot semantics (T2 consumes reviewedT1); Tasks1/4 share final docs (T4 reconciles actual implementation); Tasks3/4 share deployment gates (T4 validates, never deploys). Task scopes internally agree with spec.

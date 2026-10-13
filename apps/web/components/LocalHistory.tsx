@@ -148,12 +148,12 @@ export function LocalHistory({
     >
       <h2>Local investigation history</h2>
       <p>
-        Save stores raw CSV snapshots, question, approved contracts, compiled
-        source, results and report on this browser. Scripts running in this
-        application origin can access them. Storage is unencrypted and can be
-        evicted; exports are separate sensitive copies. Credentials and session
-        capabilities are excluded. Approximate logical quota: 64 MiB / 20
-        investigations.
+        Save stores original CSV/Parquet and derived canonical CSV snapshots,
+        question, approved contracts, compiled source, results and report on
+        this browser. Scripts running in this application origin can access
+        them. Storage is unencrypted and can be evicted; exports are separate
+        sensitive copies. Credentials and session capabilities are excluded.
+        Approximate logical quota: 64 MiB / 20 investigations.
       </p>
       <label className="consent-row">
         <input

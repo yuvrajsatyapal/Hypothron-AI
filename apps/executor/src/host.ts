@@ -1,3 +1,5 @@
+import parquetLock from "../../../packages/contracts/parquet-runtime.json";
+import { validateIngestion, parquetEnvelope } from "./ingestion";
 import manifest from "../../../packages/contracts/runtime-manifest.json";
 import { contentHash } from "./contracts";
 import { validatePlan, validateExecutionResult } from "./contracts";
@@ -46,13 +48,14 @@ window.addEventListener("message", async (event: MessageEvent) => {
     }
     try {
       if (
-        d.type !== "EXECUTE" ||
+        !["EXECUTE", "PARQUET"].includes(String(d.type)) ||
         typeof d.id !== "string" ||
         d.id.length > 64 ||
         !(d.bytes instanceof Uint8Array) ||
         worker ||
         !assets ||
-        Object.keys(d).length !== (d.lookupBytes === undefined ? 4 : 6) ||
+        Object.keys(d).length !==
+          (d.type === "PARQUET" ? 3 : d.lookupBytes === undefined ? 4 : 6) ||
         Object.keys(d).some(
           (k) =>
             ![
@@ -66,8 +69,9 @@ window.addEventListener("message", async (event: MessageEvent) => {
         )
       )
         throw new Error("INVALID_JOB");
-      const plan = validatePlan(d.plan);
-      const relation = plan.version === 2 ? plan.relationship : null;
+      const plan = d.type === "PARQUET" ? null : validatePlan(d.plan);
+      if (!plan) parquetEnvelope(d.bytes);
+      const relation = plan?.version === 2 ? plan.relationship : null;
       if (
         relation &&
         (!(d.lookupBytes instanceof Uint8Array) ||
@@ -98,7 +102,9 @@ window.addEventListener("message", async (event: MessageEvent) => {
             port?.postMessage({
               id: d.id,
               ok: true,
-              result: validateExecutionResult(reply.data.result, plan),
+              result: plan
+                ? validateExecutionResult(reply.data.result, plan)
+                : validateIngestion(reply.data.result),
             });
           else
             port?.postMessage({
@@ -126,7 +132,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
       worker.postMessage(
         {
           id: d.id,
-          plan,
+          ...(plan ? { plan } : { mode: "PARQUET" }),
           bytes: d.bytes,
           assets: copies,
           ...(relation
@@ -161,6 +167,14 @@ window.addEventListener("message", async (event: MessageEvent) => {
         throw new Error("ASSET_HASH_MISMATCH");
       loaded[name] = buffer;
     }
+    const extension = await fetch("/assets/parquet.duckdb_extension.wasm");
+    if (!extension.ok) throw new Error("ASSET_LOAD_FAILED");
+    const extensionBytes = await extension.arrayBuffer();
+    if (
+      (await contentHash(new Uint8Array(extensionBytes))) !== parquetLock.sha256
+    )
+      throw new Error("ASSET_HASH_MISMATCH");
+    loaded["parquet.duckdb_extension.wasm"] = extensionBytes;
     assets = loaded;
     port.postMessage({ type: "CONNECTED" });
   } catch {

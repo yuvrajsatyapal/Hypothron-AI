@@ -76,7 +76,7 @@ export function exportBundle(a: Artifact): Uint8Array {
       ),
     },
     ...a.snapshots.map((s) => ({
-      path: `snapshots/${s.hash}.csv`,
+      path: `snapshots/${s.hash}.${a.manifest.snapshots.find((d) => d.hash === s.hash)!.format}`,
       bytes: s.bytes,
     })),
   ]);
@@ -99,7 +99,7 @@ function archive(bytes: Uint8Array): Entry[] {
     centralSize = v.getUint32(end + 12, true);
   if (
     count < 2 ||
-    count > 4 ||
+    count > 7 ||
     v.getUint16(end + 8, true) !== count ||
     start + centralSize !== end
   )
@@ -140,7 +140,7 @@ function archive(bytes: Uint8Array): Entry[] {
     );
     if (
       (path !== "manifest.json" &&
-        !/^snapshots\/[a-f0-9]{64}\.csv$/.test(path)) ||
+        !/^snapshots\/[a-f0-9]{64}\.(csv|parquet)$/.test(path)) ||
       paths.has(path)
     )
       throw new Error("INVALID_ARCHIVE_PATH");
@@ -190,8 +190,15 @@ export async function importBundle(bytes: Uint8Array): Promise<Artifact> {
   if (canonical(envelope) !== raw) throw new Error("NONCANONICAL_MANIFEST");
   const blobs = entries
     .filter((e) => e.path !== "manifest.json")
-    .map((e) => ({ hash: e.path.slice(10, -4), bytes: e.bytes }));
+    .map((e) => ({ hash: e.path.slice(10, 74), bytes: e.bytes }));
   const a = await validateArtifact(envelope.manifest, blobs);
+  for (const descriptor of a.manifest.snapshots)
+    if (
+      !entries.some(
+        (e) => e.path === `snapshots/${descriptor.hash}.${descriptor.format}`,
+      )
+    )
+      throw new Error("INVALID_ARCHIVE_PATH");
   if (a.digest !== envelope.digest) throw new Error("MANIFEST_DIGEST_MISMATCH");
   await checkCompatibility(a.manifest);
   return a;

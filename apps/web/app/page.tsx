@@ -9,6 +9,8 @@ import {
   type MetricPlan,
   type ExecutionResult,
 } from "../lib/execution";
+import { readLocalInput, validateInputSet } from "../lib/ingestion";
+import type { SourceInput } from "../lib/artifacts";
 import type { Artifact, ArtifactInput } from "../lib/artifacts";
 import { replayMatches } from "../../executor/src/contracts";
 export default function Page() {
@@ -26,6 +28,9 @@ export default function Page() {
   const executor = useRef<LocalExecutor | null>(null);
   const bytes = useRef<Uint8Array | null>(null);
   const [filename, setFilename] = useState("");
+  const [source, setSource] = useState<SourceInput | undefined>();
+  const [sourceApproved, setSourceApproved] = useState(false);
+  const [executedSources, setExecutedSources] = useState<SourceInput[]>([]);
   const [hash, setHash] = useState("");
   const [amount, setAmount] = useState("revenue");
   const [date, setDate] = useState("completed_at");
@@ -41,9 +46,11 @@ export default function Page() {
   const [nullPolicy, setNullPolicy] =
     useState<MetricPlan["nullPolicy"]>("exclude");
   const [grain, setGrain] = useState("id");
-  const lookup = useRef<{ bytes: Uint8Array; datasetHash: string } | null>(
-    null,
-  );
+  const lookup = useRef<{
+    bytes: Uint8Array;
+    datasetHash: string;
+    source?: SourceInput;
+  } | null>(null);
   const lookupGeneration = useRef(0);
   const [lookupName, setLookupName] = useState("");
   const [lookupApproved, setLookupApproved] = useState(false);
@@ -78,6 +85,8 @@ export default function Page() {
     setReplay("");
     setStatus("Loading isolated runtimes and computing locally…");
     try {
+      if (!isReplay && source && !sourceApproved)
+        throw new Error("SOURCE_APPROVAL_REQUIRED");
       const plan =
         isReplay && saved.current
           ? saved.current.plan
@@ -110,6 +119,19 @@ export default function Page() {
         : advanced
           ? lookup.current?.bytes
           : undefined;
+      if (!isReplay)
+        validateInputSet([
+          { bytes: bytes.current, hash, source },
+          ...(lookupBytes && lookup.current
+            ? [
+                {
+                  bytes: lookupBytes,
+                  hash: lookup.current.datasetHash,
+                  source: lookup.current.source,
+                },
+              ]
+            : []),
+        ]);
       const computed = await executor.current.execute(
         plan,
         bytes.current,
@@ -117,6 +139,13 @@ export default function Page() {
           ? { bytes: lookupBytes, approvedRelationship: true }
           : undefined,
       );
+      if (!isReplay)
+        setExecutedSources([
+          ...(source ? [source] : []),
+          ...(lookupBytes && lookup.current?.source
+            ? [lookup.current.source]
+            : []),
+        ]);
       setExecutedLookup(lookupBytes);
       setResult(computed);
       setExecutedPlan({ ...plan });
@@ -163,7 +192,7 @@ export default function Page() {
               Dataset CSV
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.parquet,text/csv,application/vnd.apache.parquet"
                 disabled={busy || !hydrated}
                 onChange={async (e) => {
                   if (busy) return;
@@ -177,6 +206,9 @@ export default function Page() {
                   saved.current = null;
                   setReplay("");
                   bytes.current = null;
+                  setSource(undefined);
+                  setSourceApproved(false);
+                  setExecutedSources([]);
                   setFilename("");
                   setHash("");
                   setStatus("Choose a CSV to begin.");
@@ -188,21 +220,69 @@ export default function Page() {
                     return;
                   }
                   try {
-                    const data = new Uint8Array(await f.arrayBuffer());
-                    const digest = await contentHash(data);
+                    if (!executor.current && frame.current)
+                      executor.current = new LocalExecutor(frame.current);
+                    if (!executor.current)
+                      throw new Error("EXECUTOR_UNAVAILABLE");
+                    setBusy(true);
+                    setStatus("Reading local input and validating its format…");
+                    const input = await readLocalInput(f, executor.current);
+                    const data = input.bytes,
+                      digest = input.hash;
+                    setSource(input.source);
                     if (generation !== uploadGeneration.current) return;
                     bytes.current = data;
                     setFilename(f.name);
                     setHash(digest);
                     setStatus("Dataset loaded into local memory.");
-                  } catch {
+                  } catch (error) {
                     if (generation === uploadGeneration.current)
-                      setStatus("INPUT_READ_FAILED: Select the file again.");
+                      setStatus(
+                        error instanceof Error
+                          ? error.message
+                          : "INPUT_READ_FAILED",
+                      );
+                  } finally {
+                    setBusy(false);
                   }
                 }}
               />
             </label>
+            <p>
+              CSV and Parquet supported. Maximum three distinct sources
+              including a lookup, 10 MiB per source. Each calculation permits at
+              most 10 MiB combined primary and lookup CSV; all original and
+              derived investigation snapshots together permit 30 MiB.
+            </p>
             <p>{filename || "No dataset selected"}</p>
+            {source && (
+              <div data-testid="source-profile">
+                <p>
+                  {source.rows} rows ·{" "}
+                  {source.schema.map((c) => c.name + ": " + c.type).join(", ")}
+                </p>
+                <p className="hash">
+                  Original Parquet SHA-256: {source.sourceHash}
+                </p>
+                <p className="hash">
+                  Canonical CSV SHA-256: {source.datasetHash}
+                </p>
+                <p>
+                  {source.normalization}. DuckDB decodes Parquet once. DuckDB
+                  and Pandas independently compute arithmetic over this
+                  canonical CSV; parsing is shared.
+                </p>
+                <label className="consent-row">
+                  <input
+                    type="checkbox"
+                    checked={sourceApproved}
+                    disabled={busy}
+                    onChange={(e) => setSourceApproved(e.target.checked)}
+                  />
+                  I approve this canonical CSV dataset version
+                </label>
+              </div>
+            )}
             <label>
               Amount column
               <input
@@ -297,7 +377,7 @@ export default function Page() {
                   Optional lookup CSV
                   <input
                     type="file"
-                    accept=".csv,text/csv"
+                    accept=".csv,.parquet,text/csv,application/vnd.apache.parquet"
                     onChange={async (e) => {
                       const generation = ++lookupGeneration.current;
                       lookup.current = null;
@@ -310,14 +390,33 @@ export default function Page() {
                         return;
                       }
                       try {
-                        const data = new Uint8Array(await file.arrayBuffer());
-                        const datasetHash = await contentHash(data);
+                        if (!executor.current && frame.current)
+                          executor.current = new LocalExecutor(frame.current);
+                        if (!executor.current)
+                          throw new Error("EXECUTOR_UNAVAILABLE");
+                        setBusy(true);
+                        const input = await readLocalInput(
+                          file,
+                          executor.current,
+                        );
+                        const data = input.bytes,
+                          datasetHash = input.hash;
                         if (generation !== lookupGeneration.current) return;
-                        lookup.current = { bytes: data, datasetHash };
+                        lookup.current = {
+                          bytes: data,
+                          datasetHash,
+                          source: input.source,
+                        };
                         setLookupName(file.name);
-                      } catch {
+                      } catch (error) {
                         if (generation === lookupGeneration.current)
-                          setStatus("INPUT_READ_FAILED");
+                          setStatus(
+                            error instanceof Error
+                              ? error.message
+                              : "INPUT_READ_FAILED",
+                          );
+                      } finally {
+                        setBusy(false);
                       }
                     }}
                   />
@@ -325,6 +424,19 @@ export default function Page() {
                 {lookupName && (
                   <>
                     <p>Lookup in local memory: {lookupName}</p>
+                    <p className="hash">
+                      Lookup approved snapshot: {lookup.current?.datasetHash}
+                    </p>
+                    {lookup.current?.source && (
+                      <p className="hash">
+                        Original Parquet: {lookup.current.source.sourceHash};
+                        canonical CSV {lookup.current.source.normalization};
+                        shared DuckDB decoding.{" "}
+                        {lookup.current.source.schema
+                          .map((c) => c.name + ": " + c.type)
+                          .join(", ")}
+                      </p>
+                    )}
                     <label>
                       Source join key
                       <input
@@ -462,7 +574,7 @@ export default function Page() {
                     <tr>
                       <th>Engine</th>
                       <th>Value</th>
-                      <th>Included rows</th>
+                      <th>Included non-null metric rows</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -555,6 +667,13 @@ export default function Page() {
               plan: executedPlan,
               result,
               lookup: executedLookup,
+              sources: executedSources,
+            }}
+            ingest={async (file) => {
+              if (!executor.current && frame.current)
+                executor.current = new LocalExecutor(frame.current);
+              if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
+              return readLocalInput(file, executor.current);
             }}
             execute={async (plan, data, derivedLookup) => {
               if (!executor.current && frame.current)
@@ -573,6 +692,15 @@ export default function Page() {
                 (s) => s.hash === c.plan.datasetHash,
               )!;
             bytes.current = new Uint8Array(primary.bytes);
+            setSource(undefined);
+            setExecutedSources(
+              (artifact.manifest.sources ?? []).map((source) => ({
+                ...source,
+                bytes: artifact.snapshots.find(
+                  (s) => s.hash === source.sourceHash,
+                )!.bytes,
+              })),
+            );
             setHash(c.plan.datasetHash);
             setFilename("Saved approved snapshot");
             setExecutedPlan(c.plan);
@@ -615,6 +743,7 @@ export default function Page() {
                     bytes.current,
                     ...(executedLookup ? [executedLookup] : []),
                   ],
+                  sources: executedSources,
                   calculations: [
                     {
                       id: "local-1",
