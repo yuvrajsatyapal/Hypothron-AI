@@ -1,5 +1,54 @@
 # Hypothron AI — Frontend Experience Master Plan
 
+**Current decision: F1 rejected; design reset authorized on 13 October 2026.** Cleanup and documentation only. Stop before implementing a new landing page; that requires the user's explicit authorization. Analytical phase status and the blocked public-release gate are unchanged.
+
+## Authoritative design-reset decision
+
+The user rejected the previous F1 visuals. The process spread attention across six simultaneous compositions, too many references, skills and restrictions before establishing a compelling visual direction. Historical static QA and critic acceptance do not override that rejection. The Evidence Observatory concept, mineral-teal/font/token proposal and old F0–F7 ordering are superseded rather than approved inputs to a new implementation.
+
+**Removed:** isolated F1 `prototype.html`, `prototype.css`, `prototype.js`, `tokens.css`, `validate.mjs`, synthetic fixture, five font/license/manifest assets and six screenshots. F1 was untracked and never integrated into the application; no application route/component, shared style or package required removal. See the [exact inventory and reset validation](F1_RESET_REPORT.md).
+
+**Preserved:** the original working Next.js frontend, all API/backend/database code, browser executor, contracts, tests, locks, existing .planning artifacts, master plan and historical reports. Retained [F1 design](f1/DESIGN.md), [scope](f1/SCOPE_AND_PLAN.md), [report](f1/REPORT.md) and [review](f1/REVIEW.md) are explicitly rejected/superseded; [historical validation](f1/VALIDATION.json) remains evidence of the old static artifact only. Unrelated `next-env.d.ts` and `.env.example` changes are excluded from this task.
+
+### Reference hierarchy and creative scope
+
+1. **Primary:** [MeetStream](https://meetstream.ai/), for cinematic presentation, sophisticated composition, scroll-driven storytelling, depth, transitions and overall craft. Author original Hypothron imagery, scenes, copy and branding; do not copy its assets or identity. Public page content was rechecked for this reset; no fresh motion/performance audit is claimed.
+2. **Secondary, only for a specific need:** [21st.dev](https://21st.dev/) for individual components and [ThreeUI](https://threeui.com/browse) for meaningful 3D inspiration. Check item source/license before future reuse; neither sets the brand nor triggers automatic dependency installation.
+3. No additional reference catalogue or simultaneous dashboard directions. Use at most one relevant design skill if it materially helps a later task; **do not use awwwards or emil-design-eng**. No design skill is used for this reset.
+
+### Frontend and motion strategy
+
+- Keep **Next.js 15 + React 19**. **Tailwind CSS v4 is the primary styling system for the future redesign**, with custom CSS for specialized effects and semantic CSS variables where useful. This overrides the archived plain-CSS-only recommendation. Tailwind/PostCSS is not installed in the inspected repository; no existing Tailwind configuration was removed and no dependency is added during cleanup.
+- Use **GSAP + ScrollTrigger** for cinematic marketing scroll choreography and **Three.js** for scenes that convey meaning. Native scrolling, lazy-loaded marketing chunks, bounded render work, disposal on navigation and reduced-motion/no-WebGL fallbacks remain required. These libraries are planned, not installed by this reset.
+- Separate the marketing experience and analytical workspace in routing and bundles during a later scoped integration. Marketing must not import private dataset/session stores, executor bridge, persistence or provider clients; analytical routes must not load the marketing scene. The existing working `/` route stays accessible throughout this reset. Any future move must preserve session ownership, unsaved memory and cancellation, with tested navigation behavior.
+- New colors, type and composition remain undecided until the first landing direction is reviewed. Rejected prototype tokens do not establish the new UI brand.
+
+### Revised implementation sequence
+
+| Milestone | Scope and exit |
+|---|---|
+| Reset — this task | Remove rejected static artifacts, mark history, validate original frontend, commit locally and stop |
+| First new design milestone — awaits explicit authorization | One exceptional landing-page hero and a coherent scroll-driven storytelling experience; original assets/branding, composed static and reduced-motion versions, focused desktop/mobile review |
+| Visual direction approval | User approves that landing direction before expanding screens or redesigning the analytical workspace |
+| Separate workspace redesign | Scoped design/plan and incremental behavior-preserving implementation for dataset/metric, investigation/report, history/replay; test state ownership, consent and recovery |
+| Integration and hardening | Route/bundle separation, focused browser/unit/type/build checks, accessibility and performance evidence; public release remains a separately authorized gate |
+
+The marketing milestone comes first. Do not revive six simultaneous workspace prototypes or make a complete workspace redesign a prerequisite for the landing direction.
+
+### Engineering constraints retained
+
+- Preserve hypothesis-driven investigation, deterministic numerical verification and reproducible zero-inference replay. FastAPI/LangGraph owns orchestration; the frontend must not create another scheduler.
+- Raw CSV/Parquet stays in browser memory by default; no raw upload, automatic snapshot persistence or new telemetry. Save/Import consent, source/metric approval, ephemeral keys and fixed provider destinations remain explicit. Metadata and aggregates are sensitive.
+- Keep executor origin/CSP, trusted operation compiler/templates, bounded execution and existing contract/artifact/runtime versions. Do not relax execution policy for fonts, animation or 3D.
+- Present validated claims, exact values and citations. Keep verification separate from CLIENT_REPORTED provenance; agreement is not trusted server attestation, confidence or causality. Synthetic demonstrations must be labeled; no invented capability or benchmark.
+- Preserve API authorization, frozen run inputs, SSE cursor/recovery, idempotence, late-result rejection, cancellation and history/bundle/replay behavior. New application behavior requires meaningful Red → Green → Refactor tests.
+- Maintain semantic HTML, visible focus, keyboard navigation, readable contrast, responsive composition, zoom/reflow and equivalent static/reduced-motion reading. Canvas cannot carry essential inaccessible content. Measure rendering/loading; do not invent scores or field-performance guarantees.
+- Existing security/privacy/analytical contracts remain normative. No backend, database or trust-boundary changes are approved by rejecting a visual design. No push, deployment, paid services or public-readiness claim follows.
+
+## Historical proposal archive — superseded visual direction
+
+**Everything below is the preserved 13 October research proposal, not the current implementation order or visual instruction.** Its old reference breadth, skill use, styling recommendations, palette, fonts, concepts, screen designs and roadmap are historical. Useful engineering details remain context subject to the retained constraints above and current project contracts. Historical task/validation claims are not fresh reset results.
+
 **Research date:** 13 October 2026
 
 **Status:** Proposed direction; awaiting design review. This document does not authorize implementation or advance the project phase.
