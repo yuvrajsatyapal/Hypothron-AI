@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-10-13T12:59:09.050Z",
+  "environment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "os": "25.6.0",
+    "cpu": "Apple M2",
+    "totalMemoryBytes": 8589934592,
+    "browser": "154.0.8037.100"
+  },
+  "fixture": {
+    "rows": 10000,
+    "bytes": 318918,
+    "valueMinorUnits": "10100000"
+  },
+  "measurements": {
+    "importAndHashMs": 130,
+    "executionUiMs": 3877,
+    "workerTiming": "3413 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
+    "trackedMemory": "Tracked DuckDB allocations: 890880 bytes; Pandas dataframe: 1038966 bytes. These measurements exclude runtime overhead and are not peak heap bounds.",
+    "saveMs": 81,
+    "exportMs": 115,
+    "bundleBytes": 322806,
+    "loadMs": 96,
+    "replayMs": 4376,
+    "importValidateMs": 115,
+    "importSaveMs": 63,
+    "parquetImportAndCanonicalHashMs": 842,
+    "parquetFixtureBytes": 557,
+    "parquetArithmeticUiMs": 3868
+  },
+  "limitations": [
+    "One local sample, not percentile or peak-heap benchmark",
+    "UI timings include browser/automation and runtime startup",
+    "Tracked engine allocations omit runtime overhead",
+    "No physical mobile, real-origin or live provider measurements"
+  ]
+}

@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 const ci = process.env.HYPOTHRON_CI === "1";
+const production = ci || process.env.HYPOTHRON_PRODUCTION === "1";
 export default defineConfig({
   retries: 0,
   forbidOnly: ci,
@@ -24,7 +25,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "services/api/.venv/bin/uvicorn browser_server:app --host 127.0.0.1 --port 8000 --no-access-log",
+        "services/api/.venv/bin/uvicorn browser_server:app --host 127.0.0.1 --port 8000 --no-access-log --no-proxy-headers",
       env: {
         PYTHONPATH: ci
           ? "scripts/ci/python:services/api/tests"
@@ -43,11 +44,11 @@ export default defineConfig({
       reuseExistingServer: !ci,
     },
     {
-      command: ci
+      command: production
         ? "pnpm --filter @hypothron/web exec next start --hostname 127.0.0.1 --port 3000"
         : "pnpm web",
       url: "http://127.0.0.1:3000",
-      reuseExistingServer: !ci,
+      reuseExistingServer: !production,
       timeout: 120000,
     },
   ],

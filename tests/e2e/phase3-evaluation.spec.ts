@@ -161,11 +161,7 @@ test("ten golden questions and twelve adverse fixtures through genuine independe
   );
   expect(forged.provenance).toBe("CLIENT_REPORTED");
   await writeFile(
-    resolve(
-      process.env.HYPOTHRON_CI === "1"
-        ? "test-results/phase3-evaluation.json"
-        : "docs/reports/PHASE_3_EVALUATION.json",
-    ),
+    resolve("test-results/phase3-evaluation.json"),
     JSON.stringify(
       {
         schemaVersion: 1,

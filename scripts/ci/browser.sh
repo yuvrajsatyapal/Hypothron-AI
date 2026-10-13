@@ -12,4 +12,5 @@ pnpm build
 node --input-type=module -e 'import {chromium} from "@playwright/test"; const b=await chromium.launch(); console.log("Linux CI",process.platform,process.arch,"Chromium",b.version()); await b.close()'
 node scripts/ci/probe-browser-guard.mjs
 pnpm e2e
+services/api/.venv/bin/python -m hypothron.evaluation --observations test-results/phase5-evaluation.json --output test-results/phase5-baseline.json
 git diff --exit-code -- pnpm-lock.yaml services/api/uv.lock packages/contracts

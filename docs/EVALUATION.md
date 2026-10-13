@@ -1,6 +1,6 @@
 # Evaluation and Testing Plan
 
-No benchmarks have run. All targets here are planned; publish observed values with fixture/model/runtime versions and dates.
+Measured regression evidence exists in the Phase3/Phase4 reports. Phase5 adds twenty hand-derived golden questions and twelve earlier adverse fixtures in `tests/fixtures/phase5-golden.json`; fresh browser measurements and the equal-ceiling policy comparison are separate artifacts. None of these scripted fixtures measures live-model quality.
 
 ## Layers
 
@@ -13,7 +13,7 @@ No benchmarks have run. All targets here are planned; publish observed values wi
 
 ## Dataset progression
 
-Start with 10 questions (revenue sum, refund-adjusted revenue, grouped contribution, join duplication, missing data, timezone boundary, zero denominator, conflicting contracts, injected contradiction, exact replay). Expand to 20 for public MVP and 50–100 later. Separate prompt-development fixtures from held-out evaluation. Include insufficient evidence and unsupported operations so abstention is scored correctly.
+Phase3 measured ten questions; Phase5's twenty cover exact USD/EUR/JPY sums, refunds, half-open periods, fixed offsets, approved joins, values above the JavaScript safe-integer range, genuine zero, null/empty evidence, leap day and row permutation. The twelve adverse engine fixtures retain unsupported operation/timezone/precision, null, identity and relationship refusal coverage. Current operations are approved `revenue_sum` IR1/2; general grouping/anomaly/causal inference remains unsupported. Fifty to one hundred questions and held-out live evaluation remain future work. The present fixture questions and provider scripts are regression cases, not held-out model evaluation.
 
 ## Metrics and denominators
 
@@ -32,6 +32,40 @@ Start with 10 questions (revenue sum, refund-adjusted revenue, grouped contribut
 | Usage/cost | Attempted calls, actual tokens when provider reports them, unknown outcomes and estimates with pricing timestamp |
 
 Compare single-agent and multi-agent systems on identical contracts, operations, data, model and total token/call budgets. Stratify task difficulty; repeat stochastic runs where affordable and record uncertainty. A second verifier shared by both baselines isolates orchestration benefit. Publish failures and overhead even if the multi-agent system loses.
+
+## Phase5 offline comparison
+
+`services/api/src/hypothron/evaluation.py` is an offline harness, with no application route or new product agent. Its single-agent baseline makes one typed decision per iteration: select an approved dataset contract, or finish with a report. The multi-role arm invokes the implemented `InvestigationDriver`, `RequestRoleProvider`, real PostgreSQL ledger and fenced native LangGraph checkpoints. Both use the same scripted Gemini HTTP model (`gemini-test`), temperature0, at most12 attempted calls,1024 output tokens per request, and6 jobs. The single arm is ephemeral; durable persistence is part of the measured multi-role overhead.
+
+Both consume the same fresh browser-observed SQL/Pandas results, diagnostics and approved plans, and use `verify_evidence` and `validated_report`. The harness never computes replacement answers or synthesizes measured engine values. It first requires all32 distinct fixture IDs, validates golden plans against source/lookup SHA256 identities and compares both observed results/statuses to hand-derived ground truth. Provider scripts choose approved inputs and quote verified observations; they do not contain fixture expected answers. Invalid reports fall back through the same reporting policy.
+
+Run after the fresh browser evaluation creates its report, using the isolated test database with migrations applied:
+
+```sh
+source /tmp/hypothron-phase5-env.sh
+services/api/.venv/bin/python -m hypothron.evaluation \
+  --observations docs/reports/PHASE_5_EVALUATION.json \
+  --output docs/reports/PHASE_5_BASELINE.json
+```
+
+The browser report records20 golden and12 adverse observations, runtime identity, engine/worker latency, tracked allocations and privacy checks. The baseline JSON records its source report/fixture digests, generation timestamps, each arm's attempted calls, completed outcomes, evidence correctness, independent verification coverage, verification statuses, report claim counts and orchestration latency. Completion/correctness/status denominators are20 eligible runs; coverage uses all material findings, including explicit inconclusive empty/null findings. False VERIFIED uses only VERIFIED honest-client findings as its denominator. The twelve rejected engine operations never create a valid result, so their refusal count is separate and their orchestration eligibility is0. They are not counted as twelve invented graph runs.
+
+Token totals and costs remain null: mock envelopes omit usage metadata and no inference is billed. Browser computation is reused, so orchestration timing excludes engine execution; sequential observations include different persistence/bootstrap overhead and are not controlled latency trials. Median and sample count are reported; p95, recovery rates, peak heap and unsupported-claim quality rates are not inferred. Numerical claim authority is tested with malformed citations/causal proposals, not scored by a model. No superiority claim follows from equal correctness or a lower call count in these scripts. Real-provider compatibility, stochastic reasoning quality and external release remain unvalidated.
+
+Observed on2026-10-13 in [the baseline artifact](reports/PHASE_5_BASELINE.json), sourced from [the fresh browser artifact](reports/PHASE_5_EVALUATION.json):
+
+| Metric | Single decision loop | Durable multi-role graph |
+|---|---|---|
+| Correct expected completion/status/evidence |20/20 each|20/20 each|
+| Independent checks / material findings |20/20|20/20|
+| VERIFIED / all checked outcomes |18/20 (two INCONCLUSIVE)|18/20 (two INCONCLUSIVE)|
+| False VERIFIED / VERIFIED findings |0/18|0/18|
+| Validated numerical report claims |18|18|
+| Attempted mock HTTP calls |40|80|
+| Median orchestration latency (20 samples) |2.894ms|248.578ms|
+| Tokens / costs |Unavailable|Unavailable|
+
+The browser also rejected12/12 adverse operations. These finite fixtures establish scripted correctness and bounded integration for this local configuration; the difference in calls and timing reflects the prescribed policies and persistence work.
 
 ## Release gating
 

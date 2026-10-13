@@ -1,0 +1,982 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-13T12:59:59.049519+00:00",
+  "source": {
+    "path": "docs/reports/PHASE_5_EVALUATION.json",
+    "sha256": "b705a437c924e34d4e4aae968f3ac74a2d81ba17c041a82f9a79487d77827342",
+    "generatedAt": "2026-10-13T12:58:25.233Z",
+    "target": "Local desktop Chrome; real DuckDB-WASM and Pyodide/Pandas; mocked external HTTP only",
+    "fixtureSha256": "4134cef5b0b33ca168e759131ac064606edaec51a209539b3bf38fda271c732a"
+  },
+  "conditions": {
+    "provider": "gemini",
+    "model": "gemini-test",
+    "temperature": 0,
+    "transport": "mock HTTP only",
+    "attemptCeiling": 12,
+    "outputTokenCeilingPerCall": 1024,
+    "jobCeiling": 6,
+    "multiPersistence": "real PostgreSQL/fenced checkpoints/ledger",
+    "singlePersistence": "ephemeral offline decision loop",
+    "sharedVerifier": "hypothron.verification.verify_evidence",
+    "sharedReportValidator": "hypothron.reporting.validated_report"
+  },
+  "summary": {
+    "single": {
+      "runs": 20,
+      "completed": 20,
+      "evidenceCorrect": 20,
+      "statusCorrect": 20,
+      "independentlyChecked": 20,
+      "verified": 18,
+      "verifiedDenominator": 18,
+      "materialFindingsDenominator": 20,
+      "reportClaims": 18,
+      "falseVerified": 0,
+      "attemptedCalls": 40,
+      "tokens": null,
+      "cost": null,
+      "orchestrationLatencyMs": {
+        "samples": 20,
+        "median": 2.894188044592738,
+        "p95": null
+      }
+    },
+    "multi": {
+      "runs": 20,
+      "completed": 20,
+      "evidenceCorrect": 20,
+      "statusCorrect": 20,
+      "independentlyChecked": 20,
+      "verified": 18,
+      "verifiedDenominator": 18,
+      "materialFindingsDenominator": 20,
+      "reportClaims": 18,
+      "falseVerified": 0,
+      "attemptedCalls": 80,
+      "tokens": null,
+      "cost": null,
+      "orchestrationLatencyMs": {
+        "samples": 20,
+        "median": 248.57824994251132,
+        "p95": null
+      }
+    }
+  },
+  "observations": [
+    {
+      "id": "G01",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 4068.199999809265,
+      "workerElapsedMs": 4015.699999809265,
+      "engineMemory": {
+        "pandasDataframeBytes": 452,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.8536671306937933
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 316.32987479679286
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G02",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 4865.599999904633,
+      "workerElapsedMs": 4746.299999952316,
+      "engineMemory": {
+        "pandasDataframeBytes": 326,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.0268328953534365
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 198.86195822618902
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G03",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 5644.5,
+      "workerElapsedMs": 5337.200000047684,
+      "engineMemory": {
+        "pandasDataframeBytes": 320,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.3518751841038465
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 166.17041593417525
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G04",
+      "expectedStatus": "INCONCLUSIVE",
+      "engineElapsedMs": 4515.600000143051,
+      "workerElapsedMs": 4357.699999809265,
+      "engineMemory": {
+        "pandasDataframeBytes": 199,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 0,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 0,
+        "orchestrationElapsedMs": 2.252708887681365
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 0,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 0,
+        "orchestrationElapsedMs": 171.43791704438627
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G05",
+      "expectedStatus": "INCONCLUSIVE",
+      "engineElapsedMs": 5205.800000190735,
+      "workerElapsedMs": 5064.799999952316,
+      "engineMemory": {
+        "pandasDataframeBytes": 316,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 0,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 0,
+        "orchestrationElapsedMs": 2.49504204839468
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 0,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 0,
+        "orchestrationElapsedMs": 210.52266703918576
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G06",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 4436.200000047684,
+      "workerElapsedMs": 4309,
+      "engineMemory": {
+        "pandasDataframeBytes": 582,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 3.182915970683098
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 276.6397080849856
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G07",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3657.2000000476837,
+      "workerElapsedMs": 3602.800000190735,
+      "engineMemory": {
+        "pandasDataframeBytes": 601,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 8.783374913036823
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 284.2865828424692
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G08",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3695.399999856949,
+      "workerElapsedMs": 3638.899999856949,
+      "engineMemory": {
+        "pandasDataframeBytes": 635,
+        "duckdbTrackedBytes": 208896
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.3689582012593746
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 226.73170897178352
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G09",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3345.899999856949,
+      "workerElapsedMs": 3297.2999999523163,
+      "engineMemory": {
+        "pandasDataframeBytes": 509,
+        "duckdbTrackedBytes": 208896
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.137708943337202
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 244.19833393767476
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G10",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3570.7000000476837,
+      "workerElapsedMs": 3535.5,
+      "engineMemory": {
+        "pandasDataframeBytes": 352,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.3178330156952143
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 309.6194160170853
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G11",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3530.4000000953674,
+      "workerElapsedMs": 3472.9000000953674,
+      "engineMemory": {
+        "pandasDataframeBytes": 198,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.934708958491683
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 308.6044581141323
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G12",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3305.2999999523163,
+      "workerElapsedMs": 3266.9000000953674,
+      "engineMemory": {
+        "pandasDataframeBytes": 327,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 5.347999976947904
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 395.00708295963705
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G13",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3911.9000000953674,
+      "workerElapsedMs": 3864.100000143051,
+      "engineMemory": {
+        "pandasDataframeBytes": 327,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 4.3605410028249025
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 240.99108297377825
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G14",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3658.800000190735,
+      "workerElapsedMs": 3593.5,
+      "engineMemory": {
+        "pandasDataframeBytes": 326,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 3.166540991514921
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 255.34787494689226
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G15",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3704.5999999046326,
+      "workerElapsedMs": 3656.7999999523163,
+      "engineMemory": {
+        "pandasDataframeBytes": 321,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 3.4054999705404043
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 271.2390418164432
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G16",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 4057.300000190735,
+      "workerElapsedMs": 4004.0999999046326,
+      "engineMemory": {
+        "pandasDataframeBytes": 326,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 3.715792205184698
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 339.6046250127256
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G17",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3766.4000000953674,
+      "workerElapsedMs": 3702.5999999046326,
+      "engineMemory": {
+        "pandasDataframeBytes": 446,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 3.2471248414367437
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 252.95816594734788
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G18",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 4136.5,
+      "workerElapsedMs": 4077.5999999046326,
+      "engineMemory": {
+        "pandasDataframeBytes": 321,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.2172078024595976
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 190.85841602645814
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G19",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3812.9000000953674,
+      "workerElapsedMs": 3764.4000000953674,
+      "engineMemory": {
+        "pandasDataframeBytes": 452,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 2.2482089698314667
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 237.26537497714162
+      },
+      "multiDurableAttempts": 4
+    },
+    {
+      "id": "G20",
+      "expectedStatus": "VERIFIED",
+      "engineElapsedMs": 3801.7999999523163,
+      "workerElapsedMs": 3737.899999856949,
+      "engineMemory": {
+        "pandasDataframeBytes": 328,
+        "duckdbTrackedBytes": 139264
+      },
+      "engineRuntime": {
+        "duckdb": "v1.4.3",
+        "pyodide": "0.29.3",
+        "pandas": "2.3.3",
+        "numpy": "2.2.5"
+      },
+      "single": {
+        "status": "COMPLETE",
+        "calls": 2,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 3.386541036888957
+      },
+      "multi": {
+        "status": "COMPLETE",
+        "calls": 4,
+        "tokens": null,
+        "jobs": 1,
+        "evidenceCorrect": true,
+        "statusCorrect": true,
+        "completed": true,
+        "verified": 1,
+        "independentlyChecked": 1,
+        "reportSource": "validated",
+        "reportClaimCount": 1,
+        "orchestrationElapsedMs": 230.45304091647267
+      },
+      "multiDurableAttempts": 4
+    }
+  ],
+  "adverseEngineRejections": {
+    "observed": 12,
+    "orchestrationComparisonEligible": 0,
+    "falseVerified": 0
+  },
+  "limitations": [
+    "Scripted regression policies, not held-out live-model evaluation or superiority evidence.",
+    "Both policies consume the same measured browser results; engines are not re-executed inside Python.",
+    "Orchestration timings exclude browser computation and are sequential warm/cold observations, not controlled performance trials.",
+    "Single policy combines selection/reporting; multi policy additionally plans hypotheses and uses durable PostgreSQL.",
+    "Tokens and cost unavailable: mock envelope omits usage, no paid inference occurred.",
+    "No recovery, allocation or unsupported-claim rate is inferred from this orchestration comparison.",
+    "CLIENT_REPORTED agreement is not execution attestation."
+  ]
+}
