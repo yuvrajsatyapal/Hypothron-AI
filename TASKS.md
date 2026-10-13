@@ -38,13 +38,13 @@ Only check a task after its behavior tests pass; phase exit gates are tracked se
 
 - [x] T4.5.4 Independently verify hosted main-push run38290929211, preserve validation history and finalize acceptance documentation.
 
-Hosted [run38290929211](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211) was independently verified on2026-10-13 at `8bd118c5b6c6c297ea385b3cd7e0355ab3ed470e`: all four jobs succeed. Local and hosted evidence remain distinct; Phase5 remains unstarted.
+Hosted [run38290929211](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/runs/38290929211) was independently verified on2026-10-13 at `8bd118c5b6c6c297ea385b3cd7e0355ab3ed470e`: all four jobs succeed. Local and hosted evidence remain distinct; Phase5 was unstarted at that historical acceptance milestone. Its current local acceptance is recorded below.
 
 ## Phase 5
 
-- [ ] T5.1 CSV/Parquet/multi-dataset UI, 20 golden questions and equal-budget baseline evaluation.
-- [ ] T5.2 Full release lint/type/build/security/browser suite, retention and cancellation/resource probes. CI implementation moved to Phase4.5; hosted CI verified; release-specific gates remain pending.
-- [ ] T5.3 Local run guide, integration report and learning documentation.
+- [x] T5.1 Bounded CSV/Parquet/three-source UI,20golden/twelve-adverse fixtures and equal-budget scripted baseline; supported revenue IR remains unchanged.
+- [x] T5.2 Local full regression/static/security/browser/retention/cancellation/resource probes PASS. Physical devices/peak heap/actual-origin validation remain PARTIAL/BLOCKED; no new hostedPhase5CI.
+- [x] T5.3 Local guide, Phase5report/deepdive, linked validated diagrams, architecture/security/learning documentation.
 - [ ] T5.4 External deployment gates (requires separate authorization); never label passed from localhost.
 
 ## Rulings and blockers
@@ -84,3 +84,6 @@ Hosted [run38290929211](https://github.com/yuvrajsatyapal/Hypothron-AI/actions/r
 - 2026-10-12 Phase4.5: 93backend/99unit/static/types/format/build/migrations and32native Linuxarm64 Chromium tests pass; separate fresh-DB API/LangGraph/engines check passes. Read-only CI and active provider refusal implemented; no push, hosted run or Phase5 work. See docs/reports/PHASE_4_5_CI_REPORT.md for local task hashes and review evidence.
 
 - 2026-10-13 Phase4.5 hosted acceptance: authenticated read-only GitHub API/log inspection confirms run38290929211 success, attempt1/main/push at `8bd118c5b6c6c297ea385b3cd7e0355ab3ed470e`; static21s, backend28s, frontend58s and native arm64 browser9m8s. Full93/99/32test totals, asset integrity and active guards pass; non-blocking uv cache-save collision recorded. No full-suite rerun, agent push/deploy or Phase5 work; only scoped acceptance documentation committed locally.
+
+
+- 2026-10-13 Phase5 brief supersedes all historical Phase5 stops. T5.1–T5.3 local candidatePASS:118backend/113units/39productionChrome,20golden/12adverse and priorfixture regression, equal-ceiling scriptedcomparison, migrations/static/build/format/diagrams, independent reviewsACCEPT. T5.4publicexit remainsBLOCKED, not waived; physicalmobile/liveprovider/peakheap/newhostedCI unvalidated. No Phase6/push/deployment/paid inference. Taskcommits/evidence in docs/reports/PHASE_5_REPORT.md; unrelated.env.example preserved.

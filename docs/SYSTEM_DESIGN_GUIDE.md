@@ -1,6 +1,6 @@
 # System-Design and Interview Preparation
 
-The overview describes the target design. Phases 1–4 have scoped local implementations and tests; study their reports and code links below. Say “designed” for unimplemented phases and “measured” only for recorded artifacts.
+The overview describes the target design. Phases 1–5 have scoped local implementations and tests; study their reports and code links below. Say “designed” for unimplemented phases and “measured” only for recorded artifacts.
 
 ## Explain the system in ninety seconds
 
@@ -108,4 +108,8 @@ Before Phase5 prioritize canonical identity/trust, transaction failure semantics
 
 ## Phase 4.5 CI learning progression
 
-Read [CI guide](CI_CD.md), [engineering deep dive](learning/PHASE_4_5_CI_DEEP_DIVE.md), [evidence report](reports/PHASE_4_5_CI_REPORT.md) and [gate architecture](diagrams/phase-4-5-ci.html). Study workflow job/service isolation, frozen toolchains/runtime hashes, native saver migration ownership, production browser startup, mocked wire plus active inference refusal, PR authority and sensitive artifact risks. Reproduce in disposable Linux containers; distinguish recorded local target evidence from an actual hosted Actions run. Phase5 remains unstarted; prioritize hosted evidence, resource/retention/cancellation reasoning and actual-origin release probes before any authorized release.
+Read [CI guide](CI_CD.md), [engineering deep dive](learning/PHASE_4_5_CI_DEEP_DIVE.md), [evidence report](reports/PHASE_4_5_CI_REPORT.md) and [gate architecture](diagrams/phase-4-5-ci.html). Study workflow job/service isolation, frozen toolchains/runtime hashes, native saver migration ownership, production browser startup, mocked wire plus active inference refusal, PR authority and sensitive artifact risks. Reproduce in disposable Linux containers; distinguish recorded local target evidence from an actual hosted Actions run. Phase5 local integration adds fresh evaluation; prioritize new hosted evidence, resource/retention/cancellation reasoning and actual-origin release probes before any authorized release.
+
+## Phase5 final integration study
+
+Read [Phase5 acceptance report](reports/PHASE_5_REPORT.md), then the comprehensive [Phase5 deep dive](learning/PHASE_5_DEEP_DIVE.md). New diagrams show [Parquet ingestion/provenance](diagrams/phase-5-ingestion.html) and [local validation versus external release](diagrams/phase-5-release.html); prior graph/replay diagrams remain relevant. Study shared parsing versus independent exact arithmetic, versioned original/derived lineage, bounded join cardinality, native-saver error redaction, lease/epoch fencing, consent/key lifetime, strict ZIP/artifact identity and zero-inference replay. Defend the measured equal-ceiling single-loop comparison honestly: scripted numerical correctness ties and fewer baseline calls do not establish live model quality or multi-agent superiority. Local candidate acceptance cannot certify TLS/proxy/provider/backups or physical mobile compatibility. The deep dive includes detailed interview answers, exercises and prioritized study topics.

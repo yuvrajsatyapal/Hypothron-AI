@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-10-13T12:43:48.946862+00:00",
+  "target": "task-owned PostgreSQL17 restart on loopback55433; genuine InvestigationDriver/RequestRoleProvider/fenced native saver; only provider HTTP mocked",
+  "status": "PASS",
+  "beforeRestart": {
+    "state": "WAITING_RESULT",
+    "durableAttempts": 2
+  },
+  "afterRestart": {
+    "samePendingJob": true,
+    "providerCallsOnRecovery": 0,
+    "completionProviderCalls": 2,
+    "attemptsAfterCompletion": 4,
+    "state": "COMPLETE",
+    "verification": "VERIFIED",
+    "provenance": "CLIENT_REPORTED",
+    "duplicateAck": true
+  },
+  "limitations": [
+    "Protocol persistence/reconciliation probe using synthetic client evidence; not a separate numerical execution benchmark",
+    "No production DB, deployment or external provider restart tested"
+  ]
+}

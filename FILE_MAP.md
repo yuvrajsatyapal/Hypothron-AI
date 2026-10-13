@@ -37,7 +37,7 @@ Dependency direction: API routes → domain/policies/repositories; domain never 
 | docs/reports/PHASE_1_REPORT.md / PHASE_1_BROWSER_MEASUREMENT.json | Gate status, code-based learning, measured evidence and exact resume |
 | compose.yaml / services/api/.env.example | Local PostgreSQL development setup; no hosted credentials |
 
-Not implemented: Parquet/general multi-dataset analytics and hosted deployment. CI is implemented in Phase4.5; the first hosted main-push run is independently verified in docs/reports/PHASE_4_5_CI_REPORT.md. Explicit persistence/bundles/replay are implemented in Phase4. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
+Phase5 implements bounded Parquet ingestion and up to three sources, as mapped below. General multi-dataset analytics and hosted deployment remain unimplemented. CI is implemented in Phase4.5; the first hosted main-push run is independently verified in docs/reports/PHASE_4_5_CI_REPORT.md. Explicit persistence/bundles/replay are implemented in Phase4. Approved single-lookup joins and structured reports now exist in Phase3. FILE_MAP is a responsibility map, not a phase completion claim.
 
 | Path | Responsibility |
 |---|---|
@@ -96,3 +96,22 @@ Not implemented: Parquet/general multi-dataset analytics and hosted deployment. 
 | playwright.config.ts | Explicit CI bundled Chromium/production fresh services; separate prior macOS local mode |
 | docs/CI_CD.md, learning/PHASE_4_5_CI_DEEP_DIVE.md, reports/PHASE_4_5_CI_REPORT.md | Operations, teaching, exact local evidence and hosted limits |
 | docs/diagrams/phase-4-5-ci.html | Validated parallel gate and isolated integration architecture |
+
+## Phase5 local release integration
+
+| Path | Actual responsibility |
+|---|---|
+| .planning/specs/phase-5.md / plans/phase-5.md / design/phase-5.md | Accepted scoped tasks, risks and existing-workspace design |
+| apps/executor/src/ingestion.ts | Bounded actual Parquet decoding, scalar canonicalization and strict reply schema |
+| packages/contracts/parquet-runtime.json | Separate pinned extension identity; historical runtime manifest unchanged |
+| apps/web/lib/ingestion.ts | Browser-only file acquisition, source lineage and three-input/blob limits |
+| apps/web/lib/artifacts.ts / bundles.ts | Strict original/derived manifest2 and hash-named STORED ZIP compatibility |
+| services/api/src/hypothron/evaluation.py | Offline equal-ceiling single-loop versus real durable graph comparison |
+| services/api/src/hypothron/operations.py | Fixed-event bounded privacy-safe JSON diagnostics |
+| services/api/src/hypothron/release_policy.py | Exact origin config, local peer admission and sanitized HTTP boundary |
+| services/api/src/hypothron/retention.py | Periodic cooperative bounded transactional expiry sweep |
+| scripts/run-api.sh / release-probe.mjs | Local single-process safe launcher / actual read-only HTTP policy probe |
+| tests/fixtures/phase5-* / tests/e2e/phase5-* | Synthetic scalar/malformed Parquet,20golden+12adverse, real lifecycle/egress/workload/viewport validation |
+| docs/reports/PHASE_5_* | Fresh scoped evidence, measured baseline/performance/viewport observations and acceptance report |
+| docs/learning/PHASE_5_DEEP_DIVE.md | Actual final architecture, execution/security trade-offs and interview study |
+| docs/diagrams/phase-5-*.html | Skill-designed ingestion/provenance and local/release physical-placement views |

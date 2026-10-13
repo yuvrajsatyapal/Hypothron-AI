@@ -1,6 +1,6 @@
 # Hypothron AI — Architecture
 
-Status: target architecture with implemented local Phases 1–4; tested scope and remaining validation are in CURRENT_PHASE.md and the phase reports. See DECISIONS.md for rationale and docs/RISKS_AND_RESOLUTIONS.md for unresolved release gates.
+Status: target architecture with implemented local Phases 1–5; tested scope and remaining validation are in CURRENT_PHASE.md and the phase reports. See DECISIONS.md for rationale and docs/RISKS_AND_RESOLUTIONS.md for unresolved release gates.
 
 ## System shape
 
@@ -123,4 +123,16 @@ Phase4 executor readiness: a credential-free PROBE/HOST_READY exchange verifies 
 
 ## Phase 4.5 CI validation architecture
 
-[CI gate diagram](docs/diagrams/phase-4-5-ci.html) shows independent static/backend/frontend jobs feeding isolated real-engine Chromium integration. Read-only workflow/test authority is separate from deployment. Every DB is disposable test-only; production UI/worker integration uses test-only mocked provider HTTP with active network refusal. [CI guide](docs/CI_CD.md) and [report](docs/reports/PHASE_4_5_CI_REPORT.md) distinguish local Linux container results, prior macOS support and independently verified hosted Linux CI execution. No product trust/persistence semantics change; Phase5 remains unstarted.
+[CI gate diagram](docs/diagrams/phase-4-5-ci.html) shows independent static/backend/frontend jobs feeding isolated real-engine Chromium integration. Read-only workflow/test authority is separate from deployment. Every DB is disposable test-only; production UI/worker integration uses test-only mocked provider HTTP with active network refusal. [CI guide](docs/CI_CD.md) and [report](docs/reports/PHASE_4_5_CI_REPORT.md) distinguish local Linux container results, prior macOS support and independently verified hosted Linux CI execution. At that historical Phase4.5 milestone there was no product trust/persistence change and Phase5 was unstarted. The following implemented Phase5 delta supersedes that status.
+
+## Phase5 implemented integration delta
+
+The local v1 candidate adds genuine bounded Parquet ingestion without broadening analytical IR. `apps/executor/src/ingestion.ts` inspects Parquet envelopes, metadata expansion and supported scalar schema, then fixed DuckDB projections cast exact numbers to strings before Arrow conversion. Original bytes stay immutable; the approved canonical CSV has a distinct SHA256. `parquet-runtime.json` pins the actual extension separately, preserving historical runtime-manifest identity. Both DuckDB and Pandas independently compute the approved canonical CSV. They share decoding; agreement is CLIENT_REPORTED and cannot prove original data truth, independent decoding or server execution.
+
+Three logical inputs include any lookup. Each calculation permits one full-coverage one-to-one/many-to-one join or an independent revenue computation. Combined primary/lookup CSV stays10MiB, each source/derived file10MiB, all original+derived run blobs30MiB. Grain, uniqueness, missing-key/population and exact minor-unit checks remain in both numerical paths. No arbitrary SQL/Python, generic statistics, three-way joins or connectors are added. Native UI source/type/version feedback and explicit derived/relationship/provider consent use existing workspace conventions.
+
+Manifest2 preserves original Parquet plus derived CSV and strict normalization/decoder/rows/schema lineage; CSV-only artifacts remain unchanged manifest1. `artifacts.ts` excludes original source descriptors from executable authorities. Bundle parser paths are hash-named and STORED-only. Replay hashes both original and derived blobs, executes saved canonical CSV and compares historical evidence without inference/re-decoding. Fresh reasoning stays separately consented and parent-linked.
+
+Operational events use strict allowlisted JSON and hashed UUID correlation. Workflow wrappers sanitize ordinary exceptions before native checkpoint error writes; cancellation/GraphInterrupt propagate. HTTP and lifespan failures suppress exception payloads. A cooperative lifespan task periodically runs existing fenced transactional retention cleanup. Admission is a bounded local actual-peer cap, not distributed public defense. Evaluation runs genuine durable graph versus a bounded single decision loop using equal ceilings and actual mocked HTTP; observed browser arithmetic is reused explicitly.
+
+Validated new diagrams: [ingestion and provenance](docs/diagrams/phase-5-ingestion.html), [local validation and release gates](docs/diagrams/phase-5-release.html). Reuse [implemented graph recovery](docs/diagrams/phase-2-routing.html) and [immutable zero-inference replay](docs/diagrams/phase-4-replay.html). [Phase5 report](docs/reports/PHASE_5_REPORT.md) owns actual current evidence; [deep dive](docs/learning/PHASE_5_DEEP_DIVE.md) explains flows and trade-offs. External release remains BLOCKED.
