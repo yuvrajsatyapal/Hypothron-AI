@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import os
 import secrets
@@ -23,7 +24,9 @@ from hypothron.driver import InvestigationDriver
 from hypothron.investigations import mount_routes
 from hypothron.ledger import Ledger
 from hypothron.limits import BodyLimit
-from hypothron.retention import purge_expired
+from hypothron.operations import configure
+from hypothron.release_policy import ReleasePolicy, app_origin
+from hypothron.retention import purge_expired, purge_loop
 
 
 class EmptyRequest(BaseModel):
@@ -33,6 +36,7 @@ class EmptyRequest(BaseModel):
 def create_app(
     *, database_url: str, provider_transport: httpx.AsyncBaseTransport | None = None
 ) -> FastAPI:
+    origin = app_origin(os.getenv("APP_ORIGIN", "http://127.0.0.1:3000"))
     engine = create_async_engine(
         database_url,
         pool_size=3,
@@ -47,18 +51,30 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        yield
-        await engine.dispose()
+        stop = asyncio.Event()
+        purge = asyncio.create_task(purge_loop(sessions, stop))
+        try:
+            yield
+        finally:
+            stop.set()
+            try:
+                async with asyncio.timeout(6):
+                    await purge
+            except TimeoutError:
+                purge.cancel()
+                await asyncio.gather(purge, return_exceptions=True)
+            await engine.dispose()
 
     app = FastAPI(title="Hypothron AI", lifespan=lifespan)
     app.state.sessions = sessions
     app.add_middleware(BodyLimit)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[os.getenv("APP_ORIGIN", "http://127.0.0.1:3000")],
+        allow_origins=[origin],
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "Content-Type"],
     )
+    app.add_middleware(ReleasePolicy)
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(_: object, __: RequestValidationError) -> JSONResponse:
@@ -124,4 +140,5 @@ def create_app(
 
 
 def app_factory() -> FastAPI:
+    configure()
     return create_app(database_url=os.environ["DATABASE_URL"])

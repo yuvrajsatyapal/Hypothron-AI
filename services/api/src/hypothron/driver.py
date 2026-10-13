@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import asdict
+from time import monotonic
 from typing import Any
 
 import httpx
@@ -14,6 +15,7 @@ from hypothron.agents.provider import RequestRoleProvider
 from hypothron.agents.workflow import Role, RoleProvider, build_workflow, initial_state
 from hypothron.checkpoints import checkpoint_store
 from hypothron.ledger import Ledger, LedgerError, digest
+from hypothron.operations import correlation, emit
 from hypothron.providers.http import ProviderError, Usage, _contains_secret
 
 SEGMENT_TIMEOUT_SECONDS = 60.0
@@ -35,14 +37,31 @@ class InvestigationDriver:
         provider: RoleProvider | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> dict[str, Any]:
+        identity = correlation(run_id)
+        started = monotonic()
+        emit("segment_started", **identity)
         try:
             with tracing_context(enabled=False):
                 async with asyncio.timeout(SEGMENT_TIMEOUT_SECONDS):
-                    return await self._advance(
+                    result = await self._advance(
                         owner, run_id, key, answer=answer, provider=provider, transport=transport
                     )
+                    emit(
+                        "segment_completed",
+                        **identity,
+                        elapsed_ms=min(600000, int((monotonic() - started) * 1000)),
+                        status=result["status"],
+                    )
+                    return result
         except TimeoutError:
+            emit("segment_failed", **identity, category="TIMEOUT")
             raise LedgerError("SEGMENT_TIMEOUT") from None
+        except LedgerError:
+            emit("segment_failed", **identity, category="POLICY")
+            raise
+        except BaseException:
+            emit("segment_failed", **identity, category="INTERNAL")
+            raise
 
     async def _advance(
         self,
@@ -84,6 +103,7 @@ class InvestigationDriver:
                         except LedgerError as error:
                             raise ProviderError(str(error)) from None
                         if cached is not None:
+                            emit("provider_cached", run_id=run_id, role=role, attempt=ordinal)
                             return cached
                         usage: dict[str, Any] | None = None
                         elapsed: int | None = None
@@ -104,7 +124,12 @@ class InvestigationDriver:
                             observe=observe,
                             transport=transport,
                         )
-                        response = await adapter(role, context, schema)
+                        emit("provider_dispatch", run_id=run_id, role=role, attempt=ordinal)
+                        try:
+                            response = await adapter(role, context, schema)
+                        except BaseException:
+                            emit("provider_failed", run_id=run_id, role=role, attempt=ordinal)
+                            raise
                         if _contains_secret(response, key.get_secret_value()):
                             raise ProviderError("SECRET_IN_OUTPUT")
                         try:
@@ -113,9 +138,10 @@ class InvestigationDriver:
                             )
                         except LedgerError as error:
                             raise ProviderError(str(error)) from None
+                        emit("provider_completed", run_id=run_id, role=role, attempt=ordinal)
                         return response
 
-                    graph = build_workflow(durable_provider, saver)
+                    graph = build_workflow(durable_provider, saver, diagnostic_run_id=run_id)
                     config: RunnableConfig = {
                         "configurable": {"thread_id": run_id},
                         "recursion_limit": 48,
@@ -123,6 +149,7 @@ class InvestigationDriver:
                     snapshot = await graph.aget_state(config)
                     input_value: Any = initial_state(row.request) if not snapshot.values else None
                     if snapshot.values and snapshot.next:
+                        emit("checkpoint_resume", run_id=run_id)
                         if snapshot.values.get("status") == "CLARIFYING":
                             if answer is not None:
                                 input_value = Command(resume={"answer": answer})
@@ -132,6 +159,7 @@ class InvestigationDriver:
                             job = snapshot.values["pending"]
                             # Recover crash after checkpoint issuance but before ledger insert.
                             await self.ledger.issue(lease, job)
+                            emit("job_reconciled", run_id=run_id)
                             record = await self.ledger.job(owner, run_id, job["id"])
                             if record.result is None:
                                 await self.ledger.status(lease, "WAITING_RESULT")

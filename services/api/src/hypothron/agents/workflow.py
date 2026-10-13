@@ -4,10 +4,15 @@ Caller supplies request-scoped role transport and checkpointer. Production owner
 atomic reservation/fencing and reconciliation belong to the PostgreSQL ledger.
 """
 
+import inspect
+from collections.abc import Awaitable, Callable, Coroutine
+from time import monotonic
 from typing import Any, Literal, Protocol, TypedDict
 from uuid import uuid4
 
+from langchain_core.runnables import RunnableLambda
 from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.errors import GraphInterrupt
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt
@@ -22,6 +27,7 @@ from hypothron.agents.models import (
     ReportReply,
     RunInput,
 )
+from hypothron.operations import emit
 from hypothron.providers.http import ProviderError
 from hypothron.reporting import ReportError, fallback_report, validated_report
 from hypothron.verification import contract_hash, verify_evidence
@@ -72,7 +78,10 @@ class RoleFailure(Exception):
 
 
 def build_workflow(
-    provider: RoleProvider, checkpointer: BaseCheckpointSaver[Any]
+    provider: RoleProvider,
+    checkpointer: BaseCheckpointSaver[Any],
+    *,
+    diagnostic_run_id: str | None = None,
 ) -> CompiledStateGraph[State, None, State, State]:
     async def ask(state: State, role: Role, schema: type[BaseModel]) -> BaseModel:
         if state["calls"] >= 12:
@@ -276,7 +285,37 @@ def build_workflow(
         return "issue" if state["decision"]["action"] == "execute" else "report"
 
     graph = StateGraph(State)
-    for name, node in [
+
+    def observed(
+        name: str, node: Callable[[State], State | Awaitable[State]]
+    ) -> Callable[[State], Coroutine[Any, Any, State]]:
+        async def execute(state: State) -> State:
+            before = monotonic()
+            if diagnostic_run_id is not None:
+                emit("node_started", run_id=diagnostic_run_id, node=name)
+            try:
+                value = node(state)
+                result = await value if inspect.isawaitable(value) else value
+                if diagnostic_run_id is not None:
+                    emit(
+                        "node_completed",
+                        run_id=diagnostic_run_id,
+                        node=name,
+                        elapsed_ms=min(600000, int((monotonic() - before) * 1000)),
+                    )
+                return result
+            except GraphInterrupt:
+                if diagnostic_run_id is not None:
+                    emit("node_paused", run_id=diagnostic_run_id, node=name)
+                raise
+            except Exception:  # noqa: BLE001 — sanitize before LangGraph persists error writes
+                if diagnostic_run_id is not None:
+                    emit("node_failed", run_id=diagnostic_run_id, node=name, category="INTERNAL")
+                raise RuntimeError("NODE_FAILED") from None
+
+        return execute
+
+    nodes: list[tuple[str, Callable[[State], State | Awaitable[State]]]] = [
         ("planner", planner),
         ("clarify", clarify),
         ("analyst", analyst),
@@ -284,8 +323,9 @@ def build_workflow(
         ("accept", accept),
         ("report", report),
         ("correction", correction),
-    ]:
-        graph.add_node(name, node)
+    ]
+    for name, node in nodes:
+        graph.add_node(name, RunnableLambda(observed(name, node)))
     graph.add_edge(START, "planner")
     graph.add_conditional_edges("planner", route_planner)
     graph.add_conditional_edges("clarify", lambda s: END if s["status"] == "FAILED" else "planner")
