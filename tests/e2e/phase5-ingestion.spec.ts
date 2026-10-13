@@ -58,6 +58,7 @@ test("real Parquet conversion approves canonical version and preserves source th
   await h
     .getByRole("button", { name: "Delete saved investigation", exact: true })
     .click();
+  await expect(h.getByLabel("Import investigation bundle")).toBeEnabled();
   await h.getByLabel("Import investigation bundle").setInputFiles(path!);
   await expect(h.getByTestId("import-preview")).toContainText("2 snapshots");
   await h
@@ -192,4 +193,63 @@ test("active Parquet nested worker reads only pinned extension bytes and denies 
     "DECIMAL(10,2)",
     { timeout: 35000 },
   );
+});
+
+test("primary and lookup imports cancel during file reads without late Parquet work", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    const read = File.prototype.arrayBuffer;
+    File.prototype.arrayBuffer = async function () {
+      if (this.name.endsWith(".parquet"))
+        await new Promise((r) => setTimeout(r, 1500));
+      return read.call(this);
+    };
+    const send = MessagePort.prototype.postMessage;
+    (window as unknown as { parquetRequests: number }).parquetRequests = 0;
+    MessagePort.prototype.postMessage = function (message, ...rest) {
+      if (message?.type === "PARQUET")
+        (window as unknown as { parquetRequests: number }).parquetRequests++;
+      return send.call(this, message, ...rest);
+    };
+  });
+  const cancel = page.getByRole("button", { name: "Cancel", exact: true });
+  const primary = page.getByLabel("Dataset CSV", { exact: true });
+  await primary.setInputFiles("tests/fixtures/phase5-revenue.parquet");
+  await expect(cancel).toBeEnabled();
+  await cancel.click();
+  await expect(primary).toBeEnabled();
+  // Await the deferred file read to prove its completion cannot enqueue work or restore state.
+  await page.waitForTimeout(1700);
+  await expect(page.getByRole("status").first()).toHaveText("CANCELLED");
+  await expect(page.getByTestId("source-profile")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Execute locally", exact: true }),
+  ).toBeDisabled();
+  await primary.setInputFiles({
+    name: "input.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(
+      "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n",
+    ),
+  });
+  await expect(page.getByRole("status").first()).toHaveText(
+    "Dataset loaded into local memory.",
+  );
+  await page.getByLabel("Use advanced v2 contract").check();
+  const lookup = page.getByLabel("Optional lookup CSV", { exact: true });
+  await lookup.setInputFiles("tests/fixtures/phase5-revenue.parquet");
+  await expect(cancel).toBeEnabled();
+  await cancel.click();
+  await expect(lookup).toBeEnabled();
+  await page.waitForTimeout(1700);
+  await expect(page.getByRole("status").first()).toHaveText("CANCELLED");
+  await expect(page.getByText(/Lookup in local memory:/)).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { parquetRequests: number }).parquetRequests,
+    ),
+  ).toBe(0);
+  await expect(cancel).toBeDisabled();
 });

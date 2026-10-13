@@ -149,6 +149,10 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
     buffer: Buffer.from("wrong,date\n1,2025-07-01\n"),
   });
   await page
+    .getByRole("region", { name: "Autonomous investigation" })
+    .getByRole("checkbox")
+    .check();
+  await page
     .getByLabel("BYOK provider key", { exact: true })
     .fill("browser-test-key-never-persist");
   await page
@@ -164,11 +168,6 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
       exact: true,
     }),
   ).toBeDisabled();
-  await page.getByLabel("Additional CSV datasets (up to two)").setInputFiles({
-    name: "delayed.csv",
-    mimeType: "text/csv",
-    buffer: Buffer.from(csv),
-  });
   await page.evaluate(() => {
     const original = File.prototype.arrayBuffer;
     File.prototype.arrayBuffer = async function () {
@@ -179,25 +178,30 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
     const state = window as typeof window & { afterCancelExecutions: number };
     state.afterCancelExecutions = 0;
     MessagePort.prototype.postMessage = function (value, options) {
-      if (value?.type === "EXECUTE") state.afterCancelExecutions++;
+      if (value?.type === "EXECUTE" || value?.type === "PARQUET")
+        state.afterCancelExecutions++;
       return send.call(this, value, options as Transferable[]);
     };
   });
   const creations = posts.filter((p) =>
     p.url.endsWith("/v1/investigations"),
   ).length;
-  await page
-    .getByLabel("BYOK provider key", { exact: true })
-    .fill("browser-test-key-never-persist");
-  await page
-    .getByRole("button", { name: "Start AI investigation", exact: true })
-    .click();
+  await page.getByLabel("Additional CSV datasets (up to two)").setInputFiles({
+    name: "delayed.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(csv.replace("10.10", "13.10")),
+  });
+  await expect(
+    page.getByRole("button", { name: "Start AI investigation", exact: true }),
+  ).toBeDisabled();
   await page
     .getByRole("button", { name: "Cancel investigation", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Start AI investigation", exact: true }),
+    page.getByLabel("Additional CSV datasets (up to two)"),
   ).toBeEnabled({ timeout: 10000 });
+  // File.arrayBuffer itself is not abortable; wait for the late return and prove it cannot enqueue work.
+  await page.waitForTimeout(1600);
   expect(
     await page.evaluate(
       () =>
@@ -205,6 +209,11 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
           .afterCancelExecutions,
     ),
   ).toBe(0);
+  await expect(
+    page
+      .getByRole("region", { name: "Autonomous investigation" })
+      .getByRole("checkbox"),
+  ).not.toBeChecked();
   expect(posts.filter((p) => p.url.endsWith("/v1/investigations")).length).toBe(
     creations,
   );
@@ -212,6 +221,10 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
   await page
     .getByLabel("Additional CSV datasets (up to two)")
     .setInputFiles([]);
+  await page
+    .getByRole("region", { name: "Autonomous investigation" })
+    .getByRole("checkbox")
+    .check();
   await page
     .getByLabel("BYOK provider key", { exact: true })
     .fill("browser-test-key-never-persist");
@@ -258,6 +271,10 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
   await expect(
     page.getByRole("button", { name: "Start AI investigation", exact: true }),
   ).toBeEnabled({ timeout: 10000 });
+  await page
+    .getByRole("region", { name: "Autonomous investigation" })
+    .getByRole("checkbox")
+    .check();
   await page
     .getByLabel("BYOK provider key", { exact: true })
     .fill("browser-test-key-never-persist");

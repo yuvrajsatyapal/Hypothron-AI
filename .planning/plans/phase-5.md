@@ -29,3 +29,6 @@ Check shared parser versus independent arithmetic distinction; source/version/li
 ## Progress ledger
 
 - 2026-10-13 baseline: HEAD32f3e1e, existingmain; unrelated untracked services/api/.env.example preserved. No Phase5 tests run yet. Spec/plan preflight: Tasks1/2 share runtime/canonical snapshot semantics (T2 consumes reviewedT1); Tasks1/4 share final docs (T4 reconciles actual implementation); Tasks3/4 share deployment gates (T4 validates, never deploys). Task scopes internally agree with spec.
+
+- Task1 data integration: committed `6fb8dc3`; Task3 operations: committed `58d60d8`. Focused reviews ACCEPT. Final gates supersede historical/interim observations.
+- Cancellation followup: RED production Chromium deferred primary-Parquet read restored data after Cancel; GREEN controller-owned primary/lookup/calculation cleanup and signal guards. Investigation additional-input cancellation independently owns its signal; cancelled prior import cannot enqueue a runtime job or clear a newer operation's busy state. Unit113/type/build/static checks pass; focused investigation/Parquet/deferred-import3tests pass. Independent data review ACCEPT with12 focused units. A separate performance test exposed asynchronous Delete→Import fixture timing; await enabled input before import, preserving application locking and deadlines.

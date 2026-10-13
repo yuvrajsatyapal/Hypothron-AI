@@ -38,6 +38,40 @@ export default function Page() {
   const [end, setEnd] = useState("2025-10-01T00:00:00Z");
   const [status, setStatus] = useState("Choose a CSV to begin.");
   const [busy, setBusy] = useState(false);
+  const [localBusy, setLocalBusy] = useState(false);
+  const localAbort = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      localAbort.current?.abort();
+      localAbort.current = null;
+      executor.current?.close();
+    },
+    [],
+  );
+  function beginLocal() {
+    const controller = new AbortController();
+    localAbort.current = controller;
+    setLocalBusy(true);
+    setBusy(true);
+    return controller;
+  }
+  function finishLocal(controller: AbortController) {
+    if (localAbort.current !== controller) return;
+    localAbort.current = null;
+    setLocalBusy(false);
+    setBusy(false);
+  }
+  function cancelLocal() {
+    if (!localAbort.current) return;
+    localAbort.current.abort();
+    localAbort.current = null;
+    ++uploadGeneration.current;
+    ++lookupGeneration.current;
+    executor.current?.cancel();
+    setLocalBusy(false);
+    setBusy(false);
+    setStatus("CANCELLED");
+  }
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [replay, setReplay] = useState("");
   const [advanced, setAdvanced] = useState(false);
@@ -78,7 +112,7 @@ export default function Page() {
       setStatus("EXECUTOR_UNAVAILABLE");
       return;
     }
-    setBusy(true);
+    const controller = beginLocal();
     setInvestigationArtifact(null);
     setFreshArtifact(null);
     setResult(null);
@@ -139,6 +173,8 @@ export default function Page() {
           ? { bytes: lookupBytes, approvedRelationship: true }
           : undefined,
       );
+      if (localAbort.current !== controller || controller.signal.aborted)
+        return;
       if (!isReplay)
         setExecutedSources([
           ...(source ? [source] : []),
@@ -160,13 +196,15 @@ export default function Page() {
         localCreated.current = new Date().toISOString();
       }
     } catch (error) {
+      if (localAbort.current !== controller || controller.signal.aborted)
+        return;
       setResult(null);
       setStatus(
         (error instanceof Error ? error.message : "EXECUTION_FAILED") +
           ": Check the selected columns, period timezone and input limits, then retry. Reload if the runtime is unavailable.",
       );
     } finally {
-      setBusy(false);
+      finishLocal(controller);
     }
   }
   return (
@@ -219,31 +257,44 @@ export default function Page() {
                     );
                     return;
                   }
+                  const controller = beginLocal();
                   try {
                     if (!executor.current && frame.current)
                       executor.current = new LocalExecutor(frame.current);
                     if (!executor.current)
                       throw new Error("EXECUTOR_UNAVAILABLE");
-                    setBusy(true);
                     setStatus("Reading local input and validating its format…");
-                    const input = await readLocalInput(f, executor.current);
+                    const input = await readLocalInput(
+                      f,
+                      executor.current,
+                      controller.signal,
+                    );
                     const data = input.bytes,
                       digest = input.hash;
+                    if (
+                      generation !== uploadGeneration.current ||
+                      localAbort.current !== controller ||
+                      controller.signal.aborted
+                    )
+                      return;
                     setSource(input.source);
-                    if (generation !== uploadGeneration.current) return;
                     bytes.current = data;
                     setFilename(f.name);
                     setHash(digest);
                     setStatus("Dataset loaded into local memory.");
                   } catch (error) {
-                    if (generation === uploadGeneration.current)
+                    if (
+                      generation === uploadGeneration.current &&
+                      localAbort.current === controller &&
+                      !controller.signal.aborted
+                    )
                       setStatus(
                         error instanceof Error
                           ? error.message
                           : "INPUT_READ_FAILED",
                       );
                   } finally {
-                    setBusy(false);
+                    finishLocal(controller);
                   }
                 }}
               />
@@ -379,6 +430,7 @@ export default function Page() {
                     type="file"
                     accept=".csv,.parquet,text/csv,application/vnd.apache.parquet"
                     onChange={async (e) => {
+                      if (busy) return;
                       const generation = ++lookupGeneration.current;
                       lookup.current = null;
                       setLookupName("");
@@ -389,19 +441,25 @@ export default function Page() {
                         setStatus("INPUT_LIMIT");
                         return;
                       }
+                      const controller = beginLocal();
                       try {
                         if (!executor.current && frame.current)
                           executor.current = new LocalExecutor(frame.current);
                         if (!executor.current)
                           throw new Error("EXECUTOR_UNAVAILABLE");
-                        setBusy(true);
                         const input = await readLocalInput(
                           file,
                           executor.current,
+                          controller.signal,
                         );
                         const data = input.bytes,
                           datasetHash = input.hash;
-                        if (generation !== lookupGeneration.current) return;
+                        if (
+                          generation !== lookupGeneration.current ||
+                          localAbort.current !== controller ||
+                          controller.signal.aborted
+                        )
+                          return;
                         lookup.current = {
                           bytes: data,
                           datasetHash,
@@ -409,14 +467,18 @@ export default function Page() {
                         };
                         setLookupName(file.name);
                       } catch (error) {
-                        if (generation === lookupGeneration.current)
+                        if (
+                          generation === lookupGeneration.current &&
+                          localAbort.current === controller &&
+                          !controller.signal.aborted
+                        )
                           setStatus(
                             error instanceof Error
                               ? error.message
                               : "INPUT_READ_FAILED",
                           );
                       } finally {
-                        setBusy(false);
+                        finishLocal(controller);
                       }
                     }}
                   />
@@ -513,9 +575,9 @@ export default function Page() {
                 Execute locally
               </button>
               <button
-                disabled={!busy}
+                disabled={!localBusy}
                 className="secondary"
-                onClick={() => executor.current?.cancel()}
+                onClick={cancelLocal}
               >
                 Cancel
               </button>
@@ -669,11 +731,11 @@ export default function Page() {
               lookup: executedLookup,
               sources: executedSources,
             }}
-            ingest={async (file) => {
+            ingest={async (file, signal) => {
               if (!executor.current && frame.current)
                 executor.current = new LocalExecutor(frame.current);
               if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
-              return readLocalInput(file, executor.current);
+              return readLocalInput(file, executor.current, signal);
             }}
             execute={async (plan, data, derivedLookup) => {
               if (!executor.current && frame.current)

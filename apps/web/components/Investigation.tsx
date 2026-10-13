@@ -38,7 +38,7 @@ export function Investigation({
   onArtifact,
 }: {
   primary: Snapshot;
-  ingest: (file: File) => Promise<LocalInput>;
+  ingest: (file: File, signal?: AbortSignal) => Promise<LocalInput>;
   original?: Artifact | null;
   onArtifact?: (input: ArtifactInput | null) => void;
   execute: (
@@ -152,6 +152,7 @@ export function Investigation({
     [events, setEvents] = useState<string[]>([]);
   const cursor = useRef(0);
   const generation = useRef(0);
+  const importAbort = useRef<AbortController | null>(null);
   const [activeRun, setActiveRun] = useState<{
     provider: string;
     model: string;
@@ -161,6 +162,8 @@ export function Investigation({
     () => () => {
       operation.current?.abort();
       eventsAbort.current?.abort();
+      importAbort.current?.abort();
+      importAbort.current = null;
     },
     [],
   );
@@ -494,6 +497,16 @@ export function Investigation({
     }
   }
   async function cancel() {
+    if (importAbort.current) {
+      importAbort.current.abort(new Error("CANCELLED"));
+      importAbort.current = null;
+      cancelLocal();
+      if (keyInput.current) keyInput.current.value = "";
+      setBusy(false);
+      onBusy(false);
+      setMessage("CANCELLED");
+      return;
+    }
     const cancelledGeneration = generation.current;
     const cancelledRun = runId.current;
     const cancelledToken = token.current;
@@ -616,10 +629,16 @@ export function Investigation({
             }
             setBusy(true);
             onBusy(true);
+            const controller = new AbortController();
+            importAbort.current = controller;
             try {
               const inputs = [];
               for (const file of files)
-                inputs.push({ ...(await ingest(file)), name: file.name });
+                inputs.push({
+                  ...(await ingest(file, controller.signal)),
+                  name: file.name,
+                });
+              controller.signal.throwIfAborted();
               validateInputSet([
                 { bytes: primary.bytes, hash: primary.plan.datasetHash },
                 ...(primary.lookup
@@ -637,12 +656,19 @@ export function Investigation({
                 "Additional versions loaded locally. Approve their displayed metric semantics and provider disclosure to start.",
               );
             } catch (error) {
-              setMessage(
-                error instanceof Error ? error.message : "INPUT_READ_FAILED",
-              );
+              if (
+                importAbort.current === controller &&
+                !controller.signal.aborted
+              )
+                setMessage(
+                  error instanceof Error ? error.message : "INPUT_READ_FAILED",
+                );
             } finally {
-              setBusy(false);
-              onBusy(false);
+              if (importAbort.current === controller) {
+                importAbort.current = null;
+                setBusy(false);
+                onBusy(false);
+              }
             }
           }}
         />
