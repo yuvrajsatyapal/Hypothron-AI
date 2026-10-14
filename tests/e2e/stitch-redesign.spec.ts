@@ -59,17 +59,8 @@ test("desktop motion, SVG connections, route isolation and clean console", async
   await expect(page.locator("#demo")).toBeVisible();
   await page.screenshot({ path: "/tmp/hypothron-landing-desktop.png" });
   await page.locator("#pipeline").scrollIntoViewIfNeeded();
-  const path = page.locator("[data-pipeline-connection]");
-  const alignment = await page.locator("#pipeline").evaluate((root) => {
-    const svg = root.querySelector("svg")!.getBoundingClientRect();
-    const nodes = [
-      ...root.querySelectorAll("[data-pipeline-stage] > span:first-child"),
-    ].map((n) => n.getBoundingClientRect());
-    return nodes.map((n) =>
-      Math.abs(n.y + n.height / 2 - (svg.y + svg.height / 2)),
-    );
-  });
-  expect(Math.max(...alignment)).toBeLessThan(3);
+  const path = page.locator("[data-pipeline-connection]").first();
+  await expect(page.locator("[data-flow-edge]")).toHaveCount(9);
   await expect(page.locator("#pipeline svg")).toBeVisible();
   await expect
     .poll(() => path.evaluate((e) => getComputedStyle(e).strokeDasharray))

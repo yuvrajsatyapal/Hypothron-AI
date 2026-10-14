@@ -3,16 +3,15 @@ import { Brand } from "../components/Brand";
 import { SyntheticEvidence } from "../components/marketing/SyntheticEvidence";
 import { InvestigationPipeline } from "../components/marketing/InvestigationPipeline";
 import { LandingMotion } from "../components/marketing/LandingMotion";
-import { AmbientGraph } from "../components/marketing/AmbientGraph";
 export const metadata = {
   title: "Hypothron AI — Hypothesis-driven data investigation",
   description:
     "Investigate local datasets with approved calculations, independent numerical verification and reproducible replay.",
 };
 const primary =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-semibold text-white transition-colors hover:bg-[#066570]";
+  "marketing-cta inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-semibold text-white transition-colors hover:bg-[#066570]";
 const secondary =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-6 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-dim";
+  "marketing-cta inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-6 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-dim";
 const points = [
   "Hypothesis-driven investigation",
   "Independent local calculations",
@@ -46,7 +45,7 @@ export default function Landing() {
           </nav>
           <Link
             href="/app"
-            className="inline-flex min-h-11 items-center rounded-lg bg-brand-teal px-3 text-xs font-semibold text-white sm:px-5"
+            className="marketing-cta inline-flex min-h-11 items-center rounded-lg bg-brand-teal px-3 text-xs font-semibold text-white sm:px-5"
           >
             Start an Investigation{" "}
             <span className="ml-2 hidden sm:inline" aria-hidden="true">
@@ -54,10 +53,28 @@ export default function Landing() {
             </span>
           </Link>
         </div>
+        <details
+          data-section-nav
+          className="border-t border-border-subtle px-6 xl:hidden"
+        >
+          <summary className="flex min-h-11 cursor-pointer items-center text-xs font-semibold text-on-surface-muted">
+            Explore the platform{" "}
+            <span aria-hidden="true" className="ml-auto">
+              ⌄
+            </span>
+          </summary>
+          <nav
+            aria-label="Mobile section navigation"
+            className="grid gap-1 pb-3 text-xs [&_a]:flex [&_a]:min-h-11 [&_a]:items-center"
+          >
+            <a href="#pipeline">Investigation Engine</a>
+            <a href="#deep-dives">Evidence &amp; Replay</a>
+            <a href="#privacy">Privacy &amp; Local Compute</a>
+          </nav>
+        </details>
       </header>
       <main id="content">
         <section className="relative overflow-hidden border-b border-border-subtle bg-gradient-to-b from-surface to-[#eef3f9] py-16 lg:py-24">
-          <AmbientGraph />
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] opacity-35 [background-size:32px_32px]"
@@ -139,14 +156,16 @@ export default function Landing() {
             <div
               data-reveal
               id="demo"
-              className="relative mx-auto w-full max-w-[680px] lg:col-span-7 lg:pl-8"
+              className="hero-preview relative mx-auto w-full max-w-[680px] lg:col-span-7 lg:pl-8"
             >
               <div
                 aria-hidden="true"
                 className="absolute -inset-8 rounded-full bg-brand-teal-light opacity-40"
               />
-              <div className="relative lg:rotate-1">
-                <SyntheticEvidence />
+              <div data-preview-parallax className="hero-depth">
+                <div data-preview-float className="relative lg:rotate-1">
+                  <SyntheticEvidence />
+                </div>
               </div>
             </div>
           </div>
@@ -168,7 +187,10 @@ export default function Landing() {
               reproduce.
             </p>
           </div>
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <div
+            data-showcase
+            className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20"
+          >
             <div>
               <p className="mb-4 font-mono text-xs text-brand-teal">
                 DEEP DIVE 01 · HYPOTHESES
@@ -223,13 +245,24 @@ export default function Landing() {
                 aria-hidden="true"
               >
                 <path
-                  d="M210 0v24H80v40M210 24H340v40"
+                  data-showcase-line
+                  d="M210 0 C210 24 80 24 80 64 M210 0 C210 24 340 24 340 64"
                   fill="none"
                   stroke="#7565d9"
                   strokeDasharray="4 4"
                   strokeWidth="1.5"
                 />
               </svg>
+              <details className="mb-4 text-xs text-on-surface-muted">
+                <summary className="flex min-h-11 cursor-pointer items-center">
+                  Inspect the approval boundary
+                </summary>
+                <p className="leading-6">
+                  The workspace approves dataset identity, period, grain,
+                  currency and null policy before computation. This illustration
+                  does not approve or execute a real calculation.
+                </p>
+              </details>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-lg border border-border-subtle bg-brand-teal-light p-4 text-xs">
                   <strong>Approve semantics</strong>
@@ -246,7 +279,10 @@ export default function Landing() {
               </div>
             </div>
           </div>
-          <div className="mt-24 grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <div
+            data-showcase
+            className="mt-24 grid items-center gap-12 lg:grid-cols-2 lg:gap-20"
+          >
             <div className="rounded-xl bg-navy-night p-6 text-white lg:order-first">
               <div className="mb-6 flex justify-between border-b border-navy-border pb-4">
                 <h4 className="text-sm font-semibold">
@@ -278,6 +314,15 @@ export default function Landing() {
                   </pre>
                 </div>
               </div>
+              <details className="mt-4 text-xs text-slate-300">
+                <summary className="flex min-h-11 cursor-pointer items-center">
+                  What happens when results disagree?
+                </summary>
+                <p className="leading-6">
+                  The workspace preserves both results and labels the evidence
+                  DISPUTED. Missing or incompatible results remain INCONCLUSIVE.
+                </p>
+              </details>
               <p className="mt-6 border-t border-navy-border pt-5 text-xs leading-6 text-slate-300">
                 Compare contract, source identity, exact values and row counts.
                 Disagreement remains visible.
@@ -304,7 +349,10 @@ export default function Landing() {
               </p>
             </div>
           </div>
-          <div className="mt-24 grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <div
+            data-showcase
+            className="mt-24 grid items-center gap-12 lg:grid-cols-2 lg:gap-20"
+          >
             <div>
               <p className="mb-4 font-mono text-xs text-brand-teal">
                 DEEP DIVE 03 · EVIDENCE & REPLAY
@@ -350,6 +398,7 @@ export default function Landing() {
                 ].map((v, i) => (
                   <div
                     key={v}
+                    data-bundle-item
                     className="flex items-center gap-4 rounded-lg border border-border-subtle p-4"
                   >
                     <span className="font-mono text-xs text-brand-teal">

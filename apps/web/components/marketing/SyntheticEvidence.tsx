@@ -53,6 +53,7 @@ export function SyntheticEvidence({ compact = false }: { compact?: boolean }) {
               <span className="font-mono text-on-surface-muted">USD</span>
             </div>
             <svg
+              data-example-chart
               className="h-28 w-full"
               viewBox="0 0 400 120"
               role="img"
@@ -124,13 +125,19 @@ export function SyntheticEvidence({ compact = false }: { compact?: boolean }) {
           </div>
         )}
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-brand-teal-light p-3">
+          <div
+            data-example-result
+            className="rounded-lg bg-brand-teal-light p-3"
+          >
             <p className="font-mono text-[10px] text-brand-teal">
               DUCKDB EXAMPLE
             </p>
             <p className="mt-1 font-mono text-lg font-semibold">$250.00</p>
           </div>
-          <div className="rounded-lg bg-brand-violet-light p-3">
+          <div
+            data-example-result
+            className="rounded-lg bg-brand-violet-light p-3"
+          >
             <p className="font-mono text-[10px] text-violet-ink">
               PYODIDE EXAMPLE
             </p>
