@@ -2,7 +2,7 @@ import { test, expect } from "./fixtures";
 test("real Parquet conversion approves canonical version and preserves source through Save export import replay", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page
     .getByLabel("Dataset CSV", { exact: true })
     .setInputFiles("tests/fixtures/phase5-revenue.parquet");
@@ -79,7 +79,7 @@ test("real Parquet conversion approves canonical version and preserves source th
 test("Parquet exact integers retain digits; unsupported schemas and expansion refuse", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   const upload = page.getByLabel("Dataset CSV", { exact: true });
   for (const [name, code] of [
     ["float", "UNSUPPORTED_PARQUET_TYPE"],
@@ -140,7 +140,7 @@ test("active Parquet nested worker reads only pinned extension bytes and denies 
   page.on("request", (r) => {
     if (r.url().includes("parquet_native_canary")) attempted.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/app");
   const nested = page.waitForEvent("worker", (worker) =>
     worker.url().endsWith("/duckdb-worker.js"),
   );
@@ -198,7 +198,7 @@ test("active Parquet nested worker reads only pinned extension bytes and denies 
 test("primary and lookup imports cancel during file reads without late Parquet work", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.evaluate(() => {
     const read = File.prototype.arrayBuffer;
     File.prototype.arrayBuffer = async function () {

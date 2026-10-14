@@ -9,7 +9,7 @@ interface SavedFixture {
 import { test, expect } from "./fixtures";
 const csv = "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n";
 async function saved(page: import("@playwright/test").Page) {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "private.csv",
     mimeType: "text/csv",

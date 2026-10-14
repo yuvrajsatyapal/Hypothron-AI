@@ -3,7 +3,7 @@ test("v2 real SQL/Pandas independently compute money, periods, grain and cardina
   page,
 }) => {
   test.setTimeout(180000);
-  await page.goto("/");
+  await page.goto("/app");
   const posts: string[] = [];
   page.on("request", (r) => {
     if (r.method() === "POST") posts.push(r.url());
@@ -208,7 +208,7 @@ test("advanced workspace requires explicit join approval, shows diagnostics and 
   page.on("request", (r) => {
     if (r.method() === "POST") posts.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",

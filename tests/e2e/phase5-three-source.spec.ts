@@ -13,7 +13,7 @@ const csv =
 test("three sources including Parquet lookup retain lineage through real graph Save fresh run and zero inference replay", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "primary.csv",
     mimeType: "text/csv",

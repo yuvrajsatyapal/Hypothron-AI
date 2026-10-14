@@ -1,839 +1,511 @@
-"use client";
-import { useEffect, useRef, useState } from "react";
-import { approvedMetric, executionVerdict } from "../components/metricApproval";
-import { LocalHistory } from "../components/LocalHistory";
-import { Investigation } from "../components/Investigation";
-import {
-  LocalExecutor,
-  contentHash,
-  type MetricPlan,
-  type ExecutionResult,
-} from "../lib/execution";
-import { readLocalInput, validateInputSet } from "../lib/ingestion";
-import type { SourceInput } from "../lib/artifacts";
-import type { Artifact, ArtifactInput } from "../lib/artifacts";
-import { replayMatches } from "../../executor/src/contracts";
-export default function Page() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
-  const [investigationArtifact, setInvestigationArtifact] =
-      useState<ArtifactInput | null>(null),
-    [freshArtifact, setFreshArtifact] = useState<Artifact | null>(null);
-  const [freshGeneration, setFreshGeneration] = useState(0);
-  const localId = useRef<string | null>(null);
-  const localCreated = useRef<string>("");
-  const frame = useRef<HTMLIFrameElement | null>(null);
-  const executor = useRef<LocalExecutor | null>(null);
-  const bytes = useRef<Uint8Array | null>(null);
-  const [filename, setFilename] = useState("");
-  const [source, setSource] = useState<SourceInput | undefined>();
-  const [sourceApproved, setSourceApproved] = useState(false);
-  const [executedSources, setExecutedSources] = useState<SourceInput[]>([]);
-  const [hash, setHash] = useState("");
-  const [amount, setAmount] = useState("revenue");
-  const [date, setDate] = useState("completed_at");
-  const [start, setStart] = useState("2025-07-01T00:00:00Z");
-  const [end, setEnd] = useState("2025-10-01T00:00:00Z");
-  const [status, setStatus] = useState("Choose a CSV to begin.");
-  const [busy, setBusy] = useState(false);
-  const [localBusy, setLocalBusy] = useState(false);
-  const localAbort = useRef<AbortController | null>(null);
-  useEffect(
-    () => () => {
-      localAbort.current?.abort();
-      localAbort.current = null;
-      executor.current?.close();
-    },
-    [],
-  );
-  function beginLocal() {
-    const controller = new AbortController();
-    localAbort.current = controller;
-    setLocalBusy(true);
-    setBusy(true);
-    return controller;
-  }
-  function finishLocal(controller: AbortController) {
-    if (localAbort.current !== controller) return;
-    localAbort.current = null;
-    setLocalBusy(false);
-    setBusy(false);
-  }
-  function cancelLocal() {
-    if (!localAbort.current) return;
-    localAbort.current.abort();
-    localAbort.current = null;
-    ++uploadGeneration.current;
-    ++lookupGeneration.current;
-    executor.current?.cancel();
-    setLocalBusy(false);
-    setBusy(false);
-    setStatus("CANCELLED");
-  }
-  const [result, setResult] = useState<ExecutionResult | null>(null);
-  const [replay, setReplay] = useState("");
-  const [advanced, setAdvanced] = useState(false);
-  const [currency, setCurrency] = useState<MetricPlan["currency"]>("USD");
-  const [timezone, setTimezone] = useState("UTC");
-  const [nullPolicy, setNullPolicy] =
-    useState<MetricPlan["nullPolicy"]>("exclude");
-  const [grain, setGrain] = useState("id");
-  const lookup = useRef<{
-    bytes: Uint8Array;
-    datasetHash: string;
-    source?: SourceInput;
-  } | null>(null);
-  const lookupGeneration = useRef(0);
-  const [lookupName, setLookupName] = useState("");
-  const [lookupApproved, setLookupApproved] = useState(false);
-  const [keyColumn, setKeyColumn] = useState("id");
-  const [lookupKeyColumn, setLookupKeyColumn] = useState("id");
-  const [cardinality, setCardinality] = useState<"one_to_one" | "many_to_one">(
-    "many_to_one",
-  );
-  const [populationCount, setPopulationCount] = useState(0);
-  const [executedLookup, setExecutedLookup] = useState<
-    Uint8Array | undefined
-  >();
-  const uploadGeneration = useRef(0);
-  const [executedPlan, setExecutedPlan] = useState<MetricPlan | null>(null);
-  const saved = useRef<{
-    plan: MetricPlan;
-    result: ExecutionResult;
-    lookup?: Uint8Array;
-  } | null>(null);
-  async function run(isReplay = false) {
-    if (!bytes.current) return;
-    if (!executor.current && frame.current)
-      executor.current = new LocalExecutor(frame.current);
-    if (!executor.current) {
-      setStatus("EXECUTOR_UNAVAILABLE");
-      return;
-    }
-    const controller = beginLocal();
-    setInvestigationArtifact(null);
-    setFreshArtifact(null);
-    setResult(null);
-    setReplay("");
-    setStatus("Loading isolated runtimes and computing locally…");
-    try {
-      if (!isReplay && source && !sourceApproved)
-        throw new Error("SOURCE_APPROVAL_REQUIRED");
-      const plan =
-        isReplay && saved.current
-          ? saved.current.plan
-          : approvedMetric({
-              datasetHash: hash,
-              amountColumn: amount,
-              dateColumn: date,
-              start,
-              end,
-              advanced,
-              currency,
-              timezone,
-              nullPolicy,
-              grain,
-              ...(advanced && lookup.current
-                ? {
-                    lookup: {
-                      datasetHash: lookup.current.datasetHash,
-                      keyColumn,
-                      lookupKeyColumn,
-                      cardinality,
-                      populationCount,
-                      approved: lookupApproved,
-                    },
-                  }
-                : {}),
-            });
-      const lookupBytes = isReplay
-        ? saved.current?.lookup
-        : advanced
-          ? lookup.current?.bytes
-          : undefined;
-      if (!isReplay)
-        validateInputSet([
-          { bytes: bytes.current, hash, source },
-          ...(lookupBytes && lookup.current
-            ? [
-                {
-                  bytes: lookupBytes,
-                  hash: lookup.current.datasetHash,
-                  source: lookup.current.source,
-                },
-              ]
-            : []),
-        ]);
-      const computed = await executor.current.execute(
-        plan,
-        bytes.current,
-        lookupBytes
-          ? { bytes: lookupBytes, approvedRelationship: true }
-          : undefined,
-      );
-      if (localAbort.current !== controller || controller.signal.aborted)
-        return;
-      if (!isReplay)
-        setExecutedSources([
-          ...(source ? [source] : []),
-          ...(lookupBytes && lookup.current?.source
-            ? [lookup.current.source]
-            : []),
-        ]);
-      setExecutedLookup(lookupBytes);
-      setResult(computed);
-      setExecutedPlan({ ...plan });
-      setStatus("Local execution complete.");
-      if (isReplay && saved.current)
-        setReplay(
-          replayMatches(saved.current.result, computed) ? "MATCH" : "MISMATCH",
-        );
-      else {
-        saved.current = { plan, result: computed, lookup: lookupBytes };
-        localId.current = crypto.randomUUID();
-        localCreated.current = new Date().toISOString();
-      }
-    } catch (error) {
-      if (localAbort.current !== controller || controller.signal.aborted)
-        return;
-      setResult(null);
-      setStatus(
-        (error instanceof Error ? error.message : "EXECUTION_FAILED") +
-          ": Check the selected columns, period timezone and input limits, then retry. Reload if the runtime is unavailable.",
-      );
-    } finally {
-      finishLocal(controller);
-    }
-  }
+import Link from "next/link";
+import { Brand } from "../components/Brand";
+import { SyntheticEvidence } from "../components/marketing/SyntheticEvidence";
+import { InvestigationPipeline } from "../components/marketing/InvestigationPipeline";
+import { LandingMotion } from "../components/marketing/LandingMotion";
+import { AmbientGraph } from "../components/marketing/AmbientGraph";
+export const metadata = {
+  title: "Hypothron AI — Hypothesis-driven data investigation",
+  description:
+    "Investigate local datasets with approved calculations, independent numerical verification and reproducible replay.",
+};
+const primary =
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-teal px-6 text-sm font-semibold text-white transition-colors hover:bg-[#066570]";
+const secondary =
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border-subtle bg-white px-6 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-dim";
+const points = [
+  "Hypothesis-driven investigation",
+  "Independent local calculations",
+  "Reproducible evidence and replay",
+];
+export default function Landing() {
   return (
-    <>
-      <header>
-        <strong>Hypothron AI</strong>
-        <span>Deterministic browser foundation</span>
-      </header>
-      <main>
-        <section className="intro">
-          <p className="eyebrow">LOCAL ANALYTICAL WORKSPACE</p>
-          <h1>Inspect the evidence.</h1>
-          <p>
-            Datasets remain in browser memory. This foundation calculates
-            revenue independently with SQL and Python. AI investigations require
-            explicit provider consent. No automatic saving.
-          </p>
-        </section>
-        <div className="workspace">
-          <section className="controls">
-            <h2>Dataset and metric</h2>
-            <label>
-              Dataset CSV
-              <input
-                type="file"
-                accept=".csv,.parquet,text/csv,application/vnd.apache.parquet"
-                disabled={busy || !hydrated}
-                onChange={async (e) => {
-                  if (busy) return;
-                  const generation = ++uploadGeneration.current;
-                  const f = e.target.files?.[0];
-                  setResult(null);
-                  setInvestigationArtifact(null);
-                  setFreshArtifact(null);
-                  setExecutedLookup(undefined);
-                  setLookupApproved(false);
-                  saved.current = null;
-                  setReplay("");
-                  bytes.current = null;
-                  setSource(undefined);
-                  setSourceApproved(false);
-                  setExecutedSources([]);
-                  setFilename("");
-                  setHash("");
-                  setStatus("Choose a CSV to begin.");
-                  if (!f) return;
-                  if (f.size > 10 * 1024 * 1024) {
-                    setStatus(
-                      "INPUT_LIMIT: Choose a CSV no larger than 10 MiB.",
-                    );
-                    return;
-                  }
-                  const controller = beginLocal();
-                  try {
-                    if (!executor.current && frame.current)
-                      executor.current = new LocalExecutor(frame.current);
-                    if (!executor.current)
-                      throw new Error("EXECUTOR_UNAVAILABLE");
-                    setStatus("Reading local input and validating its format…");
-                    const input = await readLocalInput(
-                      f,
-                      executor.current,
-                      controller.signal,
-                    );
-                    const data = input.bytes,
-                      digest = input.hash;
-                    if (
-                      generation !== uploadGeneration.current ||
-                      localAbort.current !== controller ||
-                      controller.signal.aborted
-                    )
-                      return;
-                    setSource(input.source);
-                    bytes.current = data;
-                    setFilename(f.name);
-                    setHash(digest);
-                    setStatus("Dataset loaded into local memory.");
-                  } catch (error) {
-                    if (
-                      generation === uploadGeneration.current &&
-                      localAbort.current === controller &&
-                      !controller.signal.aborted
-                    )
-                      setStatus(
-                        error instanceof Error
-                          ? error.message
-                          : "INPUT_READ_FAILED",
-                      );
-                  } finally {
-                    finishLocal(controller);
-                  }
-                }}
-              />
-            </label>
-            <p>
-              CSV and Parquet supported. Maximum three distinct sources
-              including a lookup, 10 MiB per source. Each calculation permits at
-              most 10 MiB combined primary and lookup CSV; all original and
-              derived investigation snapshots together permit 30 MiB.
-            </p>
-            <p>{filename || "No dataset selected"}</p>
-            {source && (
-              <div data-testid="source-profile">
-                <p>
-                  {source.rows} rows ·{" "}
-                  {source.schema.map((c) => c.name + ": " + c.type).join(", ")}
-                </p>
-                <p className="hash">
-                  Original Parquet SHA-256: {source.sourceHash}
-                </p>
-                <p className="hash">
-                  Canonical CSV SHA-256: {source.datasetHash}
-                </p>
-                <p>
-                  {source.normalization}. DuckDB decodes Parquet once. DuckDB
-                  and Pandas independently compute arithmetic over this
-                  canonical CSV; parsing is shared.
-                </p>
-                <label className="consent-row">
-                  <input
-                    type="checkbox"
-                    checked={sourceApproved}
-                    disabled={busy}
-                    onChange={(e) => setSourceApproved(e.target.checked)}
-                  />
-                  I approve this canonical CSV dataset version
-                </label>
-              </div>
-            )}
-            <label>
-              Amount column
-              <input
-                disabled={busy}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </label>
-            <label>
-              Date column
-              <input
-                disabled={busy}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-            <label>
-              Period start (inclusive)
-              <input
-                disabled={busy}
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-              />
-            </label>
-            <label>
-              Period end (exclusive)
-              <input
-                disabled={busy}
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-              />
-            </label>
-            <label className="consent-row">
-              <input
-                type="checkbox"
-                checked={advanced}
-                disabled={busy}
-                onChange={(e) => {
-                  setAdvanced(e.target.checked);
-                  setLookupApproved(false);
-                }}
-              />
-              Use advanced v2 contract (grain, currency and timezone)
-            </label>
-            {advanced && (
-              <fieldset disabled={busy} style={{ minWidth: 0 }}>
-                <legend>Advanced metric contract</legend>
-                <label>
-                  Currency
-                  <select
-                    value={currency}
-                    onChange={(e) =>
-                      setCurrency(e.target.value as MetricPlan["currency"])
-                    }
-                  >
-                    <option value="USD">USD (2 decimal places)</option>
-                    <option value="EUR">EUR (2 decimal places)</option>
-                    <option value="JPY">JPY (whole yen)</option>
-                  </select>
-                </label>
-                <label>
-                  Timezone (UTC or fixed offset)
-                  <input
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                  />
-                </label>
-                <p>
-                  Period timestamps must end with Z for UTC, or this exact
-                  offset. Fixed offsets do not follow daylight saving changes.
-                </p>
-                <label>
-                  Unique dataset grain keys (comma-separated)
-                  <input
-                    value={grain}
-                    onChange={(e) => setGrain(e.target.value)}
-                  />
-                </label>
-                <label>
-                  Missing amount policy
-                  <select
-                    value={nullPolicy}
-                    onChange={(e) =>
-                      setNullPolicy(e.target.value as MetricPlan["nullPolicy"])
-                    }
-                  >
-                    <option value="exclude">Exclude missing amounts</option>
-                    <option value="error">Reject missing amounts</option>
-                  </select>
-                </label>
-                <label>
-                  Optional lookup CSV
-                  <input
-                    type="file"
-                    accept=".csv,.parquet,text/csv,application/vnd.apache.parquet"
-                    onChange={async (e) => {
-                      if (busy) return;
-                      const generation = ++lookupGeneration.current;
-                      lookup.current = null;
-                      setLookupName("");
-                      setLookupApproved(false);
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      if (file.size > 10 * 1024 * 1024) {
-                        setStatus("INPUT_LIMIT");
-                        return;
-                      }
-                      const controller = beginLocal();
-                      try {
-                        if (!executor.current && frame.current)
-                          executor.current = new LocalExecutor(frame.current);
-                        if (!executor.current)
-                          throw new Error("EXECUTOR_UNAVAILABLE");
-                        const input = await readLocalInput(
-                          file,
-                          executor.current,
-                          controller.signal,
-                        );
-                        const data = input.bytes,
-                          datasetHash = input.hash;
-                        if (
-                          generation !== lookupGeneration.current ||
-                          localAbort.current !== controller ||
-                          controller.signal.aborted
-                        )
-                          return;
-                        lookup.current = {
-                          bytes: data,
-                          datasetHash,
-                          source: input.source,
-                        };
-                        setLookupName(file.name);
-                      } catch (error) {
-                        if (
-                          generation === lookupGeneration.current &&
-                          localAbort.current === controller &&
-                          !controller.signal.aborted
-                        )
-                          setStatus(
-                            error instanceof Error
-                              ? error.message
-                              : "INPUT_READ_FAILED",
-                          );
-                      } finally {
-                        finishLocal(controller);
-                      }
-                    }}
-                  />
-                </label>
-                {lookupName && (
-                  <>
-                    <p>Lookup in local memory: {lookupName}</p>
-                    <p className="hash">
-                      Lookup approved snapshot: {lookup.current?.datasetHash}
-                    </p>
-                    {lookup.current?.source && (
-                      <p className="hash">
-                        Original Parquet: {lookup.current.source.sourceHash};
-                        canonical CSV {lookup.current.source.normalization};
-                        shared DuckDB decoding.{" "}
-                        {lookup.current.source.schema
-                          .map((c) => c.name + ": " + c.type)
-                          .join(", ")}
-                      </p>
-                    )}
-                    <label>
-                      Source join key
-                      <input
-                        value={keyColumn}
-                        onChange={(e) => {
-                          setKeyColumn(e.target.value);
-                          setLookupApproved(false);
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Lookup join key
-                      <input
-                        value={lookupKeyColumn}
-                        onChange={(e) => {
-                          setLookupKeyColumn(e.target.value);
-                          setLookupApproved(false);
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Join cardinality
-                      <select
-                        value={cardinality}
-                        onChange={(e) => {
-                          setCardinality(e.target.value as typeof cardinality);
-                          setLookupApproved(false);
-                        }}
-                      >
-                        <option value="many_to_one">
-                          Many source rows to one lookup row
-                        </option>
-                        <option value="one_to_one">
-                          One source row to one lookup row
-                        </option>
-                      </select>
-                    </label>
-                    <label>
-                      Expected source population rows
-                      <input
-                        type="number"
-                        min={0}
-                        max={100000}
-                        value={populationCount}
-                        onChange={(e) => {
-                          setPopulationCount(Number(e.target.value));
-                          setLookupApproved(false);
-                        }}
-                      />
-                    </label>
-                    <label className="consent-row">
-                      <input
-                        type="checkbox"
-                        checked={lookupApproved}
-                        onChange={(e) => setLookupApproved(e.target.checked)}
-                      />
-                      I approve this derived join on the displayed keys,
-                      cardinality and population. Original source bytes remain
-                      unchanged.
-                    </label>
-                  </>
-                )}
-              </fieldset>
-            )}
-            <p>
-              Contract: {advanced ? currency : "USD"}, exact{" "}
-              {advanced && currency === "JPY" ? "yen" : "minor units"},{" "}
-              {advanced ? timezone : "UTC"},{" "}
-              {nullPolicy === "exclude" ? "exclude" : "reject"} missing amounts.
-              Revenue sum.
-            </p>
-            <div className="actions">
-              <button disabled={!hash || busy} onClick={() => run()}>
-                Execute locally
-              </button>
-              <button
-                disabled={!localBusy}
-                className="secondary"
-                onClick={cancelLocal}
-              >
-                Cancel
-              </button>
-              <button
-                className="secondary"
-                disabled={!saved.current || busy}
-                onClick={() => run(true)}
-              >
-                Replay original calculations
-              </button>
-            </div>
-          </section>
-          <section className="evidence">
-            <h2>
-              {freshArtifact
-                ? "Historical saved input evidence"
-                : "Independent numerical evidence"}
-            </h2>
-            {freshArtifact && (
-              <p>
-                Historical CLIENT_REPORTED playback from the saved parent. These
-                displayed values, runtime and timing have not been recomputed by
-                this pane. Fresh investigation jobs establish their own separate
-                evidence below.
-              </p>
-            )}
-            <p role="status" aria-live="polite">
-              {status}
-            </p>
-            {result && (
-              <>
-                <p data-testid="executed-contract">
-                  Executed contract: {executedPlan?.amountColumn}, date{" "}
-                  {executedPlan?.dateColumn}, [{executedPlan?.start},{" "}
-                  {executedPlan?.end}), {executedPlan?.currency} /{" "}
-                  {executedPlan?.timezone} / {executedPlan?.nullPolicy} missing
-                  amounts / v{executedPlan?.version}. Replay uses this original
-                  contract.
-                </p>
-                <p data-testid="verification" className="verdict">
-                  {freshArtifact && "HISTORICAL "}
-                  {executedPlan &&
-                    executionVerdict(executedPlan, result).state}{" "}
-                  · CLIENT_REPORTED
-                </p>
-                <p>
-                  Local agreement is not server attestation or proof of
-                  causality.
-                </p>
-                <table>
-                  <caption>
-                    Exact monetary result in{" "}
-                    {executedPlan?.currency === "JPY" ? "yen" : "minor units"}
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th>Engine</th>
-                      <th>Value</th>
-                      <th>Included non-null metric rows</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>DuckDB-WASM</td>
-                      <td data-testid="sql-value">
-                        {result.sql.minorUnits ?? "undefined"}
-                      </td>
-                      <td>{result.sql.count}</td>
-                    </tr>
-                    <tr>
-                      <td>Pyodide / Pandas</td>
-                      <td data-testid="python-value">
-                        {result.python.minorUnits ?? "undefined"}
-                      </td>
-                      <td>{result.python.count}</td>
-                    </tr>
-                  </tbody>
-                </table>
-                {result.diagnostics && (
-                  <div
-                    style={{ overflowX: "auto" }}
-                    tabIndex={0}
-                    role="region"
-                    aria-label="Independent contract diagnostics"
-                  >
-                    <table style={{ minWidth: 540 }}>
-                      <caption>Independent contract diagnostics</caption>
-                      <thead>
-                        <tr>
-                          <th>Engine</th>
-                          <th>Population</th>
-                          <th>Period</th>
-                          <th>Null amounts</th>
-                          <th>Unique grain</th>
-                          <th>Join keys</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(["sql", "python"] as const).map((engine) => {
-                          const d = result.diagnostics![engine];
-                          return (
-                            <tr key={engine}>
-                              <th>{engine}</th>
-                              <td>{d.populationRows}</td>
-                              <td>{d.periodRows}</td>
-                              <td>{d.nullAmounts}</td>
-                              <td>{d.grainUniqueRows}</td>
-                              <td>{d.joinUniqueRows}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <p>
-                  Dataset rows: {result.rows}; columns:{" "}
-                  {result.schema.join(", ")}
-                </p>
-                <p data-testid="timing">
-                  {Math.round(result.elapsedMs)} ms; DuckDB{" "}
-                  {result.runtime.duckdb}; Pyodide {result.runtime.pyodide};
-                  Pandas {result.runtime.pandas}; NumPy {result.runtime.numpy}
-                </p>
-                <p data-testid="memory">
-                  Tracked DuckDB allocations: {result.memory.duckdbTrackedBytes}{" "}
-                  bytes; Pandas dataframe: {result.memory.pandasDataframeBytes}{" "}
-                  bytes. These measurements exclude runtime overhead and are not
-                  peak heap bounds.
-                </p>
-                <p data-testid="replay">{replay}</p>
-                <details>
-                  <summary>Inspect compiled SQL and Python</summary>
-                  <pre>{result.sqlSource}</pre>
-                  <pre>{result.pythonSource}</pre>
-                </details>
-                <p className="hash">Snapshot SHA-256: {result.datasetHash}</p>
-              </>
-            )}
-          </section>
+    <div id="landing" className="text-on-surface antialiased">
+      <a
+        href="#content"
+        className="fixed left-4 top-3 z-[100] -translate-y-20 rounded bg-white p-3 focus:translate-y-0"
+      >
+        Skip to content
+      </a>
+      <header className="sticky top-0 z-50 border-b border-border-subtle bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex min-h-16 max-w-[1600px] items-center justify-between gap-4 px-6 lg:px-12">
+          <Brand />
+          <nav
+            aria-label="Main navigation"
+            className="hidden items-center gap-6 text-xs font-semibold text-on-surface-muted xl:flex [&_a]:inline-flex [&_a]:min-h-11 [&_a]:items-center"
+          >
+            <a
+              href="#content"
+              className="rounded-lg bg-brand-teal-light px-3 py-2 text-brand-teal"
+            >
+              Platform
+            </a>
+            <a href="#pipeline">Investigation Engine</a>
+            <a href="#privacy">Privacy & Local Compute</a>
+            <a href="#deep-dives">Evidence & Replay</a>
+          </nav>
+          <Link
+            href="/app"
+            className="inline-flex min-h-11 items-center rounded-lg bg-brand-teal px-3 text-xs font-semibold text-white sm:px-5"
+          >
+            Start an Investigation{" "}
+            <span className="ml-2 hidden sm:inline" aria-hidden="true">
+              ↗
+            </span>
+          </Link>
         </div>
-        {result && executedPlan && bytes.current && (
-          <Investigation
-            key={hash + "/" + freshGeneration}
-            original={freshArtifact}
-            onArtifact={setInvestigationArtifact}
-            primary={{
-              bytes: bytes.current,
-              plan: executedPlan,
-              result,
-              lookup: executedLookup,
-              sources: executedSources,
-            }}
-            ingest={async (file, signal) => {
-              if (!executor.current && frame.current)
-                executor.current = new LocalExecutor(frame.current);
-              if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
-              return readLocalInput(file, executor.current, signal);
-            }}
-            execute={async (plan, data, derivedLookup) => {
-              if (!executor.current && frame.current)
-                executor.current = new LocalExecutor(frame.current);
-              if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
-              return executor.current.execute(plan, data, derivedLookup);
-            }}
-            onBusy={setBusy}
-            cancelLocal={() => executor.current?.cancel()}
+      </header>
+      <main id="content">
+        <section className="relative overflow-hidden border-b border-border-subtle bg-gradient-to-b from-surface to-[#eef3f9] py-16 lg:py-24">
+          <AmbientGraph />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] opacity-35 [background-size:32px_32px]"
           />
-        )}
-        <LocalHistory
-          onFresh={(artifact) => {
-            const c = artifact.manifest.calculations[0],
-              primary = artifact.snapshots.find(
-                (s) => s.hash === c.plan.datasetHash,
-              )!;
-            bytes.current = new Uint8Array(primary.bytes);
-            setSource(undefined);
-            setExecutedSources(
-              (artifact.manifest.sources ?? []).map((source) => ({
-                ...source,
-                bytes: artifact.snapshots.find(
-                  (s) => s.hash === source.sourceHash,
-                )!.bytes,
-              })),
-            );
-            setHash(c.plan.datasetHash);
-            setFilename("Saved approved snapshot");
-            setExecutedPlan(c.plan);
-            setResult(c.result);
-            setExecutedLookup(
-              c.plan.relationship
-                ? new Uint8Array(
-                    artifact.snapshots.find(
-                      (s) => s.hash === c.plan.relationship!.datasetHash,
-                    )!.bytes,
-                  )
-                : undefined,
-            );
-            setFreshArtifact(artifact);
-            setFreshGeneration((v) => v + 1);
-            setInvestigationArtifact(null);
-            localId.current = null;
-            setStatus(
-              "Saved inputs restored to memory for a separate fresh AI run. Consent and key required.",
-            );
-          }}
-          execute={async (plan, data, derivedLookup) => {
-            if (!executor.current && frame.current)
-              executor.current = new LocalExecutor(frame.current);
-            if (!executor.current) throw new Error("EXECUTOR_UNAVAILABLE");
-            return executor.current.execute(plan, data, derivedLookup);
-          }}
-          cancelLocal={() => executor.current?.cancel()}
-          onBusy={setBusy}
-          disabled={busy}
-          input={
-            investigationArtifact ??
-            (result && executedPlan && bytes.current && localId.current
-              ? {
-                  id: localId.current,
-                  question: "Local approved revenue calculation",
-                  createdAt: localCreated.current,
-                  parentId: null,
-                  snapshots: [
-                    bytes.current,
-                    ...(executedLookup ? [executedLookup] : []),
-                  ],
-                  sources: executedSources,
-                  calculations: [
+          <div className="relative mx-auto grid max-w-[1600px] items-center gap-12 px-6 lg:grid-cols-12 lg:gap-14 lg:px-12">
+            <div className="lg:col-span-5">
+              <p
+                data-reveal
+                className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-full border border-border-subtle bg-white px-3 py-2 text-[10px] text-on-surface-muted"
+              >
+                <span className="size-1.5 rounded-full bg-brand-teal" />
+                <span className="font-mono font-semibold tracking-wider text-brand-teal">
+                  HYPOTHESIS-DRIVEN AI
+                </span>
+                <span aria-hidden="true">|</span> Browser-local computation
+              </p>
+              <h1
+                data-reveal
+                className="mb-6 text-4xl leading-[1.08] font-extrabold tracking-[-.03em] sm:text-5xl lg:text-[54px]"
+              >
+                Turn complex data into{" "}
+                <span className="bg-gradient-to-r from-brand-teal to-brand-violet bg-clip-text text-transparent">
+                  numerically verified answers
+                </span>
+                .
+              </h1>
+              <p
+                data-reveal
+                className="mb-8 max-w-xl text-base leading-8 text-on-surface-muted lg:text-lg"
+              >
+                Hypothron AI investigates testable hypotheses, compares approved
+                calculations across DuckDB and Pyodide, and connects every
+                supported finding to reproducible evidence.
+              </p>
+              <div
+                data-reveal
+                className="mb-8 flex items-center gap-3 rounded-xl border border-border-subtle bg-white p-4 shadow-subtle-lift"
+              >
+                <span
+                  className="rounded-lg bg-brand-teal-light p-2 text-brand-teal"
+                  aria-hidden="true"
+                >
+                  ◇
+                </span>
+                <p className="font-mono text-xs leading-6">
+                  <span className="text-on-surface-muted">investigate(</span>
+                  “What is total revenue for Q3?”
+                  <span className="text-on-surface-muted">)</span>
+                </p>
+              </div>
+              <div data-reveal className="flex flex-wrap gap-3">
+                <Link href="/app" className={primary}>
+                  Start an Investigation <span aria-hidden="true">↗</span>
+                </Link>
+                <a href="#demo" className={secondary}>
+                  <span className="text-brand-teal" aria-hidden="true">
+                    ▷
+                  </span>{" "}
+                  Explore the Example
+                </a>
+              </div>
+              <div className="mt-10 grid grid-cols-3 gap-3 border-t border-border-subtle pt-6">
+                {["Local first", "Dual engines", "Replayable"].map((v, i) => (
+                  <div key={v}>
+                    <p className="text-sm font-bold sm:text-base">{v}</p>
+                    <p className="mt-2 font-mono text-[9px] leading-4 text-on-surface-muted">
+                      {
+                        [
+                          "Raw data in memory",
+                          "SQL + Python",
+                          "Approved snapshots",
+                        ][i]
+                      }
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div
+              data-reveal
+              id="demo"
+              className="relative mx-auto w-full max-w-[680px] lg:col-span-7 lg:pl-8"
+            >
+              <div
+                aria-hidden="true"
+                className="absolute -inset-8 rounded-full bg-brand-teal-light opacity-40"
+              />
+              <div className="relative lg:rotate-1">
+                <SyntheticEvidence />
+              </div>
+            </div>
+          </div>
+        </section>
+        <InvestigationPipeline />
+        <section
+          id="deep-dives"
+          className="mx-auto max-w-[1504px] px-6 py-24 lg:px-12 lg:py-32"
+        >
+          <div className="mb-20 text-center">
+            <p className="mb-4 font-mono text-xs uppercase tracking-wider text-brand-teal">
+              Rigorous analytical depth
+            </p>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+              Reason clearly. Calculate independently.
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-on-surface-muted">
+              Three foundations for investigations you can inspect and
+              reproduce.
+            </p>
+          </div>
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            <div>
+              <p className="mb-4 font-mono text-xs text-brand-teal">
+                DEEP DIVE 01 · HYPOTHESES
+              </p>
+              <h3 className="mb-5 text-3xl font-bold tracking-tight">
+                An investigation starts
+                <br />
+                with a testable question.
+              </h3>
+              <p className="mb-6 text-sm leading-7 text-on-surface-muted">
+                AI proposes hypotheses and bounded operations. You approve the
+                metric contract before local computation. The investigation
+                keeps its assumptions and evidence visible.
+              </p>
+              <ul className="space-y-3 text-sm">
+                {[
+                  "Review dataset and metric semantics",
+                  "Approve supported calculations",
+                  "Keep unresolved questions visible",
+                ].map((v) => (
+                  <li key={v} className="flex gap-3">
+                    <span className="text-brand-teal" aria-hidden="true">
+                      ✓
+                    </span>
+                    {v}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 font-mono text-[10px] text-on-surface-muted">
+                Correlation and decomposition do not establish causality.
+              </p>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white p-6 shadow-subtle-lift">
+              <div className="mb-6 flex items-center justify-between border-b border-border-subtle pb-4">
+                <h4 className="text-sm font-bold">Candidate hypothesis</h4>
+                <span className="font-mono text-[10px] text-on-surface-muted">
+                  ILLUSTRATION
+                </span>
+              </div>
+              <div className="rounded-lg bg-navy-night p-5 text-white">
+                <p className="mb-3 font-mono text-xs text-teal-200">
+                  H1 · REVENUE TOTAL
+                </p>
+                <p className="text-sm leading-6">
+                  The Q3 total can be computed under an approved period and
+                  currency contract.
+                </p>
+              </div>
+              <svg
+                viewBox="0 0 420 64"
+                className="h-16 w-full"
+                aria-hidden="true"
+              >
+                <path
+                  d="M210 0v24H80v40M210 24H340v40"
+                  fill="none"
+                  stroke="#7565d9"
+                  strokeDasharray="4 4"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border-subtle bg-brand-teal-light p-4 text-xs">
+                  <strong>Approve semantics</strong>
+                  <p className="mt-2 leading-5 text-on-surface-muted">
+                    USD · UTC · revenue_sum
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-brand-violet-light p-4 text-xs">
+                  <strong>Inspect evidence</strong>
+                  <p className="mt-2 leading-5 text-on-surface-muted">
+                    Independent totals and counts
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-24 grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            <div className="rounded-xl bg-navy-night p-6 text-white lg:order-first">
+              <div className="mb-6 flex justify-between border-b border-navy-border pb-4">
+                <h4 className="text-sm font-semibold">
+                  Independent execution paths
+                </h4>
+                <span className="font-mono text-[10px] text-teal-200">
+                  LOCAL
+                </span>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <p className="mb-3 font-mono text-xs text-teal-200">
+                    DuckDB-WASM · SQL
+                  </p>
+                  <pre className="overflow-x-auto rounded-lg bg-navy-card p-4 font-mono text-xs leading-6">
                     {
-                      id: "local-1",
-                      hypothesisId: "H1",
-                      dependsOn: [],
-                      plan: executedPlan,
-                      result,
-                    },
-                  ],
-                  report: null,
-                  run: null,
-                }
-              : null)
-          }
-        />
-        <iframe
-          ref={frame}
-          title="Restricted analytical executor"
-          src="http://127.0.0.1:3001/"
-          sandbox="allow-scripts allow-same-origin"
-          hidden
-          onLoad={(e) => {
-            if (!executor.current)
-              executor.current = new LocalExecutor(e.currentTarget);
-            else executor.current.notifyFrameLoaded();
-          }}
-        />
+                      "SELECT SUM(amount)\nFROM approved_rows;\n\n-- Exact minor units"
+                    }
+                  </pre>
+                </div>
+                <div>
+                  <p className="mb-3 font-mono text-xs text-violet-300">
+                    Pyodide · Python
+                  </p>
+                  <pre className="overflow-x-auto rounded-lg bg-navy-card p-4 font-mono text-xs leading-6">
+                    {
+                      "# Fixed trusted template\n# Independent computation\n# Approved metric only"
+                    }
+                  </pre>
+                </div>
+              </div>
+              <p className="mt-6 border-t border-navy-border pt-5 text-xs leading-6 text-slate-300">
+                Compare contract, source identity, exact values and row counts.
+                Disagreement remains visible.
+              </p>
+            </div>
+            <div>
+              <p className="mb-4 font-mono text-xs text-violet-ink">
+                DEEP DIVE 02 · NUMERICAL VERIFICATION
+              </p>
+              <h3 className="mb-5 text-3xl font-bold tracking-tight">
+                Two engines.
+                <br />
+                One approved contract.
+              </h3>
+              <p className="text-sm leading-7 text-on-surface-muted">
+                Separate SQL and Python calculations help detect implementation
+                errors. Exact monetary values and counts must agree under the
+                same dataset and metric semantics.
+              </p>
+              <p className="mt-6 rounded-lg border-l-2 border-brand-violet bg-brand-violet-light p-4 text-xs leading-6">
+                VERIFIED + CLIENT_REPORTED means local agreement. It is not
+                trusted server attestation, and shared Parquet decoding is not
+                an independent verification path.
+              </p>
+            </div>
+          </div>
+          <div className="mt-24 grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+            <div>
+              <p className="mb-4 font-mono text-xs text-brand-teal">
+                DEEP DIVE 03 · EVIDENCE & REPLAY
+              </p>
+              <h3 className="mb-5 text-3xl font-bold tracking-tight">
+                An answer with a trail
+                <br />
+                you can follow.
+              </h3>
+              <p className="text-sm leading-7 text-on-surface-muted">
+                Reports bind supported claims to dataset identity, metric
+                versions and accepted evidence. Explicit Save retains the
+                snapshot required for deterministic local replay.
+              </p>
+              <ul className="mt-6 space-y-3 text-sm">
+                {[
+                  "Inspect compiled SQL and Python",
+                  "Export approved snapshots and runtime identity",
+                  "Replay calculations with zero LLM requests",
+                ].map((v) => (
+                  <li key={v} className="flex gap-3">
+                    <span className="text-brand-teal" aria-hidden="true">
+                      ✓
+                    </span>
+                    {v}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-border-subtle bg-white shadow-subtle-lift">
+              <div className="border-b border-border-subtle p-5 text-sm font-bold">
+                Investigation bundle{" "}
+                <span className="float-right font-mono text-[10px] font-normal text-on-surface-muted">
+                  EXPLICIT SAVE
+                </span>
+              </div>
+              <div className="space-y-4 p-6">
+                {[
+                  "Original dataset snapshot",
+                  "Approved metric contract",
+                  "Paired numerical evidence",
+                  "Pinned runtime & compiler identity",
+                ].map((v, i) => (
+                  <div
+                    key={v}
+                    className="flex items-center gap-4 rounded-lg border border-border-subtle p-4"
+                  >
+                    <span className="font-mono text-xs text-brand-teal">
+                      0{i + 1}
+                    </span>
+                    <span className="text-xs font-semibold">{v}</span>
+                  </div>
+                ))}
+                <p className="text-xs leading-6 text-on-surface-muted">
+                  A hash identifies bytes; it does not prove execution. Exported
+                  bundles contain sensitive data and are not automatically
+                  encrypted.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section
+          id="privacy"
+          className="border-y border-border-subtle bg-[#f3f6fb] py-24 lg:py-32"
+        >
+          <div className="mx-auto max-w-[1408px] px-6 lg:px-12">
+            <div className="mb-14 text-center">
+              <p className="mb-4 font-mono text-xs text-brand-teal">
+                PRIVACY-FIRST LOCAL COMPUTE
+              </p>
+              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+                Client isolation meets
+                <br />
+                consent-controlled reasoning.
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-on-surface-muted">
+                Raw datasets stay local by default. AI reasoning uses only
+                explicitly approved metadata and bounded aggregate evidence.
+              </p>
+            </div>
+            <div className="grid items-center gap-6 lg:grid-cols-[1fr_auto_1fr]">
+              <div className="rounded-xl border border-border-subtle bg-white p-6">
+                <span className="mb-6 inline-block rounded bg-brand-teal-light px-3 py-1 font-mono text-[10px] text-brand-teal">
+                  BROWSER MEMORY
+                </span>
+                <h3 className="mb-2 text-xl font-bold">
+                  Client Browser Sandbox
+                </h3>
+                <p className="mb-6 text-xs text-on-surface-muted">
+                  Local processing · explicit Save only
+                </p>
+                {[
+                  "Raw CSV / Parquet snapshots",
+                  "DuckDB & Pyodide calculations",
+                  "Local saved history and replay",
+                ].map((v) => (
+                  <p
+                    key={v}
+                    className="border-t border-border-subtle py-4 text-sm"
+                  >
+                    {v}
+                  </p>
+                ))}
+              </div>
+              <div className="text-center font-mono text-[10px] leading-6 text-brand-teal">
+                <span className="text-2xl" aria-hidden="true">
+                  ⇄
+                </span>
+                <br />
+                Consent
+                <br />
+                boundary
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-white p-6">
+                <span className="mb-6 inline-block rounded bg-brand-violet-light px-3 py-1 font-mono text-[10px] text-violet-ink">
+                  APPROVED CONTEXT
+                </span>
+                <h3 className="mb-2 text-xl font-bold">
+                  AI Hypothesis Service
+                </h3>
+                <p className="mb-6 text-xs text-on-surface-muted">
+                  Provider consent · bounded calls
+                </p>
+                {[
+                  "Approved schema and metric metadata",
+                  "Bounded approved aggregate evidence",
+                  "Structured hypotheses and plans",
+                ].map((v) => (
+                  <p
+                    key={v}
+                    className="border-t border-border-subtle py-4 text-sm"
+                  >
+                    {v}
+                  </p>
+                ))}
+              </div>
+            </div>
+            <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-6 text-on-surface-muted">
+              Metadata and aggregates can be sensitive. Provider retention
+              depends on the selected provider. Keys remain ephemeral; nothing
+              is automatically saved. Deterministic replay makes no new
+              inference requests.
+            </p>
+          </div>
+        </section>
+        <section className="bg-white px-6 py-24 text-center lg:py-28">
+          <span
+            className="mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-brand-teal-light text-2xl text-brand-teal"
+            aria-hidden="true"
+          >
+            ◇
+          </span>
+          <h2 className="mx-auto mb-5 max-w-3xl text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+            Ready to investigate
+            <br />
+            with evidence?
+          </h2>
+          <p className="mx-auto mb-8 max-w-xl text-sm leading-7 text-on-surface-muted">
+            Bring a local dataset. Define the calculation. Inspect what the
+            evidence supports.
+          </p>
+          <Link href="/app" className={primary}>
+            Start an Investigation <span aria-hidden="true">↗</span>
+          </Link>
+          <ul className="mt-10 flex flex-wrap justify-center gap-6 text-xs text-on-surface-muted">
+            {points.map((p) => (
+              <li key={p}>
+                <span className="mr-2 text-brand-teal" aria-hidden="true">
+                  ✓
+                </span>
+                {p}
+              </li>
+            ))}
+          </ul>
+        </section>
       </main>
-    </>
+      <footer className="border-t border-border-subtle px-6 py-12 lg:px-12">
+        <div className="mx-auto flex max-w-[1504px] flex-wrap justify-between gap-8">
+          <div>
+            <Brand />
+            <p className="mt-4 max-w-md text-xs leading-6 text-on-surface-muted">
+              Hypothesis-driven data investigation, deterministic numerical
+              verification and reproducible replay.
+            </p>
+          </div>
+          <nav
+            aria-label="Footer navigation"
+            className="flex flex-wrap gap-8 text-xs text-on-surface-muted [&_a]:flex [&_a]:min-h-11 [&_a]:items-center"
+          >
+            <a href="#pipeline">Investigation Engine</a>
+            <a href="#deep-dives">Evidence & Replay</a>
+            <a href="#privacy">Privacy & Local Compute</a>
+            <Link href="/app">Open Workspace</Link>
+          </nav>
+        </div>
+        <p className="mx-auto mt-10 max-w-[1504px] border-t border-border-subtle pt-6 font-mono text-[10px] text-on-surface-muted">
+          © 2026 Hypothron AI · Arctic Intelligence
+        </p>
+      </footer>
+      <LandingMotion />
+    </div>
   );
 }

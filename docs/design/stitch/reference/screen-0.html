@@ -1,0 +1,1231 @@
+<!DOCTYPE html><html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_standard" name="shell-type">
+<title>Hypothron AI - Mathematical Causal Intelligence Engine</title>
+<!-- Typography: Plus Jakarta Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<!-- Three.js CDN for ambient causal graph visualization -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface": "#F7F9FC",
+            "surface-pure": "#FFFFFF",
+            "surface-dim": "#EEF2F6",
+            "surface-card": "#FFFFFF",
+            "brand-teal": "#087F8C",
+            "brand-teal-light": "#E6F4F5",
+            "brand-teal-glow": "#79D4E2",
+            "brand-violet": "#7565D9",
+            "brand-violet-light": "#F0EDFB",
+            "navy-night": "#0B1426",
+            "navy-card": "#111E38",
+            "navy-border": "#1E3156",
+            "on-surface": "#111D35",
+            "on-surface-muted": "#66758C",
+            "border-subtle": "#E3E9F2",
+            "code-bg": "#0D172A",
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            'subtle-lift': '0 4px 24px -2px rgba(11, 20, 38, 0.06), 0 2px 8px -1px rgba(11, 20, 38, 0.04)',
+            'glass-elevated': '0 24px 64px -12px rgba(11, 29, 53, 0.12), 0 0 1px 1px rgba(227, 233, 242, 0.8)',
+            'glow-teal': '0 0 40px -10px rgba(8, 127, 140, 0.35)',
+            'glow-violet': '0 0 40px -10px rgba(117, 101, 217, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #F7F9FC;
+        color: #111D35;
+        overflow-x: hidden;
+      }
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.85; }
+    }
+    .animate-ambient-glow {
+      animation: pulseGlow 6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-surface text-on-surface antialiased selection:bg-brand-teal/20 selection:text-brand-teal">
+<!-- TOP NAVIGATION HEADER -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-md border-b border-border-subtle/80 transition-all">
+<div class="h-16 max-w-[1600px] mx-auto px-6 lg:px-12 flex items-center justify-between gap-6">
+<!-- Brand Logo -->
+<div class="flex items-center gap-10">
+<a class="flex items-center gap-2.5 group" href="#">
+<div class="w-8 h-8 rounded-lg bg-brand-teal flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
+<span class="material-symbols-outlined text-[20px]">biotech</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-[16px] tracking-tight text-on-surface">HYPOTHRON</span>
+<span class="text-[9px] font-mono tracking-widest text-on-surface-muted uppercase -mt-0.5 font-semibold">Scientific AI</span>
+</div>
+</a>
+<!-- Main Nav Links -->
+<nav class="hidden xl:flex items-center gap-1">
+<a class="px-3.5 py-1.5 rounded-lg text-sm font-semibold text-brand-teal bg-brand-teal-light/60 transition-colors" href="#">Platform</a>
+<a class="px-3.5 py-1.5 rounded-lg text-sm font-medium text-on-surface-muted hover:text-on-surface hover:bg-surface-dim transition-colors" href="#pipeline">Investigation Engine</a>
+<a class="px-3.5 py-1.5 rounded-lg text-sm font-medium text-on-surface-muted hover:text-on-surface hover:bg-surface-dim transition-colors" href="#privacy">Privacy &amp; Local Compute</a>
+<a class="px-3.5 py-1.5 rounded-lg text-sm font-medium text-on-surface-muted hover:text-on-surface hover:bg-surface-dim transition-colors" href="#deep-dives">Evidence Proofs</a>
+<a class="px-3.5 py-1.5 rounded-lg text-sm font-medium text-on-surface-muted hover:text-on-surface hover:bg-surface-dim transition-colors" href="#">Docs</a>
+</nav>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-2 font-mono text-xs text-on-surface-muted">
+<a class="px-3 py-1.5 hover:text-on-surface hover:bg-surface-dim rounded-lg transition-colors flex items-center gap-1.5" href="#">
+<span class="material-symbols-outlined text-sm">code</span>
+<span>GitHub</span>
+</a>
+<div class="h-4 w-px bg-border-subtle"></div>
+<a class="px-3 py-1.5 hover:text-on-surface hover:bg-surface-dim rounded-lg transition-colors flex items-center gap-1.5" href="#">
+<span class="material-symbols-outlined text-sm">menu_book</span>
+<span>Docs</span>
+</a>
+</div>
+<a class="h-9 px-4 bg-brand-teal hover:bg-[#066570] text-white text-xs font-semibold rounded-lg transition-all shadow-sm flex items-center gap-2 hover:shadow-glow-teal" href="#pipeline">
+<span class="material-symbols-outlined text-base">terminal</span>
+<span>Start an Investigation</span>
+</a>
+<div class="w-8 h-8 rounded-full bg-surface-dim border border-border-subtle flex items-center justify-center text-on-surface-muted hover:text-on-surface cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN EDITORIAL CONTENT -->
+<main class="w-full pt-16">
+<!-- 1. HERO SECTION: ASYMMETRIC, EDITORIAL & THREE.JS AMBIENT -->
+<section class="relative w-full overflow-hidden min-h-[calc(100vh-4rem)] flex items-center border-b border-border-subtle/60 bg-gradient-to-b from-[#F7F9FC] via-[#F3F6FB] to-[#EEF3F9] py-16 lg:py-24">
+<!-- Ambient Three.js 3D Background Canvas -->
+<div class="absolute inset-0 pointer-events-none opacity-45 mix-blend-multiply z-0" id="hero-threejs-container"></div>
+<!-- Delicate Blueprint Grid Overlay -->
+<div class="absolute inset-0 bg-[radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:32px_32px] opacity-40 pointer-events-none"></div>
+<div class="max-w-[1600px] mx-auto px-6 lg:px-12 w-full relative z-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+<!-- LEFT HERO COLUMN: Editorial Typography & Authority (5 cols) -->
+<div class="lg:col-span-5 flex flex-col items-start text-left">
+<!-- Live Engine Status Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-border-subtle shadow-xs mb-6 group cursor-default">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-brand-teal"></span>
+</span>
+<span class="font-mono text-[11px] font-semibold text-brand-teal uppercase tracking-wider">Causal Engine v2.4</span>
+<span class="text-border-subtle">|</span>
+<span class="text-[12px] text-on-surface-muted">Dual DuckDB &amp; Pyodide WASM Active</span>
+</div>
+<!-- Big Editorial Headline -->
+<h1 class="text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-[-0.03em] leading-[1.08] text-on-surface mb-6">
+              Turn complex enterprise data into <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal via-[#0B7285] to-brand-violet">mathematically verified answers</span>.
+            </h1>
+<!-- Narrative Description -->
+<p class="text-lg text-on-surface-muted leading-relaxed font-normal mb-8 max-w-xl">
+              Hypothron AI generates testable Pearl causal graphs, evaluates dual independent browser-local runtimes with zero cloud data transmission, and validates statistical significance through immutable mathematical proofs.
+            </p>
+<!-- Natural Language Prompt Pill Preview -->
+<div class="w-full max-w-lg mb-8 p-3 bg-white/95 backdrop-blur-md rounded-xl border border-border-subtle shadow-subtle-lift flex items-center gap-3">
+<div class="w-7 h-7 rounded-lg bg-brand-teal-light text-brand-teal flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+</div>
+<p class="font-mono text-xs text-on-surface truncate flex-1">
+<span class="text-on-surface-muted">investigate(</span>"Frankfurt gw_latency &gt; 1200ms vs Q3 enterprise churn"<span class="text-on-surface-muted">)</span>
+</p>
+<span class="px-2 py-0.5 rounded bg-brand-teal-light text-brand-teal text-[10px] font-mono font-bold uppercase">Ready</span>
+</div>
+<!-- Dual CTAs -->
+<div class="flex flex-wrap items-center gap-4 mb-10 w-full sm:w-auto">
+<a class="h-12 px-6 bg-brand-teal hover:bg-[#076873] text-white font-semibold text-sm rounded-xl transition-all shadow-subtle-lift hover:shadow-glow-teal flex items-center gap-2 group" href="#pipeline">
+<span class="material-symbols-outlined text-[19px] transition-transform group-hover:rotate-12">biotech</span>
+<span>Start an Investigation</span>
+</a>
+<button class="h-12 px-6 bg-white hover:bg-surface-dim text-on-surface font-semibold text-sm rounded-xl border border-border-subtle transition-all shadow-xs flex items-center gap-2" onclick="document.getElementById('deep-dives').scrollIntoView({behavior:'smooth'})">
+<span class="material-symbols-outlined text-brand-teal text-[20px]" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+<span>Explore Live Demo</span>
+</button>
+</div>
+<!-- Micro Executive Stats -->
+<div class="grid grid-cols-3 gap-6 pt-6 border-t border-border-subtle/80 w-full max-w-lg">
+<div>
+<div class="font-mono text-xl font-bold text-on-surface">100%</div>
+<div class="text-[11px] text-on-surface-muted uppercase tracking-wider font-medium mt-0.5">Browser Local</div>
+</div>
+<div>
+<div class="font-mono text-xl font-bold text-brand-teal">0.0000%</div>
+<div class="text-[11px] text-on-surface-muted uppercase tracking-wider font-medium mt-0.5">Execution Delta</div>
+</div>
+<div>
+<div class="font-mono text-xl font-bold text-brand-violet">&lt; 30ms</div>
+<div class="text-[11px] text-on-surface-muted uppercase tracking-wider font-medium mt-0.5">WASM Aggregation</div>
+</div>
+</div>
+</div>
+<!-- RIGHT HERO COLUMN: Dimensional Realistic UI Showcase (7 cols) -->
+<div class="lg:col-span-7 relative">
+<!-- Soft Ambient Back Glows -->
+<div class="absolute -top-12 -right-12 w-80 h-80 bg-brand-teal/15 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-10 -left-10 w-80 h-80 bg-brand-violet/15 rounded-full blur-3xl pointer-events-none"></div>
+<!-- Elevated Dimensional Card Showcase -->
+<div class="relative bg-white rounded-2xl border border-border-subtle/90 shadow-glass-elevated transition-transform duration-500 hover:scale-[1.01] overflow-hidden">
+<!-- Card Window Chrome -->
+<div class="px-5 py-3.5 bg-surface-dim/80 border-b border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
+<span class="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E]"></span>
+<span class="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123]"></span>
+<span class="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]"></span>
+</div>
+<div class="h-3.5 w-px bg-border-subtle"></div>
+<div class="flex items-center gap-2 font-mono text-xs text-on-surface font-medium bg-white px-2.5 py-1 rounded-md border border-border-subtle/60 shadow-xs">
+<span class="material-symbols-outlined text-sm text-brand-teal">dataset</span>
+<span>emea_saas_churn_q3.parquet</span>
+<span class="text-on-surface-muted text-[11px] font-normal">(1,429,811 rows • 842.6 MB)</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Zero-Copy RAM
+                  </span>
+<span class="font-mono text-xs text-on-surface-muted">#INV-8839</span>
+</div>
+</div>
+<!-- Main Investigation Laboratory Body -->
+<div class="p-6 space-y-6">
+<!-- Active Natural Language Hypothesis Bar -->
+<div class="p-4 rounded-xl bg-gradient-to-r from-brand-teal-light/40 to-brand-violet-light/30 border border-brand-teal/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded-lg bg-brand-teal text-white flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">neurology</span>
+</div>
+<div>
+<div class="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-teal">Evaluated Hypothesis [H1]</div>
+<div class="text-sm font-semibold text-on-surface mt-0.5">
+                        "Payment gateway timeout &gt; 1,200ms causally induces 2.84x relative hazard for enterprise churn."
+                      </div>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 self-end md:self-auto font-mono text-xs">
+<span class="px-2.5 py-1 rounded-md bg-white border border-border-subtle font-bold text-brand-teal">p = 0.0031</span>
+<span class="px-2.5 py-1 rounded-md bg-white border border-border-subtle font-bold text-brand-violet">d = 0.88</span>
+<span class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-sans font-semibold text-[11px]">Upheld</span>
+</div>
+</div>
+<!-- Dual Execution Split View: Code & Curve -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<!-- Left: Python/Polars Cell (7 Cols) -->
+<div class="md:col-span-7 rounded-xl bg-code-bg text-slate-100 p-4 font-mono text-xs flex flex-col justify-between shadow-inner">
+<div>
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-700/60 text-[11px] text-slate-400">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-brand-teal-glow"></span>
+<span class="text-brand-teal-glow font-bold">Pyodide 0.26 WebWorker</span>
+<span>• Cox CPH Model</span>
+</div>
+<span class="text-slate-400">Local Thread #4</span>
+</div>
+<div class="space-y-1 leading-5 text-[11.5px] text-slate-300">
+<p><span class="text-purple-400">import</span> polars <span class="text-purple-400">as</span> pl, lifelines</p>
+<p class="text-slate-500"># Direct Zero-Copy Arrow Memory Reference</p>
+<p>df = pl.read_parquet(<span class="text-emerald-300">"emea_churn_q3"</span>)</p>
+<p>df = df.with_columns(breach=(pl.col(<span class="text-emerald-300">"lat"</span>) &gt; <span class="text-amber-300">1200</span>))</p>
+<p>cph = lifelines.CoxPHFitter().fit(df, duration=<span class="text-emerald-300">"tenure"</span>)</p>
+<p class="text-brand-teal-glow font-semibold mt-1"># Hazard Ratio: 2.842x (95% CI: 2.14 - 3.76, p=0.0031)</p>
+</div>
+</div>
+<!-- Micro Speedometer -->
+<div class="mt-4 pt-3 border-t border-slate-700/60 grid grid-cols-2 gap-2 text-[11px]">
+<div class="bg-slate-800/80 px-2.5 py-1.5 rounded border border-slate-700/40">
+<span class="text-slate-400">DuckDB C++ WASM:</span>
+<span class="text-brand-teal-glow font-bold ml-1">24.1 ms</span>
+</div>
+<div class="bg-slate-800/80 px-2.5 py-1.5 rounded border border-slate-700/40">
+<span class="text-slate-400">Pyodide NumPy:</span>
+<span class="text-purple-300 font-bold ml-1">26.8 ms</span>
+</div>
+</div>
+</div>
+<!-- Right: Empirical Hazard Curve (5 Cols) -->
+<div class="md:col-span-5 bg-surface rounded-xl p-4 border border-border-subtle flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-bold text-xs text-on-surface">Hazard Rate vs Gateway SLA</span>
+<span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white text-on-surface-muted border border-border-subtle">n=1.4M</span>
+</div>
+<!-- Empirical Curve SVG -->
+<div class="w-full bg-white rounded-lg p-2 border border-border-subtle/60 shadow-xs">
+<svg class="w-full h-28 overflow-visible" viewBox="0 0 280 140">
+<!-- Gridlines -->
+<line stroke="#EEF2F6" stroke-dasharray="2 2" x1="20" x2="270" y1="20" y2="20"></line>
+<line stroke="#EEF2F6" stroke-dasharray="2 2" x1="20" x2="270" y1="60" y2="60"></line>
+<line stroke="#EEF2F6" stroke-dasharray="2 2" x1="20" x2="270" y1="100" y2="100"></line>
+<line stroke="#CBD5E1" x1="20" x2="270" y1="120" y2="120"></line>
+<!-- SLA Breach Vertical Line -->
+<line stroke="#EF4444" stroke-dasharray="3 2" stroke-width="1.5" x1="165" x2="165" y1="15" y2="120"></line>
+<rect fill="#FEE2E2" fill-opacity="0.25" height="105" width="105" x="165" y="15"></rect>
+<text fill="#EF4444" font-family="JetBrains Mono" font-size="8" font-weight="bold" x="168" y="26">&gt;1200ms Breach</text>
+<!-- Normal baseline path -->
+<path d="M 25 115 Q 90 113, 165 106" fill="none" stroke="#66758C" stroke-width="2"></path>
+<!-- Post-breach cliff rise -->
+<path d="M 165 106 C 185 102, 215 60, 265 28" fill="none" stroke="#087F8C" stroke-width="2.5"></path>
+<circle cx="165" cy="106" fill="#EF4444" r="3.5"></circle>
+<circle cx="230" cy="50" fill="#087F8C" r="3.5"></circle>
+</svg>
+</div>
+<div class="flex justify-between font-mono text-[9px] text-on-surface-muted mt-1 px-1">
+<span>200ms</span>
+<span>800ms</span>
+<span class="text-brand-teal font-bold">1200ms SLA</span>
+<span>2400ms</span>
+</div>
+</div>
+<!-- In-Browser Cryptographic Badge -->
+<div class="mt-3 pt-2.5 border-t border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+<span class="material-symbols-outlined text-[17px] text-emerald-600">verified</span>
+<span>0.0000% Delta Parity</span>
+</div>
+<span class="font-mono text-[10px] text-on-surface-muted">SHA: 0x8b3f...92e1</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. SIGNATURE INTERACTIVE PIPELINE (CINEMATIC DARK NAVY #0B1426) -->
+<section class="w-full bg-navy-night text-white py-24 lg:py-32 relative overflow-hidden" id="pipeline">
+<!-- Ambient Radiant Color Lighting -->
+<div class="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-brand-teal/15 rounded-full blur-[140px] pointer-events-none animate-ambient-glow"></div>
+<div class="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-brand-violet/20 rounded-full blur-[160px] pointer-events-none"></div>
+<div class="max-w-[1600px] mx-auto px-6 lg:px-12 relative z-10">
+<!-- Section Header -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+<div class="max-w-2xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-brand-teal-glow font-mono text-xs mb-4">
+<span class="material-symbols-outlined text-sm">hub</span>
+<span>Input-to-Proof Flow Architecture</span>
+</div>
+<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
+              From raw dataset to verifiable mathematical proof
+            </h2>
+<p class="text-slate-300 text-base sm:text-lg mt-4 leading-relaxed font-light">
+              Hypothron replaces black-box hallucinations with a 5-stage deterministic causal pipeline. Raw customer records remain isolated in your browser while dual WASM engines verify empirical claims.
+            </p>
+</div>
+<!-- Interactive Stage Scrub Controls -->
+<div class="flex items-center gap-1 p-1.5 rounded-xl bg-navy-card border border-navy-border self-start lg:self-auto overflow-x-auto max-w-full">
+<button class="px-3.5 py-2 rounded-lg font-mono text-xs font-semibold text-white bg-brand-teal transition-all shadow-sm shrink-0" id="tab-step-1" onclick="setActivePipelineStep(1)">1. Ingest</button>
+<button class="px-3.5 py-2 rounded-lg font-mono text-xs font-medium text-slate-400 hover:text-white transition-all shrink-0" id="tab-step-2" onclick="setActivePipelineStep(2)">2. Hypotheses</button>
+<button class="px-3.5 py-2 rounded-lg font-mono text-xs font-medium text-slate-400 hover:text-white transition-all shrink-0" id="tab-step-3" onclick="setActivePipelineStep(3)">3. Dual Compute</button>
+<button class="px-3.5 py-2 rounded-lg font-mono text-xs font-medium text-slate-400 hover:text-white transition-all shrink-0" id="tab-step-4" onclick="setActivePipelineStep(4)">4. Arbitration</button>
+<button class="px-3.5 py-2 rounded-lg font-mono text-xs font-medium text-slate-400 hover:text-white transition-all shrink-0" id="tab-step-5" onclick="setActivePipelineStep(5)">5. Proof</button>
+</div>
+</div>
+<!-- Flow Diagram Container -->
+<div class="relative w-full rounded-2xl bg-navy-card/60 border border-navy-border p-6 lg:p-10 backdrop-blur-xl shadow-2xl overflow-x-auto custom-scrollbar">
+<!-- Animated Flow SVG Filament Background -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none hidden xl:block" fill="none" viewBox="0 0 1480 440">
+<!-- Filament 1 to 2 -->
+<path class="opacity-70 animate-pulse" d="M 250 210 C 310 210, 310 210, 370 210" stroke="#087F8C" stroke-dasharray="4 4" stroke-width="2"></path>
+<!-- Filament 2 to 3 (Splits to dual engines) -->
+<path d="M 600 210 C 650 210, 650 140, 710 140" stroke="#79D4E2" stroke-width="2"></path>
+<path d="M 600 210 C 650 210, 650 280, 710 280" stroke="#7565D9" stroke-width="2"></path>
+<!-- Filament 3 to 4 (Converges to Arbitration) -->
+<path d="M 940 140 C 990 140, 990 210, 1040 210" stroke="#79D4E2" stroke-width="2"></path>
+<path d="M 940 280 C 990 280, 990 210, 1040 210" stroke="#7565D9" stroke-width="2"></path>
+<!-- Filament 4 to 5 -->
+<path d="M 1240 210 C 1270 210, 1270 210, 1300 210" stroke="#087F8C" stroke-dasharray="6 3" stroke-width="2.5"></path>
+</svg>
+<!-- 5-Stage Floating Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 relative z-10 min-w-[1100px] xl:min-w-0">
+<!-- STAGE 1: LOCAL INGESTION -->
+<div class="rounded-xl bg-navy-night/80 border border-brand-teal/40 p-5 flex flex-col justify-between shadow-lg transition-all duration-300 ring-2 ring-brand-teal" id="pipeline-card-1">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="w-7 h-7 rounded-lg bg-brand-teal text-white font-mono text-xs font-bold flex items-center justify-center">01</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-brand-teal-glow font-semibold">Zero-Upload Ingress</span>
+</div>
+<h3 class="text-base font-bold text-white mb-2">Local Data Ingestion</h3>
+<p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                  Datasets (Parquet/Arrow/CSV) load directly into browser V8 memory via streaming WebWorkers.
+                </p>
+<div class="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5 font-mono text-[11px]">
+<div class="flex justify-between text-slate-400">
+<span>Source:</span>
+<span class="text-slate-200">1,429,811 rows</span>
+</div>
+<div class="flex justify-between text-slate-400">
+<span>RAM Footprint:</span>
+<span class="text-brand-teal-glow">842.6 MB (Isolated)</span>
+</div>
+<div class="flex justify-between text-slate-400">
+<span>Network Tx:</span>
+<span class="text-emerald-400 font-bold">0.00 KB</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono text-brand-teal-glow flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">lock</span>
+<span>CSP Offline Hardened</span>
+</div>
+</div>
+<!-- STAGE 2: CAUSAL HYPOTHESES -->
+<div class="rounded-xl bg-navy-night/80 border border-navy-border p-5 flex flex-col justify-between shadow-lg transition-all duration-300 opacity-60" id="pipeline-card-2">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="w-7 h-7 rounded-lg bg-brand-violet text-white font-mono text-xs font-bold flex items-center justify-center">02</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-purple-300 font-semibold">Causal DAG Space</span>
+</div>
+<h3 class="text-base font-bold text-white mb-2">AI Hypothesis Engine</h3>
+<p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                  Generates acyclic causal graphs using Pearl's do-calculus and prioritizes candidate drivers by Bayesian surprise.
+                </p>
+<div class="space-y-1.5 font-mono text-[11px]">
+<div class="p-2 rounded bg-slate-900/80 border border-slate-800 flex justify-between items-center text-slate-200">
+<span class="truncate">H1: gw_latency &gt; 1.2s</span>
+<span class="text-brand-teal-glow font-bold ml-1">BF: 42.8</span>
+</div>
+<div class="p-2 rounded bg-slate-900/50 border border-slate-800/60 flex justify-between items-center text-slate-400">
+<span class="truncate">H2: currency_drift</span>
+<span class="text-slate-500 font-bold ml-1">BF: 2.1</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono text-purple-300 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">account_tree</span>
+<span>Confounders Controlled</span>
+</div>
+</div>
+<!-- STAGE 3: DUAL EXECUTION -->
+<div class="rounded-xl bg-navy-night/80 border border-navy-border p-5 flex flex-col justify-between shadow-lg transition-all duration-300 opacity-60" id="pipeline-card-3">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="w-7 h-7 rounded-lg bg-cyan-600 text-white font-mono text-xs font-bold flex items-center justify-center">03</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-cyan-300 font-semibold">Dual WASM Runtimes</span>
+</div>
+<h3 class="text-base font-bold text-white mb-2">Isolated Dual Compute</h3>
+<p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                  Two separate, non-overlapping compilers execute the exact same statistical model simultaneously.
+                </p>
+<div class="space-y-2 font-mono text-[11px]">
+<div class="p-2 rounded bg-cyan-950/40 border border-cyan-800/40 text-cyan-200 flex justify-between">
+<span>Engine A: DuckDB C++</span>
+<span class="font-bold">24.1 ms</span>
+</div>
+<div class="p-2 rounded bg-purple-950/40 border border-purple-800/40 text-purple-200 flex justify-between">
+<span>Engine B: Pyodide Scipy</span>
+<span class="font-bold">26.8 ms</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono text-cyan-300 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">memory</span>
+<span>SIMD Vectorized WebAssembly</span>
+</div>
+</div>
+<!-- STAGE 4: ARBITRATION -->
+<div class="rounded-xl bg-navy-night/80 border border-navy-border p-5 flex flex-col justify-between shadow-lg transition-all duration-300 opacity-60" id="pipeline-card-4">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="w-7 h-7 rounded-lg bg-amber-600 text-white font-mono text-xs font-bold flex items-center justify-center">04</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-amber-300 font-semibold">Float Reconciliation</span>
+</div>
+<h3 class="text-base font-bold text-white mb-2">Numerical Parity Check</h3>
+<p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                  Bit-for-bit matrix arbitration. Any divergence &gt; 10⁻⁷ automatically invalidates the claim.
+                </p>
+<div class="p-2.5 rounded bg-slate-900/90 border border-slate-800 space-y-1 font-mono text-[11px]">
+<div class="flex justify-between text-slate-400">
+<span>DuckDB Hazard:</span>
+<span class="text-slate-200">2.842194</span>
+</div>
+<div class="flex justify-between text-slate-400">
+<span>Pyodide Hazard:</span>
+<span class="text-slate-200">2.842194</span>
+</div>
+<div class="flex justify-between text-brand-teal-glow font-bold pt-1 border-t border-slate-800">
+<span>Parity Delta:</span>
+<span>0.000000%</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+<span>Bitwise Parity Verified</span>
+</div>
+</div>
+<!-- STAGE 5: EVIDENCE PROOF -->
+<div class="rounded-xl bg-navy-night/80 border border-navy-border p-5 flex flex-col justify-between shadow-lg transition-all duration-300 opacity-60" id="pipeline-card-5">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="w-7 h-7 rounded-lg bg-brand-teal text-white font-mono text-xs font-bold flex items-center justify-center">05</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-brand-teal-glow font-semibold">Audit Certificate</span>
+</div>
+<h3 class="text-base font-bold text-white mb-2">Immutable Proof Pack</h3>
+<p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                  Self-contained investigation state pack containing reproducible SQL AST, lockfile, and SHA-256 seal.
+                </p>
+<div class="p-2.5 rounded bg-brand-teal/10 border border-brand-teal/30 font-mono text-[10px] text-brand-teal-glow break-all">
+                  SHA-256: 0x8b3f12a87c0ed9b31980327f...92e1
+                </div>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+<span class="font-mono text-xs text-white font-bold">p = 0.0031</span>
+<span class="px-2 py-1 rounded bg-brand-teal text-white text-[10px] font-mono font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">download</span>
+                  Pack .hex
+                </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. PRODUCT SHOWCASES: 3 MAJOR EDITORIAL DEEP DIVES -->
+<section class="w-full bg-surface py-24 lg:py-32 border-b border-border-subtle" id="deep-dives">
+<div class="max-w-[1600px] mx-auto px-6 lg:px-12">
+<!-- Section Header -->
+<div class="text-center max-w-3xl mx-auto mb-20">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-teal-light text-brand-teal font-mono text-xs font-semibold mb-3">
+<span>Rigorous Analytical Depth</span>
+</div>
+<h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight">
+            Designed for quant researchers, trusted by institutional auditors
+          </h2>
+<p class="text-base sm:text-lg text-on-surface-muted mt-4">
+            Explore the three core architectural breakthroughs powering Hypothron’s empirical causal reasoning engine.
+          </p>
+</div>
+<div class="space-y-24">
+<!-- DEEP DIVE 1: AUTONOMOUS HYPOTHESIS EXPLORATION -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left Info (5 cols) -->
+<div class="lg:col-span-5 flex flex-col items-start">
+<div class="w-10 h-10 rounded-xl bg-brand-violet-light text-brand-violet flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl">account_tree</span>
+</div>
+<span class="font-mono text-xs uppercase tracking-wider text-brand-violet font-bold mb-2">Deep Dive 01</span>
+<h3 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mb-4">
+                Autonomous Pearl Causal Exploration Trees
+              </h3>
+<p class="text-on-surface-muted leading-relaxed text-base mb-6">
+                Most LLM data assistants merely hallucinate spurious correlations across columns. Hypothron constructs directed acyclic graphs (DAGs), applies Judea Pearl’s do-calculus to isolate confounders, and scores every branch by Bayes Factor before running queries.
+              </p>
+<ul class="space-y-3 font-medium text-sm text-on-surface-muted mb-8">
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-violet text-lg">check_circle</span>
+<span>Automated backdoor and frontdoor path adjustment</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-violet text-lg">check_circle</span>
+<span>Bayesian surprise ranking (AIC / BIC minimization)</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-violet text-lg">check_circle</span>
+<span>Eliminates collider bias and cherry-picked metrics</span>
+</li>
+</ul>
+<div class="p-3 bg-white rounded-xl border border-border-subtle shadow-xs flex items-center gap-3 w-full">
+<div class="w-2 h-2 rounded-full bg-brand-violet animate-pulse"></div>
+<span class="font-mono text-xs text-on-surface-muted">Prior Beliefs: Informed conjugate Dirichlets</span>
+</div>
+</div>
+<!-- Right Interactive Graphic Card (7 cols) -->
+<div class="lg:col-span-7 bg-white rounded-2xl border border-border-subtle p-6 lg:p-8 shadow-subtle-lift">
+<div class="flex items-center justify-between pb-4 mb-5 border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="font-bold text-sm text-on-surface">Candidate Causal Hypotheses Tree</span>
+<span class="font-mono text-xs text-on-surface-muted bg-surface-dim px-2 py-0.5 rounded">Target: enterprise_churn</span>
+</div>
+<span class="font-mono text-xs text-brand-teal font-semibold">3 Active Paths</span>
+</div>
+<!-- Ranked Branches -->
+<div class="space-y-4">
+<!-- Path 1 (Decisive Winner) -->
+<div class="p-4 rounded-xl bg-brand-teal-light/40 border border-brand-teal/30 hover:border-brand-teal transition-all">
+<div class="flex items-start justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-brand-teal text-white font-mono text-xs flex items-center justify-center font-bold mt-0.5">H1</span>
+<div>
+<div class="text-sm font-bold text-on-surface">gw_latency &gt; 1200ms → Churn Spike</div>
+<div class="text-xs text-on-surface-muted mt-1">
+                          Confounders adjusted: <span class="font-mono text-on-surface">region:EMEA, tier:Enterprise, renewal_window:Q3</span>
+</div>
+</div>
+</div>
+<div class="text-right shrink-0">
+<div class="font-mono text-xs font-bold text-brand-teal">Bayes Factor: 42.8</div>
+<span class="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">Decisive Evidence</span>
+</div>
+</div>
+<!-- Causal Directed Edge representation -->
+<div class="mt-3 pt-3 border-t border-brand-teal/20 flex items-center gap-2 font-mono text-[11px] text-brand-teal">
+<span>[gw_latency]</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<span>[checkout_abandon]</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<span class="font-bold">[churn_hazard_2.84x]</span>
+</div>
+</div>
+<!-- Path 2 (Weak / Anecdotal) -->
+<div class="p-4 rounded-xl bg-white border border-border-subtle hover:border-brand-violet/40 transition-all opacity-85">
+<div class="flex items-start justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-brand-violet text-white font-mono text-xs flex items-center justify-center font-bold mt-0.5">H2</span>
+<div>
+<div class="text-sm font-bold text-on-surface">ticket_escalation_count → Churn Spike</div>
+<div class="text-xs text-on-surface-muted mt-1">
+                          Confounders adjusted: <span class="font-mono text-on-surface">tier:Enterprise, seat_count</span>
+</div>
+</div>
+</div>
+<div class="text-right shrink-0">
+<div class="font-mono text-xs font-bold text-brand-violet">Bayes Factor: 2.1</div>
+<span class="inline-block mt-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">Anecdotal / Weak</span>
+</div>
+</div>
+<div class="mt-3 pt-3 border-t border-border-subtle flex items-center gap-2 font-mono text-[11px] text-on-surface-muted">
+<span>[support_tickets]</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<span>[unresolved_slas]</span>
+<span class="material-symbols-outlined text-sm">trending_flat</span>
+<span>[marginal_delta]</span>
+</div>
+</div>
+<!-- Path 3 (Inconclusive) -->
+<div class="p-4 rounded-xl bg-surface-dim/70 border border-border-subtle opacity-60">
+<div class="flex items-start justify-between gap-4">
+<div class="flex items-start gap-3">
+<span class="w-6 h-6 rounded-full bg-slate-400 text-white font-mono text-xs flex items-center justify-center font-bold mt-0.5">H3</span>
+<div>
+<div class="text-sm font-bold text-on-surface">champion_departure → Churn Spike</div>
+<div class="text-xs text-on-surface-muted mt-1">Data sparsity warning: only 8% LinkedIn signal completeness</div>
+</div>
+</div>
+<div class="text-right shrink-0">
+<div class="font-mono text-xs font-bold text-slate-500">Inconclusive</div>
+<span class="inline-block mt-1 px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-bold">Underpowered</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- DEEP DIVE 2: DUAL-ENGINE LOCAL ARBITRATION -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left Interactive Graphic Card (7 cols - order 2 on mobile) -->
+<div class="lg:col-span-7 bg-white rounded-2xl border border-border-subtle p-6 lg:p-8 shadow-subtle-lift order-2 lg:order-1">
+<div class="flex items-center justify-between pb-4 mb-6 border-b border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="font-bold text-sm text-on-surface">Dual Engine Execution Reconciliation</span>
+<span class="font-mono text-xs text-brand-teal font-semibold">Bit-for-Bit Validation</span>
+</div>
+<span class="font-mono text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Δ = 0.000000%</span>
+</div>
+<!-- Side-by-Side Dual Engine Specs -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Engine A: DuckDB -->
+<div class="p-4 rounded-xl bg-surface border border-border-subtle flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-mono text-xs font-bold text-brand-teal">Engine A: DuckDB 0.10.2</span>
+<span class="font-mono text-[10px] bg-white border border-border-subtle px-1.5 py-0.5 rounded">C++ / WASM</span>
+</div>
+<div class="p-3 bg-code-bg rounded-lg font-mono text-[11px] text-slate-300 space-y-1 mb-3">
+<p class="text-brand-teal-glow">SELECT timeout_flag,</p>
+<p>&nbsp;&nbsp;COUNT(*) as events,</p>
+<p>&nbsp;&nbsp;AVG(churn_hazard)</p>
+<p class="text-purple-300">FROM 'telemetry.parquet'</p>
+<p class="text-purple-300">GROUP BY 1</p>
+</div>
+<div class="space-y-1 font-mono text-xs text-on-surface-muted">
+<div class="flex justify-between"><span>Execution Time:</span><span class="text-on-surface font-bold">24.1 ms</span></div>
+<div class="flex justify-between"><span>Vector SIMD:</span><span class="text-brand-teal font-bold">128-bit Active</span></div>
+<div class="flex justify-between"><span>Agg Output:</span><span class="text-on-surface font-mono font-bold">1,421 Churns</span></div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-border-subtle text-[11px] text-brand-teal font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">done_all</span>
+<span>Vectorized Arrow Columnar</span>
+</div>
+</div>
+<!-- Engine B: Pyodide Python -->
+<div class="p-4 rounded-xl bg-surface border border-border-subtle flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-mono text-xs font-bold text-brand-violet">Engine B: Pyodide 0.26.1</span>
+<span class="font-mono text-[10px] bg-white border border-border-subtle px-1.5 py-0.5 rounded">Python 3.12</span>
+</div>
+<div class="p-3 bg-code-bg rounded-lg font-mono text-[11px] text-slate-300 space-y-1 mb-3">
+<p class="text-purple-300">hazard = cox_ph(</p>
+<p>&nbsp;&nbsp;df['timeout_flag'],</p>
+<p>&nbsp;&nbsp;df['duration_days']</p>
+<p>)</p>
+<p class="text-purple-300">return hazard.beta</p>
+</div>
+<div class="space-y-1 font-mono text-xs text-on-surface-muted">
+<div class="flex justify-between"><span>Execution Time:</span><span class="text-on-surface font-bold">26.8 ms</span></div>
+<div class="flex justify-between"><span>Kernel Stack:</span><span class="text-brand-violet font-bold">Polars + Scipy</span></div>
+<div class="flex justify-between"><span>Agg Output:</span><span class="text-on-surface font-mono font-bold">1,421 Churns</span></div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-border-subtle text-[11px] text-brand-violet font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">done_all</span>
+<span>Scientific Python Ecosystem</span>
+</div>
+</div>
+</div>
+<!-- Arbitration Result Strip -->
+<div class="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center justify-between text-xs font-mono">
+<span class="text-emerald-800 font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-base text-emerald-600">verified</span>
+<span>Zero Discrepancy Parity Verified across 1,429,811 records</span>
+</span>
+<span class="text-emerald-700 font-bold">Δ = 0.000000%</span>
+</div>
+</div>
+<!-- Right Info (5 cols - order 1 on mobile) -->
+<div class="lg:col-span-5 flex flex-col items-start order-1 lg:order-2">
+<div class="w-10 h-10 rounded-xl bg-brand-teal-light text-brand-teal flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl">compare_arrows</span>
+</div>
+<span class="font-mono text-xs uppercase tracking-wider text-brand-teal font-bold mb-2">Deep Dive 02</span>
+<h3 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mb-4">
+                Dual-Engine Local WebWorker Arbitration
+              </h3>
+<p class="text-on-surface-muted leading-relaxed text-base mb-6">
+                Single-engine AI analysis is prone to subtle floating-point overflow, compiler optimization bugs, or silent null-handling differences. Hypothron runs every critical inference through two structurally isolated runtimes simultaneously.
+              </p>
+<ul class="space-y-3 font-medium text-sm text-on-surface-muted mb-8">
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-teal text-lg">check_circle</span>
+<span>DuckDB WASM (C++) executes vectorized aggregation</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-teal text-lg">check_circle</span>
+<span>Pyodide (Python 3.12 / Polars) fits statistical distributions</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-teal text-lg">check_circle</span>
+<span>Automated halt on discrepancies exceeding 10⁻⁷ delta</span>
+</li>
+</ul>
+<div class="p-3 bg-white rounded-xl border border-border-subtle shadow-xs flex items-center gap-3 w-full">
+<div class="w-2 h-2 rounded-full bg-brand-teal animate-pulse"></div>
+<span class="font-mono text-xs text-on-surface-muted">Thread Isolation: SharedArrayBuffer zero-copy</span>
+</div>
+</div>
+</div>
+<!-- DEEP DIVE 3: IMMUTABLE EVIDENCE & REPLAY PACKS -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left Info (5 cols) -->
+<div class="lg:col-span-5 flex flex-col items-start">
+<div class="w-10 h-10 rounded-xl bg-brand-teal-light text-brand-teal flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-2xl">fact_check</span>
+</div>
+<span class="font-mono text-xs uppercase tracking-wider text-brand-teal font-bold mb-2">Deep Dive 03</span>
+<h3 class="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight mb-4">
+                Immutable Evidence &amp; Replay Packs
+              </h3>
+<p class="text-on-surface-muted leading-relaxed text-base mb-6">
+                In scientific research and enterprise compliance, a conclusion is worthless if it cannot be deterministically replayed. Hypothron packages every investigation into a standalone, cryptographic pack containing the query AST, lockfiles, and mathematical confidence bounds.
+              </p>
+<ul class="space-y-3 font-medium text-sm text-on-surface-muted mb-8">
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-teal text-lg">check_circle</span>
+<span>Portable executable dbt / SQL verification seeds</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-teal text-lg">check_circle</span>
+<span>SHA-256 cryptographic seal of source schema and outputs</span>
+</li>
+<li class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-brand-teal text-lg">check_circle</span>
+<span>Courtroom and SOC2-ready evidence export formats</span>
+</li>
+</ul>
+<div class="p-3 bg-white rounded-xl border border-border-subtle shadow-xs flex items-center gap-3 w-full">
+<div class="w-2 h-2 rounded-full bg-brand-teal animate-pulse"></div>
+<span class="font-mono text-xs text-on-surface-muted">Replay Drift: Guaranteed 0.00% across machines</span>
+</div>
+</div>
+<!-- Right Interactive Graphic Card (7 cols) -->
+<div class="lg:col-span-7 bg-white rounded-2xl border border-border-subtle p-6 lg:p-8 shadow-subtle-lift">
+<!-- Hex-Style Investigation Notebook Preview -->
+<div class="flex items-center justify-between pb-4 mb-5 border-b border-border-subtle">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-md bg-brand-teal flex items-center justify-center text-white font-mono text-xs font-bold">H</div>
+<div>
+<div class="text-xs font-bold text-on-surface">investigation_manifest_8839.proof</div>
+<div class="text-[10px] font-mono text-on-surface-muted">Format: Portable Deterministic Replay Archive</div>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-dim hover:bg-border-subtle text-on-surface font-mono text-xs font-semibold flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">terminal</span>
+<span>hypothron replay</span>
+</button>
+</div>
+<div class="space-y-4">
+<!-- Academic Stats Summary Card -->
+<div class="p-4 rounded-xl bg-surface border border-border-subtle grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+<div class="p-2.5 bg-white rounded-lg border border-border-subtle/60">
+<div class="font-mono text-lg font-bold text-brand-teal">0.0031</div>
+<div class="text-[10px] text-on-surface-muted uppercase font-medium">P-Value (α=0.01)</div>
+</div>
+<div class="p-2.5 bg-white rounded-lg border border-border-subtle/60">
+<div class="font-mono text-lg font-bold text-brand-violet">2.84x</div>
+<div class="text-[10px] text-on-surface-muted uppercase font-medium">Hazard Ratio</div>
+</div>
+<div class="p-2.5 bg-white rounded-lg border border-border-subtle/60">
+<div class="font-mono text-lg font-bold text-on-surface">95% CI</div>
+<div class="text-[10px] text-on-surface-muted uppercase font-medium">[2.14 - 3.76]</div>
+</div>
+<div class="p-2.5 bg-white rounded-lg border border-border-subtle/60">
+<div class="font-mono text-lg font-bold text-emerald-600">8.74</div>
+<div class="text-[10px] text-on-surface-muted uppercase font-medium">Log-Rank χ²</div>
+</div>
+</div>
+<!-- Reproducible dbt/SQL Seed Snippet -->
+<div class="p-4 rounded-xl bg-code-bg font-mono text-xs text-slate-200 space-y-2">
+<div class="flex justify-between items-center text-slate-400 text-[11px] pb-2 border-b border-slate-700/60">
+<span>reproducible_models/churn_causal_gate.sql</span>
+<span class="text-brand-teal-glow">dbt seed target</span>
+</div>
+<p><span class="text-purple-400">WITH</span> cohort <span class="text-purple-400">AS</span> (</p>
+<p>&nbsp;&nbsp;<span class="text-purple-400">SELECT</span> *, (gw_latency_ms &gt; <span class="text-amber-300">1200</span>)::<span class="text-brand-teal-glow">BOOLEAN</span> <span class="text-purple-400">AS</span> timeout_breach</p>
+<p>&nbsp;&nbsp;<span class="text-purple-400">FROM</span> {{ ref(<span class="text-emerald-300">'emea_saas_churn_q3'</span>) }}</p>
+<p>)</p>
+<p><span class="text-purple-400">SELECT</span> timeout_breach, <span class="text-brand-teal-glow">causal_relative_risk</span>(churned) <span class="text-purple-400">FROM</span> cohort;</p>
+</div>
+<!-- Cryptographic SHA-256 Stamp -->
+<div class="p-3 bg-surface-dim rounded-xl border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-brand-teal text-base">fingerprint</span>
+<span class="text-on-surface-muted truncate">SHA256: 0x8b3f12a87c0ed9b31980327f4d42b918731...92e1</span>
+</div>
+<span class="text-brand-teal font-bold shrink-0">Immutable Seal</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. PRIVACY & TRUST: VISUAL CONSENT BOUNDARY -->
+<section class="w-full bg-[#F3F6FB] py-24 lg:py-32 border-b border-border-subtle" id="privacy">
+<div class="max-w-[1600px] mx-auto px-6 lg:px-12">
+<div class="max-w-3xl mb-16">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-teal-light text-brand-teal font-mono text-xs font-semibold mb-3">
+<span>Air-Gapped Local Trust</span>
+</div>
+<h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight">
+            Client isolation meets consent-controlled reasoning
+          </h2>
+<p class="text-base sm:text-lg text-on-surface-muted mt-4">
+            Unlike cloud AI assistants that persist sensitive database records to remote third-party model servers, Hypothron enforces a strict physical split between data computation and hypothesis logic.
+          </p>
+</div>
+<!-- Architectural Consent Boundary Split Diagram -->
+<div class="grid grid-cols-1 lg:grid-cols-11 gap-6 items-stretch">
+<!-- LEFT SIDE: 100% In-Browser Client Sandbox (5 Cols) -->
+<div class="lg:col-span-5 bg-white rounded-2xl border-2 border-brand-teal/40 p-6 lg:p-8 shadow-subtle-lift flex flex-col justify-between relative overflow-hidden">
+<div class="absolute top-0 right-0 px-3 py-1 bg-brand-teal text-white font-mono text-[10px] font-bold rounded-bl-xl uppercase tracking-wider">
+              100% Browser Client RAM
+            </div>
+<div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-9 h-9 rounded-xl bg-brand-teal-light text-brand-teal flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">laptop_chromebook</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface">Client Browser Sandbox</h3>
+<p class="text-xs text-on-surface-muted">Zero remote data storage or server ingestion</p>
+</div>
+</div>
+<div class="space-y-3 font-mono text-xs">
+<div class="p-3.5 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-teal">table_rows</span>
+<div>
+<div class="font-bold text-on-surface">Raw Datasets (Parquet/CSV)</div>
+<div class="text-[11px] text-on-surface-muted font-sans">PII, healthcare records, financial ledgers</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-brand-teal-light text-brand-teal font-bold text-[10px]">Strict Local</span>
+</div>
+<div class="p-3.5 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-teal">memory</span>
+<div>
+<div class="font-bold text-on-surface">DuckDB &amp; Pyodide WASM</div>
+<div class="text-[11px] text-on-surface-muted font-sans">Executes calculations via client CPU threads</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-brand-teal-light text-brand-teal font-bold text-[10px]">In-Memory</span>
+</div>
+<div class="p-3.5 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-teal">key</span>
+<div>
+<div class="font-bold text-on-surface">Cryptographic Signing</div>
+<div class="text-[11px] text-on-surface-muted font-sans">Local hashing of query AST &amp; result proofs</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-brand-teal-light text-brand-teal font-bold text-[10px]">Local Hash</span>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-border-subtle flex items-center justify-between font-mono text-xs text-on-surface-muted">
+<span>Network Ingress: 0 Bytes</span>
+<span class="text-brand-teal font-semibold">CSP Enforced</span>
+</div>
+</div>
+<!-- MIDDLE: Sanitized Schema & Consent Gate (1 Col) -->
+<div class="lg:col-span-1 flex flex-col items-center justify-center py-4 lg:py-0">
+<div class="w-14 h-14 rounded-2xl bg-white border-2 border-border-subtle shadow-md flex items-center justify-center text-brand-teal relative">
+<span class="material-symbols-outlined text-2xl">shield_lock</span>
+<span class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+<div class="text-center mt-2">
+<span class="font-mono text-[10px] font-bold text-on-surface-muted uppercase tracking-wider block">Schema</span>
+<span class="font-mono text-[10px] font-bold text-brand-teal uppercase tracking-wider block">Gatekeeper</span>
+</div>
+</div>
+<!-- RIGHT SIDE: AI Hypothesis Formulation Service (5 Cols) -->
+<div class="lg:col-span-5 bg-white rounded-2xl border-2 border-brand-violet/40 p-6 lg:p-8 shadow-subtle-lift flex flex-col justify-between relative overflow-hidden">
+<div class="absolute top-0 right-0 px-3 py-1 bg-brand-violet text-white font-mono text-[10px] font-bold rounded-bl-xl uppercase tracking-wider">
+              Zero Data Retention (ZDR)
+            </div>
+<div>
+<div class="flex items-center gap-3 mb-6">
+<div class="w-9 h-9 rounded-xl bg-brand-violet-light text-brand-violet flex items-center justify-center">
+<span class="material-symbols-outlined text-xl">cloud_sync</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface">AI Hypothesis Service</h3>
+<p class="text-xs text-on-surface-muted">Abstract causal reasoning on schema structures only</p>
+</div>
+</div>
+<div class="space-y-3 font-mono text-xs">
+<div class="p-3.5 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-violet">schema</span>
+<div>
+<div class="font-bold text-on-surface">Anonymized Column Types</div>
+<div class="text-[11px] text-on-surface-muted font-sans">e.g. {gw_latency: FLOAT, churn: INT}</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-brand-violet-light text-brand-violet font-bold text-[10px]">No Records</span>
+</div>
+<div class="p-3.5 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-violet">terminal</span>
+<div>
+<div class="font-bold text-on-surface">Generated Query ASTs</div>
+<div class="text-[11px] text-on-surface-muted font-sans">Sends pure mathematical scripts to client</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-brand-violet-light text-brand-violet font-bold text-[10px]">Code Only</span>
+</div>
+<div class="p-3.5 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-violet">do_not_disturb_on</span>
+<div>
+<div class="font-bold text-on-surface">Ephemeral Inference</div>
+<div class="text-[11px] text-on-surface-muted font-sans">Zero training on prompts; session destroyed</div>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-brand-violet-light text-brand-violet font-bold text-[10px]">ZDR Enforced</span>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-4 border-t border-border-subtle flex items-center justify-between font-mono text-xs text-on-surface-muted">
+<span>Model Persistence: None</span>
+<span class="text-brand-violet font-semibold">SOC2 Type II Aligned</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. FINAL EDITORIAL CTA -->
+<section class="w-full bg-white py-24 lg:py-28 relative overflow-hidden">
+<div class="max-w-[1200px] mx-auto px-6 text-center relative z-10 flex flex-col items-center">
+<div class="w-12 h-12 rounded-2xl bg-brand-teal text-white flex items-center justify-center mb-6 shadow-glow-teal">
+<span class="material-symbols-outlined text-2xl">biotech</span>
+</div>
+<h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-on-surface tracking-tight max-w-3xl mb-4">
+          Ready to investigate with mathematical certainty?
+        </h2>
+<p class="text-base sm:text-lg text-on-surface-muted max-w-2xl mb-8 leading-relaxed">
+          Execute your first causal hypothesis in under 60 seconds. Zero installation required, zero cloud sync—runs directly inside your browser with pure WebAssembly.
+        </p>
+<div class="flex flex-wrap items-center justify-center gap-4 mb-10">
+<a class="h-12 px-7 bg-brand-teal hover:bg-[#076873] text-white font-semibold text-sm rounded-xl transition-all shadow-subtle-lift hover:shadow-glow-teal flex items-center gap-2 group" href="#pipeline">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+<span>Start an Investigation</span>
+</a>
+<a class="h-12 px-7 bg-surface-dim hover:bg-border-subtle text-on-surface font-semibold text-sm rounded-xl transition-all border border-border-subtle flex items-center gap-2" href="#">
+<span class="material-symbols-outlined text-brand-teal text-[20px]">menu_book</span>
+<span>Read the Whitepaper</span>
+</a>
+</div>
+<div class="flex flex-wrap items-center justify-center gap-8 font-mono text-xs text-on-surface-muted">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-teal text-base">check</span>
+<span>100% In-Client Browser Execution</span>
+</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-teal text-base">check</span>
+<span>Dual WASM Arbitration (0.0000% Delta)</span>
+</span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-teal text-base">check</span>
+<span>Deterministic SHA-256 Replay Seeds</span>
+</span>
+</div>
+</div>
+</section>
+</main>
+<!-- FOOTER -->
+<footer class="w-full bg-white border-t border-border-subtle">
+<div class="max-w-[1600px] mx-auto px-6 lg:px-12 pt-16 pb-12">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 pb-14 border-b border-border-subtle">
+<!-- Brand Info -->
+<div class="lg:col-span-2 flex flex-col gap-4">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-brand-teal flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-base">biotech</span>
+</div>
+<span class="font-bold text-base tracking-tight text-on-surface">HYPOTHRON</span>
+</div>
+<p class="text-xs text-on-surface-muted max-w-sm leading-relaxed">
+            Precision AI data hypothesis formulation, empirical causal inference, and auditable algorithmic research pipelines. Engineered for scientific integrity and zero cloud data persistency.
+          </p>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-dim text-brand-teal font-mono text-[11px] w-fit border border-border-subtle">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span>Browser-Local Zero-Upload Guarantee</span>
+</div>
+</div>
+<!-- Col 1 -->
+<div>
+<h4 class="font-mono text-xs font-bold uppercase tracking-wider text-on-surface mb-4">Architecture</h4>
+<ul class="flex flex-col gap-2.5 text-xs text-on-surface-muted">
+<li><a class="hover:text-brand-teal transition-colors" href="#">Investigation Engine</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Local WASM Kernels</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Dual Arbitration Matrix</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Causal DAG Graphs</a></li>
+</ul>
+</div>
+<!-- Col 2 -->
+<div>
+<h4 class="font-mono text-xs font-bold uppercase tracking-wider text-on-surface mb-4">Resources</h4>
+<ul class="flex flex-col gap-2.5 text-xs text-on-surface-muted">
+<li><a class="hover:text-brand-teal transition-colors" href="#">Documentation &amp; API</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">CLI Replay Pack Tools</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Statistical Benchmarks</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Causal Whitepaper (PDF)</a></li>
+</ul>
+</div>
+<!-- Col 3 -->
+<div>
+<h4 class="font-mono text-xs font-bold uppercase tracking-wider text-on-surface mb-4">Governance</h4>
+<ul class="flex flex-col gap-2.5 text-xs text-on-surface-muted">
+<li><a class="hover:text-brand-teal transition-colors" href="#">Zero Data Retention (ZDR)</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Cryptographic Audit Trails</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Terms of Empirical Service</a></li>
+<li><a class="hover:text-brand-teal transition-colors" href="#">Security Disclosures</a></li>
+</ul>
+</div>
+</div>
+<!-- Copyright & System Footprint -->
+<div class="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[11px] text-on-surface-muted">
+<div>
+<span>© 2025 Hypothron AI Labs. All rights reserved. Deterministic Scientific Computing.</span>
+</div>
+<div class="flex items-center gap-6">
+<span>Significance Threshold: α = 0.01</span>
+<span>SHA-256 Immutable Kernels</span>
+</div>
+</div>
+</div>
+</footer>
+<!-- SCRIPT: THREE.JS AMBIENT CAUSAL GRAPH IN HERO + PIPELINE INTERACTION -->
+<script>
+    // 1. Three.js Ambient Causal Network in Hero
+    (function initHeroThreeJS() {
+      const container = document.getElementById('hero-threejs-container');
+      if (!container || typeof THREE === 'undefined') return;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.z = 45;
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      // Create Nodes
+      const nodeCount = 36;
+      const nodes = [];
+      const nodeGeometry = new THREE.SphereGeometry(0.55, 16, 16);
+
+      const tealMat = new THREE.MeshBasicMaterial({ color: 0x087F8C });
+      const violetMat = new THREE.MeshBasicMaterial({ color: 0x7565D9 });
+      const neutralMat = new THREE.MeshBasicMaterial({ color: 0xA0AEC0 });
+
+      const nodeGroup = new THREE.Group();
+      scene.add(nodeGroup);
+
+      for (let i = 0; i < nodeCount; i++) {
+        const mat = i % 3 === 0 ? tealMat : (i % 3 === 1 ? violetMat : neutralMat);
+        const mesh = new THREE.Mesh(nodeGeometry, mat);
+
+        mesh.position.x = (Math.random() - 0.5) * 60;
+        mesh.position.y = (Math.random() - 0.5) * 35;
+        mesh.position.z = (Math.random() - 0.5) * 20;
+
+        mesh.userData = {
+          vx: (Math.random() - 0.5) * 0.015,
+          vy: (Math.random() - 0.5) * 0.015,
+          vz: (Math.random() - 0.5) * 0.015
+        };
+
+        nodeGroup.add(mesh);
+        nodes.push(mesh);
+      }
+
+      // Connecting Filaments
+      const maxConnectDistance = 14;
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x087F8C,
+        transparent: true,
+        opacity: 0.15
+      });
+
+      const lineGeometry = new THREE.BufferGeometry();
+      const linePositions = new Float32Array(nodeCount * nodeCount * 6);
+      lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+      const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
+      nodeGroup.add(lineSegments);
+
+      // Mouse interactive tilt
+      let mouseX = 0;
+      let mouseY = 0;
+      window.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+        mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+      });
+
+      // Window resize
+      window.addEventListener('resize', () => {
+        if (!container) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+
+      // Animation Loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Move nodes slightly
+        nodes.forEach(node => {
+          node.position.x += node.userData.vx;
+          node.position.y += node.userData.vy;
+          node.position.z += node.userData.vz;
+
+          if (Math.abs(node.position.x) > 32) node.userData.vx *= -1;
+          if (Math.abs(node.position.y) > 20) node.userData.vy *= -1;
+          if (Math.abs(node.position.z) > 12) node.userData.vz *= -1;
+        });
+
+        // Reconnect lines
+        let vertexIndex = 0;
+        const positions = lineGeometry.attributes.position.array;
+
+        for (let i = 0; i < nodeCount; i++) {
+          for (let j = i + 1; j < nodeCount; j++) {
+            const dist = nodes[i].position.distanceTo(nodes[j].position);
+            if (dist < maxConnectDistance) {
+              positions[vertexIndex++] = nodes[i].position.x;
+              positions[vertexIndex++] = nodes[i].position.y;
+              positions[vertexIndex++] = nodes[i].position.z;
+              positions[vertexIndex++] = nodes[j].position.x;
+              positions[vertexIndex++] = nodes[j].position.y;
+              positions[vertexIndex++] = nodes[j].position.z;
+            }
+          }
+        }
+        lineGeometry.setDrawRange(0, vertexIndex / 3);
+        lineGeometry.attributes.position.needsUpdate = true;
+
+        // Subtle rotation & mouse reaction
+        nodeGroup.rotation.y += 0.0008;
+        nodeGroup.rotation.x = mouseY * 0.08;
+        nodeGroup.rotation.y += mouseX * 0.001;
+
+        renderer.render(scene, camera);
+      }
+      animate();
+    })();
+
+    // 2. Interactive Pipeline Stepper
+    function setActivePipelineStep(step) {
+      for (let i = 1; i <= 5; i++) {
+        const card = document.getElementById('pipeline-card-' + i);
+        const tab = document.getElementById('tab-step-' + i);
+
+        if (card) {
+          if (i === step) {
+            card.classList.remove('opacity-60', 'border-navy-border');
+            card.classList.add('opacity-100', 'border-brand-teal', 'ring-2', 'ring-brand-teal', 'scale-[1.02]');
+          } else {
+            card.classList.remove('opacity-100', 'border-brand-teal', 'ring-2', 'ring-brand-teal', 'scale-[1.02]');
+            card.classList.add('opacity-60', 'border-navy-border');
+          }
+        }
+
+        if (tab) {
+          if (i === step) {
+            tab.className = "px-3.5 py-2 rounded-lg font-mono text-xs font-semibold text-white bg-brand-teal transition-all shadow-sm shrink-0";
+          } else {
+            tab.className = "px-3.5 py-2 rounded-lg font-mono text-xs font-medium text-slate-400 hover:text-white transition-all shrink-0";
+          }
+        }
+      }
+    }
+  </script>
+</body></html>

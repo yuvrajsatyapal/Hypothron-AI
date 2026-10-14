@@ -142,6 +142,7 @@ export function LocalHistory({
   }
   return (
     <section
+      id="local-history"
       className="controls"
       role="region"
       aria-label="Local investigation history"

@@ -17,7 +17,7 @@ test("lost accepted-result ACK recovers replayable evidence with frozen creation
     if (authorization?.startsWith("Bearer "))
       capabilities.add(authorization.slice(7));
   });
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "original.csv",
     mimeType: "text/csv",

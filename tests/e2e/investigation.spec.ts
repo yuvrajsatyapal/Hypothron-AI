@@ -24,7 +24,7 @@ test("real API/LangGraph/Postgres and browser engines clarify then conditionally
     },
     { times: 1 },
   );
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",

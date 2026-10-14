@@ -10,7 +10,7 @@
     "executor": "node apps/executor/server.mjs",
     "web": "pnpm --filter @hypothron/web dev",
     "e2e": "playwright test",
-    "format:check": "prettier --check \"apps/**/*.ts\" \"apps/**/*.tsx\" \"apps/web/app/globals.css\" \"scripts/**/*.mjs\" \"scripts/tests/*.ts\""
+    "format:check": "prettier --check \"apps/**/*.ts\" \"apps/**/*.tsx\" \"apps/web/app/**/*.css\" \"apps/web/*.mjs\" \"scripts/**/*.mjs\" \"scripts/tests/*.ts\""
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",

@@ -11,7 +11,7 @@ const csv = "id,completed_at,revenue\n1,2025-07-01T00:00:00Z,10.10\n";
 test("saved AI run retains unused approved input, fresh consent/link/comparison and zero inference replay", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "primary.csv",
     mimeType: "text/csv",

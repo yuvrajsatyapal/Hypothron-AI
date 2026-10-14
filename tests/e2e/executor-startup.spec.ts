@@ -10,7 +10,7 @@ test("execution started before iframe document load recovers without duplicate c
     await held;
     await route.continue();
   });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/app", { waitUntil: "domcontentloaded" });
   await expect(page.getByLabel("Dataset CSV", { exact: true })).toBeEnabled();
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "early.csv",

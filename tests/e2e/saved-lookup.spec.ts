@@ -2,7 +2,7 @@ import { test, expect } from "./fixtures";
 test("saved v2 lookup replay regenerates exact engines with original relationship semantics", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",

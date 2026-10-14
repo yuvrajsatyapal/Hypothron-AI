@@ -16,7 +16,7 @@ test("ten golden questions and twelve adverse fixtures through genuine independe
   page.on("request", (r) => {
     if (r.method() === "POST") requests.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/app");
   const started = Date.now();
   const observations = await page.evaluate(async (fixtures) => {
     const frame = document.createElement("iframe");

@@ -1,0 +1,9 @@
+# Stitch translation design
+
+The two current visible Stitch screens supersede historical design docs for this task. Landing tokens from screen HTML: canvas #F7F9FC, white, teal #087F8C, pale teal #E6F4F5, violet #7565D9, ink #111D35, muted #66758C, border #E3E9F2, navy #0B1426/#111E38/#1E3156. Plus Jakarta Sans display/body, JetBrains Mono technical values; workspace Inter form labels. Fonts self-hosted. Radius 8–12px. Hero 5/7 split, 54px/1.08 title; restrained blueprint backdrop; tilted white analytical preview with navy code block. Dark five-column pipeline, alternating open editorial rows, browser/AI privacy panels, white CTA.
+
+Workspace: compact white navigation, pale Arctic canvas, teal active states, five-step horizontal progress. Existing dataset/contract controls occupy the inspect rail; evidence and real Investigation components form the central canvas. Existing manual execution stays available before AI initiation; real stages show only local progress, never fake model activity. Mobile stacks rails and retains controls with ≥44px targets. No inaccessible pseudo-navigation or fake avatars/search/notifications.
+
+Synthetic demo: three revenue rows 120.00, 85.50, 44.50 USD = 250.00 / 25000 cents, Jul–Sep2025. Label Illustrative synthetic example; no benchmark timings or real verification badge. No causal claims, cloud connectors, arbitrary code editors, statistical scores, SOC2/signing claims. Local agreement prominently distinguished from server attestation. AI only receives explicitly approved metadata/aggregates; provider retention cannot be guaranteed. Save remains explicit.
+
+Motion: GSAP scroll scrub stage focus/SVG dash offset; transform/opacity reveals; desktop optional bounded ambient Three points with capped DPR, visibility pause and disposal. Mobile/reduced motion static SVG and complete text. No animation code imported by workspace.

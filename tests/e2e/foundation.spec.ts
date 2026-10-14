@@ -8,7 +8,7 @@ test("independent financial engines, replay, no upload and no implicit save", as
   page.on("request", (r) => {
     if (r.method() === "POST") posts.push(r.url());
   });
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -65,7 +65,7 @@ test("accessible narrow screen uses local scrolling without page overflow", asyn
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/app");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -76,7 +76,7 @@ test("accessible narrow screen uses local scrolling without page overflow", asyn
 test("failed new execution removes previous evidence and locks dataset controls", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -101,7 +101,7 @@ test("failed new execution removes previous evidence and locks dataset controls"
   });
 });
 test("invalid replacement clears snapshot identity", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -123,7 +123,7 @@ test("invalid replacement clears snapshot identity", async ({ page }) => {
 test("cancellation clears work and permits a fresh calculation", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -147,7 +147,7 @@ test("cancellation clears work and permits a fresh calculation", async ({
 test("actual analytical worker denies external and same-origin egress", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -210,7 +210,7 @@ test("actual analytical worker denies external and same-origin egress", async ({
 test("real executor channel rejects free-form code and wrong dataset hashes", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   const responses = await page.evaluate(async () => {
     const iframe = document.createElement("iframe");
     iframe.src = "http://127.0.0.1:3001/";
@@ -285,7 +285,7 @@ test("real executor channel rejects free-form code and wrong dataset hashes", as
 test("injected numerical contradiction remains disputed in real browser evidence", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -319,7 +319,7 @@ test("injected numerical contradiction remains disputed in real browser evidence
 test("empty selected metric is inconclusive, never false verified zero", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "empty.csv",
     mimeType: "text/csv",
@@ -335,7 +335,7 @@ test("empty selected metric is inconclusive, never false verified zero", async (
 test("decimal negative values and half-open boundary use exact arithmetic", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "edges.csv",
     mimeType: "text/csv",
@@ -355,7 +355,7 @@ test("decimal negative values and half-open boundary use exact arithmetic", asyn
 for (const width of [375, 768, 1440])
   test(`responsive workspace ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/");
+    await page.goto("/app");
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -364,7 +364,7 @@ for (const width of [375, 768, 1440])
   });
 
 test("nested DuckDB worker denies native connections", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",
@@ -422,7 +422,7 @@ test("wrong-origin bootstrap never receives a channel acknowledgement", async ({
 test("same-origin sibling cannot seize executor bootstrap channel", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   const connected = await page.evaluate(async () => {
     const target = document.createElement("iframe");
     target.id = "channel-target";
@@ -466,7 +466,7 @@ test("same-origin sibling cannot seize executor bootstrap channel", async ({
 test("empty versus populated independent result is disputed", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV").setInputFiles({
     name: "orders.csv",
     mimeType: "text/csv",

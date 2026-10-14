@@ -14,7 +14,7 @@ test("repeatable ten-thousand-row workload records actual local lifecycle latenc
     ).join("");
   const measurements: Record<string, unknown> = {};
   let start = Date.now();
-  await page.goto("/");
+  await page.goto("/app");
   await page.getByLabel("Dataset CSV", { exact: true }).setInputFiles({
     name: "synthetic.csv",
     mimeType: "text/csv",

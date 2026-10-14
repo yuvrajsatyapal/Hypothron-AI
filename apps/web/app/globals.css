@@ -1,205 +1,58 @@
-:root {
-  --paper: #f5f5f5;
-  --surface: #fff;
-  --ink: #2d3142;
-  --muted: #4f5d75;
-  --accent: #bf4520;
-  --rule: #bfc0c0;
+@import "tailwindcss";
+@import "./fonts.css";
+@theme {
+  --color-surface: #f7f9fc;
+  --color-surface-dim: #eef2f6;
+  --color-brand-teal: #087f8c;
+  --color-brand-teal-light: #e6f4f5;
+  --color-brand-violet: #7565d9;
+  --color-violet-ink: #5d4cbf;
+  --color-brand-violet-light: #f0edfb;
+  --color-navy-night: #0b1426;
+  --color-navy-card: #111e38;
+  --color-navy-border: #1e3156;
+  --color-on-surface: #111d35;
+  --color-on-surface-muted: #5b6b82;
+  --color-border-subtle: #e3e9f2;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-label: "Inter", system-ui, sans-serif;
+  --shadow-subtle-lift: 0 4px 24px -2px rgb(11 20 38 / 6%);
+  --shadow-glass-elevated: 0 24px 64px -12px rgb(11 29 53 / 12%);
 }
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-}
-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--rule);
-}
-header span {
-  color: var(--muted);
-}
-main {
-  padding: 32px;
-  max-width: 1440px;
-  margin: auto;
-}
-.intro {
-  max-width: 760px;
-  margin-bottom: 32px;
-}
-h1 {
-  font:
-    42px Georgia,
-    serif;
-  margin: 8px 0;
-}
-h2 {
-  font-size: 20px;
-  margin: 0 0 24px;
-}
-p {
-  color: var(--muted);
-}
-.eyebrow {
-  font:
-    12px ui-monospace,
-    monospace;
-  letter-spacing: 0.12em;
-}
-.workspace {
-  display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
-  gap: 24px;
-}
-.controls,
-.evidence {
-  padding: 24px;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  min-width: 0;
-}
-label {
-  display: block;
-  margin-bottom: 16px;
-  font-weight: 600;
-}
-input,
-select,
-textarea {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  min-height: 44px;
-  margin-top: 4px;
-  border: 1px solid var(--muted);
-  border-radius: 6px;
-  font: inherit;
-  color: var(--ink);
-  background: var(--surface);
-}
-button {
-  padding: 12px 16px;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.secondary {
-  background: var(--surface);
-  color: var(--ink);
-  border-color: var(--muted);
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  text-align: left;
-}
-th,
-td {
-  padding: 12px;
-  border-bottom: 1px solid var(--rule);
-}
-caption {
-  text-align: left;
-  color: var(--muted);
-  padding: 8px 0;
-}
-pre {
-  overflow: auto;
-  font-size: 12px;
-  max-width: 100%;
-  background: var(--paper);
-  padding: 16px;
-}
-.verdict {
-  font-weight: 700;
-  color: var(--ink);
-}
-.hash {
-  overflow-wrap: anywhere;
-  font:
-    12px ui-monospace,
-    monospace;
-}
-@media (max-width: 760px) {
-  header {
-    padding: 12px 16px;
-    flex-direction: column;
-    gap: 0;
+@layer base {
+  * {
+    box-sizing: border-box;
   }
-  main {
-    padding: 24px 16px;
+  body {
+    margin: 0;
+    background: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
   }
-  .workspace {
-    grid-template-columns: 1fr;
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
   }
-  .controls,
-  .evidence {
-    padding: 16px;
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
   }
-  h1 {
-    font-size: 32px;
+  :focus-visible {
+    outline: 3px solid var(--color-brand-teal);
+    outline-offset: 4px;
   }
-  th,
-  td {
-    padding: 8px;
+  section[id] {
+    scroll-margin-top: 80px;
+  }
+  ::selection {
+    background: #c8ecef;
   }
 }
-
-summary {
-  min-height: 44px;
-  padding: 8px 0;
-  cursor: pointer;
-}
-.evidence p,
-.controls p,
-td {
-  overflow-wrap: anywhere;
-}
-table {
-  table-layout: fixed;
-}
-
-.consent-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-weight: 400;
-}
-.consent-row input {
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
-  min-height: 24px;
-  margin: 8px 0;
-}
-textarea {
-  resize: vertical;
-  min-height: 88px;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
