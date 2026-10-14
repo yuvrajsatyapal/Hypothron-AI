@@ -43,3 +43,7 @@ Provider HTTP is mocked in browser integration; numerical runtimes/API/LangGraph
 - Desktop/mobile screenshots inspected after final layout refinements. Design Gate ACCEPT; contrast4.71:1 for the previously failing small text role. Physical-device frame rates and a comprehensive assistive-technology audit remain unmeasured.
 
 The passing39functional regression cases and6redesign/isolation cases cover45distinct browser cases across the broad and focused runs. They are not represented as a single45-case run on one final artifact. No backend test rerun is claimed; no backend implementation changed.
+
+## Local task commit
+
+Implementation and tested routing integration: `1205a0cf7a57c917a1e39eea91b702212a251b14` (`feat(web): implement Stitch landing and investigation studio design`), existing main only. A subsequent documentation-only commit records this hash; neither commit was pushed.
