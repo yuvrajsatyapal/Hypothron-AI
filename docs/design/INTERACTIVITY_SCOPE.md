@@ -1,0 +1,11 @@
+# Interactivity scope and implementation plan — 2026-10-14
+
+User-authorized enhancement of the current Stitch integration, without redesign, backend changes or deployment. Current source components/tokens are authoritative; prior design documents do not govern appearance. Stitch project15958353651669293938, landing0ed1ba43add749a5b5a55021a3bf0acc and workspace796d1d8227d44d7d9ca3f6d047394c96 were identified through the connector. Meetstream is a workflow interaction reference only.
+
+Acceptance: three distinct inputs converge on hypotheses; approval branches into DuckDB/Pyodide; both converge on comparison then evidence. Curved measured SVG edges draw and signals travel under reversible GSAP ScrollTrigger. Cards have readable synthetic previews and inspectable native details. Static/reduced-motion retain every node and connection. Mobile stacks without overflow. No automatic dataset persistence, inference or fake workspace actions.
+
+Plan: capture baseline; add meaningful failing browser tests; replace pipeline within existing section; measure responsive edge endpoints via ResizeObserver; scope one reversible timeline to component and clean up through matchMedia/context; enhance hero preview with desktop fine-pointer depth, entrance and chart/result reveals; progressively reveal existing showcases; remove generic particle mounting; verify navigation/details and existing real execution, investigation, Save/replay suites. Run unit/types/format/build checks, capture screenshots, document limits and local commit only task-owned files.
+
+Risk: motion must never gate access to content. Dynamic import failure leaves static markup. No hidden CSS baseline. Desktop pinning is allowed only when the measured shell plus header and margin fit the viewport; shorter/mobile screens use unpinned scrub. No per-frame React state, continuous GPU rendering or workspace animation imports. Preserve pre-existing uncommitted files. Existing FILE_MAP cleanup claims contradict actual landing source and are not overwritten.
+
+Concurrent implementation note: another session edited the same source during this pass. Its current graph and styles were preserved and independently reviewed. Earlier screenshot/test attempts against shared production output during rebuilds were discarded; final acceptance targets the restored production server.
