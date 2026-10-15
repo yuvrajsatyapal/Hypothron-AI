@@ -21,6 +21,14 @@ const pending = {
   reason: "inspect",
 };
 describe("investigation capability boundary", () => {
+  it("accepts a cleared provider error after approved model resume", () => {
+    const resumed = validateInvestigationState(
+      { status: "CLARIFYING", error: "", evidence: [] },
+      [plan],
+    );
+    expect(resumed.status).toBe("CLARIFYING");
+    expect(resumed.error).toBeUndefined();
+  });
   it("accepts only the exact user approved plan", () => {
     expect(
       validateInvestigationState({ status: "WAITING_RESULT", pending }, [plan])

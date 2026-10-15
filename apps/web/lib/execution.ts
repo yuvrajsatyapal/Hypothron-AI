@@ -1,3 +1,5 @@
+export const EXECUTOR_ORIGIN =
+  process.env.NEXT_PUBLIC_EXECUTOR_ORIGIN || "http://127.0.0.1:3001";
 import {
   validateIngestion,
   parquetEnvelope,
@@ -40,7 +42,7 @@ export class LocalExecutor {
       if (
         this.closed ||
         this.bootstrapped ||
-        event.origin !== "http://127.0.0.1:3001" ||
+        event.origin !== EXECUTOR_ORIGIN ||
         event.source !== this.frame.contentWindow ||
         !event.data ||
         typeof event.data !== "object" ||
@@ -54,7 +56,7 @@ export class LocalExecutor {
       window.removeEventListener("message", this.ready);
       this.frame.contentWindow?.postMessage(
         { type: "CONNECT" },
-        "http://127.0.0.1:3001",
+        EXECUTOR_ORIGIN,
         [this.transferPort],
       );
     };
@@ -152,10 +154,7 @@ export class LocalExecutor {
   }
   notifyFrameLoaded() {
     if (!this.closed && !this.bootstrapped)
-      this.frame.contentWindow?.postMessage(
-        { type: "PROBE" },
-        "http://127.0.0.1:3001",
-      );
+      this.frame.contentWindow?.postMessage({ type: "PROBE" }, EXECUTOR_ORIGIN);
   }
   private clear() {
     this.pending = null;

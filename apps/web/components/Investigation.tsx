@@ -10,6 +10,8 @@ import {
 import { validateInputSet, type LocalInput } from "../lib/ingestion";
 import { compareInvestigations } from "../lib/comparison";
 import { EvidenceReport } from "./EvidenceReport";
+import { useAccount } from "./AccountProvider";
+import { validateModelCatalogue, type ModelCatalogue } from "../lib/models";
 import {
   contentHash,
   type ExecutionResult,
@@ -49,6 +51,15 @@ export function Investigation({
   onBusy: (busy: boolean) => void;
   cancelLocal: () => void;
 }) {
+  const { account } = useAccount();
+  const [catalogue, setCatalogue] = useState<ModelCatalogue | null>(null);
+  const [discoveryBusy, setDiscoveryBusy] = useState(false);
+  const [fallbackModel, setFallbackModel] = useState("");
+  const [switchConsent, setSwitchConsent] = useState(false);
+  const [serverSaved, setServerSaved] = useState(false);
+  const [nextSelectionNeedsConsent, setNextSelectionNeedsConsent] =
+    useState(false);
+  const modelSwitches = useRef(0);
   const [question, setQuestion] = useState(
     original?.manifest.question ?? "Investigate the approved revenue evidence.",
   );
@@ -77,6 +88,7 @@ export function Investigation({
     let tokens: number | null = null,
       providerElapsedMs: number | null = null,
       attempts: number | null = null;
+    let modelSelection: NonNullable<ArtifactInput["run"]>["modelSelection"];
     try {
       const viewed = await apiJSON(
         `/v1/investigations/${id}`,
@@ -85,6 +97,35 @@ export function Investigation({
         signal,
       );
       const m = viewed.measurements as Record<string, unknown>;
+      if (Array.isArray(viewed.modelHistory) && viewed.modelHistory.length) {
+        if (viewed.modelHistory.length > 12 || typeof viewed.model !== "string")
+          throw new Error("INVALID_MODEL_HISTORY");
+        modelSelection = {
+          currentModel: viewed.model,
+          history: viewed.modelHistory.map((v: unknown) => {
+            if (!v || typeof v !== "object" || Array.isArray(v))
+              throw new Error("INVALID_MODEL_HISTORY");
+            const e = v as Record<string, unknown>;
+            for (const field of [
+              "oldModel",
+              "newModel",
+              "reason",
+              "role",
+              "approvedAt",
+            ])
+              if (typeof e[field] !== "string")
+                throw new Error("INVALID_MODEL_HISTORY");
+            return {
+              oldModel: String(e.oldModel),
+              newModel: String(e.newModel),
+              reason: String(e.reason),
+              role: String(e.role),
+              approvedAt: String(e.approvedAt),
+              revision: Number(e.revision),
+            };
+          }),
+        };
+      }
       if (
         m &&
         Number.isSafeInteger(m.attempts) &&
@@ -104,6 +145,8 @@ export function Investigation({
       /* Measurements unavailable; never estimate or request inference. */
     }
     if (signal.aborted) throw new Error("CANCELLED");
+    if (modelSwitches.current && !modelSelection)
+      throw new Error("MODEL_HISTORY_UNAVAILABLE");
     const context = runContext.current;
     if (!context) throw new Error("MISSING_RUN_CONTEXT");
     const input: ArtifactInput = {
@@ -128,6 +171,7 @@ export function Investigation({
         tokens,
         providerElapsedMs,
         attempts,
+        ...(modelSelection ? { modelSelection } : {}),
       },
     };
     const artifact = await createArtifact(input);
@@ -152,6 +196,18 @@ export function Investigation({
     [events, setEvents] = useState<string[]>([]);
   const cursor = useRef(0);
   const generation = useRef(0);
+  useEffect(() => {
+    operation.current?.abort();
+    eventsAbort.current?.abort();
+    token.current = account?.token ?? null;
+    runId.current = null;
+    runContext.current = null;
+    setState(null);
+    setActiveRun(null);
+    setConsent(false);
+    setServerSaved(false);
+    if (keyInput.current) keyInput.current.value = "";
+  }, [account?.token]);
   const importAbort = useRef<AbortController | null>(null);
   const [activeRun, setActiveRun] = useState<{
     provider: string;
@@ -291,9 +347,68 @@ export function Investigation({
     }
     throw new Error("JOB_BUDGET_EXHAUSTED");
   }
-  async function investigate(resume = false) {
+  async function discoverModels() {
+    setDiscoveryBusy(true);
+    setConsent(false);
+    setSwitchConsent(false);
+    try {
+      if (!token.current) {
+        const session = await apiJSON("/v1/sessions", null, {});
+        if (typeof session.token !== "string")
+          throw new Error("INVALID_RESPONSE");
+        token.current = session.token;
+      }
+      const key = keyInput.current?.value;
+      const found = validateModelCatalogue(
+        await apiJSON(
+          "/v1/providers/openrouter/models",
+          token.current,
+          key ? { key } : {},
+        ),
+      );
+      setCatalogue(found);
+      if (state?.status === "MODEL_APPROVAL_REQUIRED") {
+        setFallbackModel(
+          found.fallbackModels.find(
+            (id) =>
+              id !== activeRun?.model && found.models.some((m) => m.id === id),
+          ) ??
+            found.models.find((m) => m.id !== activeRun?.model)?.id ??
+            "",
+        );
+      } else setModel(found.resolvedModel ?? "");
+      setMessage(
+        found.models.length
+          ? "Discovered advertised free compatible models. Availability does not guarantee access. Approve the concrete selection before starting."
+          : "No compatible free models are currently advertised.",
+      );
+    } catch (e) {
+      setCatalogue(null);
+      setMessage(e instanceof Error ? e.message : "CATALOG_UNAVAILABLE");
+    } finally {
+      setDiscoveryBusy(false);
+    }
+  }
+  async function saveServer() {
+    if (!account || !runId.current || state?.status !== "COMPLETE") return;
+    try {
+      await apiJSON(`/v1/account/history/${runId.current}`, account.token, {
+        consent: true,
+      });
+      setServerSaved(true);
+      setMessage(
+        "Report and investigation metadata saved to your account. Raw datasets remain browser-local.",
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "SAVE_FAILED");
+    }
+  }
+  async function investigate(resume = false, approveSwitch = false) {
     if (operation.current) return;
-    if (!consent) {
+    if (
+      !(approveSwitch ? switchConsent : consent) ||
+      (!resume && nextSelectionNeedsConsent)
+    ) {
       setMessage("CONSENT_REQUIRED");
       return;
     }
@@ -318,6 +433,8 @@ export function Investigation({
       setActiveRun(null);
       setAnswer("");
       setEvents([]);
+      setServerSaved(false);
+      modelSwitches.current = 0;
       cursor.current = 0;
     }
     setBusy(true);
@@ -356,16 +473,41 @@ export function Investigation({
           setMessage(current.error || current.status);
           return;
         }
+        if (current.status === "MODEL_APPROVAL_REQUIRED" && !approveSwitch) {
+          setState(current);
+          setConsent(false);
+          setMessage("Approval is required before changing the model.");
+          return;
+        }
         const response = await apiJSON(
-          `/v1/investigations/${runId.current}/advance`,
+          `/v1/investigations/${runId.current}/${approveSwitch ? "model-approval" : "advance"}`,
           token.current,
-          { key, ...(current.status === "CLARIFYING" ? { answer } : {}) },
+          approveSwitch
+            ? {
+                key,
+                consent: true,
+                expectedModel: viewed.model,
+                expectedRevision: viewed.modelRevision,
+                selectedModel: fallbackModel,
+                idempotencyToken: crypto.randomUUID(),
+              }
+            : { key, ...(current.status === "CLARIFYING" ? { answer } : {}) },
           controller.signal,
         );
+        if (approveSwitch) {
+          modelSwitches.current++;
+          setActiveRun((old) => (old ? { ...old, model: fallbackModel } : old));
+          setSwitchConsent(false);
+        }
         void observe(runId.current, token.current);
         await drive(runId.current, response.state, key, controller.signal);
       } else {
         if (!consent) throw new Error("CONSENT_REQUIRED");
+        if (
+          provider === "openrouter" &&
+          !catalogue?.models.some((m) => m.id === model)
+        )
+          throw new Error("MODEL_DISCOVERY_REQUIRED");
         snapshots.current = [primary];
 
         if (original) {
@@ -704,11 +846,16 @@ export function Investigation({
         value={provider}
         onChange={(e) => {
           setProvider(e.target.value);
-          setModel(
-            e.target.value === "gemini"
-              ? "gemini-2.5-flash"
-              : "google/gemini-2.5-flash",
-          );
+          if (
+            activeRun &&
+            !["COMPLETE", "FAILED", "CANCELLED", "BUDGET_EXHAUSTED"].includes(
+              state?.status ?? "",
+            )
+          )
+            setNextSelectionNeedsConsent(true);
+          else setConsent(false);
+          setCatalogue(null);
+          setModel(e.target.value === "gemini" ? "gemini-2.5-flash" : "auto");
         }}
       >
         <option value="gemini">Gemini</option>
@@ -716,13 +863,95 @@ export function Investigation({
       </select>
       <label>
         Provider model
-        <input
-          value={model}
-          disabled={busy}
-          maxLength={128}
-          onChange={(e) => setModel(e.target.value)}
-        />
+        {provider === "openrouter" ? (
+          <select
+            aria-label="Provider model"
+            value={model}
+            disabled={
+              busy ||
+              (!!activeRun &&
+                ![
+                  "COMPLETE",
+                  "FAILED",
+                  "CANCELLED",
+                  "BUDGET_EXHAUSTED",
+                ].includes(state?.status ?? ""))
+            }
+            onChange={(e) => {
+              setModel(e.target.value);
+              setConsent(false);
+            }}
+          >
+            <option
+              value={
+                model && !catalogue?.models.some((m) => m.id === model)
+                  ? model
+                  : ""
+              }
+            >
+              {catalogue
+                ? "Choose a compatible free model"
+                : "Discover models to resolve Auto"}
+            </option>
+            {catalogue?.models.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.id}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            value={model}
+            disabled={busy}
+            maxLength={128}
+            onChange={(e) => {
+              setModel(e.target.value);
+              setConsent(false);
+            }}
+          />
+        )}
       </label>
+      {provider === "openrouter" && (
+        <>
+          <button
+            disabled={
+              busy ||
+              discoveryBusy ||
+              (!!activeRun && state?.status !== "MODEL_APPROVAL_REQUIRED")
+            }
+            onClick={discoverModels}
+          >
+            {discoveryBusy
+              ? "Discovering…"
+              : "Discover free models / resolve Auto"}
+          </button>
+          {catalogue?.resolvedModel && (
+            <button
+              disabled={
+                busy ||
+                (!!activeRun &&
+                  ![
+                    "COMPLETE",
+                    "FAILED",
+                    "CANCELLED",
+                    "BUDGET_EXHAUSTED",
+                  ].includes(state?.status ?? ""))
+              }
+              onClick={() => {
+                setModel(catalogue.resolvedModel!);
+                setConsent(false);
+              }}
+            >
+              Use Auto selection ({catalogue.resolvedModel})
+            </button>
+          )}
+          <p>
+            Selected concrete model: {model}. Advertised free pricing is checked
+            before dispatch; catalogue availability does not guarantee access or
+            output compatibility.
+          </p>
+        </>
+      )}
       <p>
         Use a model available to your account. Free availability and charges
         depend on the provider; no live compatibility or price is asserted. Up
@@ -744,7 +973,10 @@ export function Investigation({
           type="checkbox"
           checked={consent}
           disabled={busy}
-          onChange={(e) => setConsent(e.target.checked)}
+          onChange={(e) => {
+            setConsent(e.target.checked);
+            if (e.target.checked) setNextSelectionNeedsConsent(false);
+          }}
         />{" "}
         I approve sending the question, column names, hashes, metric contracts
         and bounded aggregate evidence to the backend and selected provider.
@@ -754,6 +986,13 @@ export function Investigation({
         are sent. I approve these displayed dataset versions and the displayed
         metric contract for each independent input.
       </label>
+      {nextSelectionNeedsConsent && (
+        <p>
+          Form edits apply to a new investigation. Resume keeps the recorded
+          provider and model shown below. Confirm consent again before starting
+          a new run with the edited selection.
+        </p>
+      )}
       {state?.status === "CLARIFYING" && (
         <label>
           Clarification: {state.clarification}
@@ -765,8 +1004,66 @@ export function Investigation({
           />
         </label>
       )}
+      {state?.status === "MODEL_APPROVAL_REQUIRED" && (
+        <fieldset>
+          <legend>Model change requires approval</legend>
+          <p>
+            The checkpoint and consumed budget are preserved. Discover models,
+            select a replacement, re-enter your ephemeral key and explicitly
+            approve.
+          </p>
+          <label>
+            Replacement model
+            <select
+              aria-label="Replacement model"
+              value={fallbackModel}
+              onChange={(e) => {
+                setFallbackModel(e.target.value);
+                setSwitchConsent(false);
+              }}
+              disabled={busy}
+            >
+              <option value="">Choose replacement</option>
+              {catalogue?.models
+                .filter((m) => m.id !== activeRun?.model)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.id}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={switchConsent}
+              disabled={busy}
+              onChange={(e) => setSwitchConsent(e.target.checked)}
+            />
+            I approve sending the already disclosed metadata and aggregate
+            evidence to this replacement model on OpenRouter. Existing request
+            limits remain unchanged.
+          </label>
+          <button
+            disabled={busy || !switchConsent || !fallbackModel}
+            onClick={() => investigate(true, true)}
+          >
+            Approve model switch and resume
+          </button>
+        </fieldset>
+      )}
+      {account && state?.status === "COMPLETE" && (
+        <button disabled={busy || serverSaved} onClick={saveServer}>
+          {serverSaved
+            ? "Saved to account"
+            : "Save report and metadata to account"}
+        </button>
+      )}
       <div className="actions">
-        <button disabled={busy || !consent} onClick={() => investigate()}>
+        <button
+          disabled={busy || !consent || nextSelectionNeedsConsent}
+          onClick={() => investigate()}
+        >
           Start AI investigation
         </button>
         <button
@@ -775,6 +1072,7 @@ export function Investigation({
             busy ||
             !consent ||
             !runId.current ||
+            state?.status === "MODEL_APPROVAL_REQUIRED" ||
             (state?.status === "CLARIFYING" && !answer.trim())
           }
           onClick={() => investigate(true)}
@@ -792,7 +1090,7 @@ export function Investigation({
       </p>
       {activeRun && (
         <p data-testid="active-investigation">
-          Original run: {activeRun.provider} / {activeRun.model}. Question:{" "}
+          Active run model: {activeRun.provider} / {activeRun.model}. Question:{" "}
           {activeRun.question}
         </p>
       )}

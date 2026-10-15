@@ -52,9 +52,20 @@ export interface RunSummary {
   tokens: number | null;
   providerElapsedMs: number | null;
   attempts: number | null;
+  modelSelection?: {
+    currentModel: string;
+    history: {
+      oldModel: string;
+      newModel: string;
+      revision: number;
+      reason: string;
+      role: string;
+      approvedAt: string;
+    }[];
+  };
 }
 export interface Manifest {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   id: string;
   question: string;
   createdAt: string;
@@ -202,10 +213,10 @@ export async function createArtifact(input: ArtifactInput): Promise<Artifact> {
     });
   }
   const manifest: Manifest = {
-    version: input.sources?.length ? 2 : 1,
-    ...(input.sources?.length
+    version: input.run?.modelSelection ? 3 : input.sources?.length ? 2 : 1,
+    ...(input.sources?.length || input.run?.modelSelection
       ? {
-          sources: input.sources
+          sources: (input.sources ?? [])
             .map(({ bytes: _bytes, ...source }) => source)
             .sort((a, b) => a.sourceHash.localeCompare(b.sourceHash)),
         }
@@ -281,9 +292,10 @@ export async function validateArtifact(
     "calculations",
     "report",
     "run",
-    ...((value as Manifest).version === 2 ? ["sources"] : []),
+    ...((value as Manifest).version >= 2 ? ["sources"] : []),
   ]);
-  if (m.version !== 1 && m.version !== 2) throw new Error("UNSUPPORTED_SCHEMA");
+  if (m.version !== 1 && m.version !== 2 && m.version !== 3)
+    throw new Error("UNSUPPORTED_SCHEMA");
   id(m.id);
   string(m.question, 2000);
   if (m.parentId !== null) id(m.parentId);
@@ -308,7 +320,7 @@ export async function validateArtifact(
   if (
     !Array.isArray(m.snapshots) ||
     m.snapshots.length < 1 ||
-    m.snapshots.length > (m.version === 2 ? 6 : 3) ||
+    m.snapshots.length > (Number(m.version) >= 2 ? 6 : 3) ||
     !Array.isArray(blobs) ||
     blobs.length !== m.snapshots.length
   )
@@ -324,7 +336,8 @@ export async function validateArtifact(
       !Number.isSafeInteger(r.size) ||
       Number(r.size) < 1 ||
       Number(r.size) > LIMITS.snapshot ||
-      (r.format !== "csv" && !(m.version === 2 && r.format === "parquet"))
+      (r.format !== "csv" &&
+        !(Number(m.version) >= 2 && r.format === "parquet"))
     )
       throw new Error("INVALID_SNAPSHOT");
     hashes.add(hash);
@@ -342,8 +355,12 @@ export async function validateArtifact(
     snapshots.push({ hash, bytes: new Uint8Array(b.bytes) });
   }
   const originalHashes = new Set<string>();
-  if (m.version === 2) {
-    if (!Array.isArray(m.sources) || !m.sources.length || m.sources.length > 3)
+  if (Number(m.version) >= 2) {
+    if (
+      !Array.isArray(m.sources) ||
+      (m.version === 2 && !m.sources.length) ||
+      m.sources.length > 3
+    )
       throw new Error("INVALID_LINEAGE");
     const derived = new Set<string>();
     for (const source of m.sources) {
@@ -475,10 +492,54 @@ export async function validateArtifact(
       "tokens",
       "providerElapsedMs",
       "attempts",
+      ...(m.version === 3 ? ["modelSelection"] : []),
     ]);
     if (!["gemini", "openrouter"].includes(String(run.provider)))
       throw new Error("INVALID_RUN");
     string(run.model, 128);
+    if (m.version === 3) {
+      const selection = exact(run.modelSelection, ["currentModel", "history"]);
+      if (
+        run.provider !== "openrouter" ||
+        !Array.isArray(selection.history) ||
+        !selection.history.length ||
+        selection.history.length > 12
+      )
+        throw new Error("INVALID_MODEL_HISTORY");
+      let previous = run.model;
+      for (const [i, value] of selection.history.entries()) {
+        const event = exact(value, [
+          "oldModel",
+          "newModel",
+          "revision",
+          "reason",
+          "role",
+          "approvedAt",
+        ]);
+        if (
+          event.oldModel !== previous ||
+          event.newModel === previous ||
+          event.revision !== i + 1 ||
+          !["planner", "analyst", "report"].includes(String(event.role)) ||
+          ![
+            "PROVIDER_RATE_LIMIT",
+            "PROVIDER_MODEL_UNAVAILABLE",
+            "MODEL_PREFLIGHT_FAILED",
+          ].includes(String(event.reason)) ||
+          !Number.isFinite(Date.parse(string(event.approvedAt, 40)))
+        )
+          throw new Error("INVALID_MODEL_HISTORY");
+        const next = string(event.newModel, 128);
+        if (
+          !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(next) ||
+          ["auto", "openrouter/auto", "openrouter/free"].includes(next)
+        )
+          throw new Error("INVALID_MODEL_HISTORY");
+        previous = next;
+      }
+      if (selection.currentModel !== previous)
+        throw new Error("INVALID_MODEL_HISTORY");
+    }
     if (!Array.isArray(run.hypotheses) || run.hypotheses.length > 6)
       throw new Error("INVALID_RUN");
     for (const h of run.hypotheses) {

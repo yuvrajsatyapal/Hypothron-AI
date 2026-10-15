@@ -73,6 +73,8 @@ export function validateInvestigationState(
     ![
       "PLANNING",
       "CLARIFYING",
+      "MODEL_APPROVAL_REQUIRED",
+      "MODEL_SWITCH_APPROVED",
       "ANALYZING",
       "ISSUING",
       "WAITING_RESULT",
@@ -135,7 +137,8 @@ export function validateInvestigationState(
   }
   if (raw.clarification !== undefined && raw.clarification !== null)
     output.clarification = text(raw.clarification);
-  if (raw.error !== undefined) output.error = text(raw.error, 64);
+  if (raw.error !== undefined && raw.error !== "")
+    output.error = text(raw.error, 64);
   if (raw.evidence !== undefined) {
     if (!Array.isArray(raw.evidence) || raw.evidence.length > 6)
       throw new Error("INVALID_RESPONSE");
@@ -211,6 +214,7 @@ export async function apiJSON(
   body?: unknown,
   signal?: AbortSignal,
   deadlineMs = 65000,
+  credentials: RequestCredentials = "omit",
 ): Promise<Record<string, unknown>> {
   const deadline = AbortSignal.timeout(Math.min(deadlineMs, 65000));
   const requestSignal = signal ? AbortSignal.any([signal, deadline]) : deadline;
@@ -222,7 +226,7 @@ export async function apiJSON(
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
-    credentials: "omit",
+    credentials,
     signal: requestSignal,
   });
   const reader = response.body?.getReader();

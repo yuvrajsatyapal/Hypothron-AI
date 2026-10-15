@@ -6,6 +6,42 @@ import {
   manifestDigest,
 } from "../lib/artifacts";
 import { fixture } from "./artifactFixture";
+test("version 3 retains exact model switches without relabelling original evidence", async () => {
+  const input = await fixture();
+  const run = {
+    provider: "openrouter",
+    model: "author/first:free",
+    hypotheses: [],
+    tokens: null,
+    providerElapsedMs: null,
+    attempts: 2,
+    modelSelection: {
+      currentModel: "author/second:free",
+      history: [
+        {
+          oldModel: "author/first:free",
+          newModel: "author/second:free",
+          revision: 1,
+          reason: "PROVIDER_RATE_LIMIT",
+          role: "planner",
+          approvedAt: "2026-10-14T00:00:00Z",
+        },
+      ],
+    },
+  };
+  const artifact = await createArtifact({ ...input, run });
+  expect(artifact.manifest.version).toBe(3);
+  expect(artifact.manifest.run?.model).toBe("author/first:free");
+  const broken = structuredClone(artifact.manifest);
+  (
+    broken.run as unknown as {
+      modelSelection: { history: { oldModel: string }[] };
+    }
+  ).modelSelection.history[0].oldModel = "other/model";
+  await expect(validateArtifact(broken, artifact.snapshots)).rejects.toThrow(
+    "MODEL_HISTORY",
+  );
+});
 test("canonical bytes ignore object insertion order and normalize negative zero", () => {
   expect(canonical({ b: 2, a: -0 })).toBe('{"a":0,"b":2}');
   expect(canonical({ a: 0, b: 2 })).toBe(canonical({ b: 2, a: 0 }));

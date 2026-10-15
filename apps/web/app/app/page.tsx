@@ -12,6 +12,7 @@ import { LocalHistory } from "../../components/LocalHistory";
 import { Investigation } from "../../components/Investigation";
 import {
   LocalExecutor,
+  EXECUTOR_ORIGIN,
   contentHash,
   type MetricPlan,
   type ExecutionResult,
@@ -853,7 +854,7 @@ export default function Page() {
         <iframe
           ref={frame}
           title="Restricted analytical executor"
-          src="http://127.0.0.1:3001/"
+          src={EXECUTOR_ORIGIN + "/"}
           sandbox="allow-scripts allow-same-origin"
           hidden
           onLoad={(e) => {
