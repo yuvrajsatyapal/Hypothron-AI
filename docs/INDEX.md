@@ -27,3 +27,10 @@ Phase4: [report](reports/PHASE_4_REPORT.md), [comprehensive deep dive](learning/
 [Phase4 numerical regression observations](reports/PHASE_4_REGRESSION_EVALUATION.json) preserve the final measured fixture run separately from historical Phase3 results.
 
 Phase4.5 CI: [operations](CI_CD.md), [engineering deep dive](learning/PHASE_4_5_CI_DEEP_DIVE.md), [local/hosted evidence](reports/PHASE_4_5_CI_REPORT.md) and [gate architecture](diagrams/phase-4-5-ci.html). Phases1–4 completion remains scoped; Phase5 has not started.
+
+
+## Account/free-model extension
+
+- [Local implementation and verification report](reports/SAAS_IMPLEMENTATION_REPORT.md)
+- [Deployment and recovery runbook](SAAS_DEPLOYMENT.md)
+- [Approved model-selection design](superpowers/specs/2026-10-14-openrouter-free-models-design.md)

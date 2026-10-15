@@ -113,3 +113,8 @@ Read [CI guide](CI_CD.md), [engineering deep dive](learning/PHASE_4_5_CI_DEEP_DI
 ## Phase5 final integration study
 
 Read [Phase5 acceptance report](reports/PHASE_5_REPORT.md), then the comprehensive [Phase5 deep dive](learning/PHASE_5_DEEP_DIVE.md). New diagrams show [Parquet ingestion/provenance](diagrams/phase-5-ingestion.html) and [local validation versus external release](diagrams/phase-5-release.html); prior graph/replay diagrams remain relevant. Study shared parsing versus independent exact arithmetic, versioned original/derived lineage, bounded join cardinality, native-saver error redaction, lease/epoch fencing, consent/key lifetime, strict ZIP/artifact identity and zero-inference replay. Defend the measured equal-ceiling single-loop comparison honestly: scripted numerical correctness ties and fewer baseline calls do not establish live model quality or multi-agent superiority. Local candidate acceptance cannot certify TLS/proxy/provider/backups or physical mobile compatibility. The deep dive includes detailed interview answers, exercises and prioritized study topics.
+
+
+## Account and configurable-provider extension
+
+Read [ADR-024](../DECISIONS.md#adr-024--account-ownership-approved-model-revisions-and-consented-cloud-bundles), [implementation evidence](reports/SAAS_IMPLEMENTATION_REPORT.md) and [deployment/recovery instructions](SAAS_DEPLOYMENT.md). Trace auth.py for independently revocable capabilities and bounded shielded password work; providers/catalogue.py plus driver/ledger/workflow for concrete-model consent and durable approvals; history/cloud for separate metadata Save and quota-counted uncertain uploads. Local pass evidence is separate from unverified live-provider/OAuth/storage and public-host behavior.

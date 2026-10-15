@@ -58,7 +58,7 @@ pnpm web
 
 Open http://127.0.0.1:3000 and choose tests/fixtures/orders.csv. Use the default columns/period; each engine should calculate 3033 cents across three included rows. API health/readiness is on port 8000; PostgreSQL is bound to localhost:55432. Current bridge/CSP origins are deliberately fixed for localhost and need explicit tested release configuration before deployment. Development/production Next.js outputs use separate directories.
 
-Required API environment: DATABASE_URL; optional APP_ORIGIN defaults to http://127.0.0.1:3000. Optional NEXT_PUBLIC_API_ORIGIN defaults to http://127.0.0.1:8000 (set before frontend build when changing it). Local bridge/executor origins remain fixed and must be retested before changing deployment configuration. No provider key belongs in environment files.
+Required API environment: DATABASE_URL; optional APP_ORIGIN defaults to http://127.0.0.1:3000. Optional NEXT_PUBLIC_API_ORIGIN defaults to http://127.0.0.1:8000 (set before frontend build when changing it). Local bridge/executor origins remain fixed and must be retested before changing deployment configuration. Provider inference remains request-scoped BYOK; a key stored in the private preparation file is not automatically activated or shared by the application.
 
 After Execute locally, open the investigation panel. Select Gemini or OpenRouter, enter a model available to your account and its BYOK key, and approve the visible metadata/provider disclosure. Extra CSV/Parquet inputs use the displayed approved metric and are profiled locally. A clarification needs a fresh key and answer. Resume identifies the original provider/model/question even if controls are edited. Keys clear on pause/completion/cancel; tokens and unsaved snapshots disappear on reload. Free availability/charges depend on the selected provider. No live model compatibility or pricing guarantee is asserted.
 
@@ -114,3 +114,10 @@ Read [Phase5 report](docs/reports/PHASE_5_REPORT.md) and [complete engineering d
 
 
 For a production-build browser regression, build first and then run `HYPOTHRON_PRODUCTION=1 pnpm e2e` with an explicitly isolated test DATABASE_URL. This requires a fresh web server and genuine mocked-provider API fixture. Local Phase5 validation passes118backend/113units/39realChrome tests; no new hostedPhase5CI, public deployment or live-model benchmark is claimed. Read [deployment prerequisites](docs/DEPLOYMENT.md) before changing the fixed execution origins or inviting private-data users.
+
+
+## Account and free-model extension
+
+The 2026-10-15 extension adds password/Google authentication, explicit PostgreSQL account history, compatible OpenRouter free-model discovery/selection and checkpointed model changes requiring fresh approval. Optional raw cloud bundles remain disabled until configured and validated. Tokens remain in browser memory; reload requires login. Existing anonymous local analysis, consent, Gemini and provider-free replay are preserved.
+
+Read the [current implementation report](docs/reports/SAAS_IMPLEMENTATION_REPORT.md) for exact tests and open gates, [ADR-024](DECISIONS.md#adr-024--account-ownership-approved-model-revisions-and-consented-cloud-bundles) for the new trust boundaries and [deployment guide](docs/SAAS_DEPLOYMENT.md) for migrations, private environment files, containers and backups. Start the API with `bash scripts/run-api.sh` to safely load the root `.env`; migrate using an explicitly exported PostgreSQL `DATABASE_URL`. The active schema head is `0006_cloud_intents`. No external deployment or paid inference has occurred. These additions do not by themselves establish public production readiness.

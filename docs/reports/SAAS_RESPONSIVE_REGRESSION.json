@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-10-15T05:13:48.748Z",
+  "browser": "154.0.8037.100",
+  "viewportChecks": [
+    {
+      "width": 1440,
+      "pageOverflow": false,
+      "tables": 2,
+      "charts": 2,
+      "accessibleKeyLabel": true
+    },
+    {
+      "width": 1280,
+      "pageOverflow": false,
+      "tables": 2,
+      "charts": 2,
+      "accessibleKeyLabel": true
+    },
+    {
+      "width": 768,
+      "pageOverflow": false,
+      "tables": 2,
+      "charts": 2,
+      "accessibleKeyLabel": true
+    },
+    {
+      "width": 390,
+      "pageOverflow": false,
+      "tables": 2,
+      "charts": 2,
+      "accessibleKeyLabel": true
+    }
+  ],
+  "limitations": [
+    "Desktop Chromium viewport emulation; no physical mobile/runtime claim",
+    "Accessible labels/roles/tables checked, not a comprehensive assistive-technology audit"
+  ]
+}

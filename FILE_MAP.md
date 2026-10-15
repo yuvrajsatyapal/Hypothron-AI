@@ -115,3 +115,18 @@ Phase5 implements bounded Parquet ingestion and up to three sources, as mapped b
 | docs/reports/PHASE_5_* | Fresh scoped evidence, measured baseline/performance/viewport observations and acceptance report |
 | docs/learning/PHASE_5_DEEP_DIVE.md | Actual final architecture, execution/security trade-offs and interview study |
 | docs/diagrams/phase-5-*.html | Skill-designed ingestion/provenance and local/release physical-placement views |
+
+
+## Account/free-model extension (2026-10-15)
+
+| Path | Responsibility |
+|---|---|
+| services/api/src/hypothron/providers/catalogue.py | Bounded compatible advertised-free discovery/cache and concrete model resolution |
+| services/api/src/hypothron/accounts.py / auth.py | Accounts, hashed revocable login tokens, bounded password and Google PKCE/OIDC flows |
+| services/api/src/hypothron/history.py / cloud.py | Explicit durable metadata Save/history and separately consented private cloud bundle intents |
+| services/api/migrations/versions/0003* through 0006* | Model lineage, accounts, history and durable cloud intent schema |
+| apps/web/components/AccountProvider.tsx / AccountHistory.tsx | Ephemeral account capabilities and explicit history/cloud controls |
+| apps/web/lib/account.ts / models.ts | Strict account/catalogue wire response validation |
+| Dockerfile.frontend / services/api/Dockerfile / compose.production.yaml | Nonroot/read-only service packaging and isolated database topology |
+| scripts/deployment/ / tests/deployment/ | Canonical origins, bounded service/backup validation and disposable restore tooling |
+| docs/reports/SAAS_IMPLEMENTATION_REPORT.md / docs/SAAS_DEPLOYMENT.md | Actual extension evidence, limitations and operator instructions |

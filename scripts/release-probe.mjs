@@ -68,7 +68,10 @@ export async function probe() {
     checkResponse(kind, response);
     if (kind === "api") {
       const ready = await response.json();
-      if (ready.database !== "ready" || ready.migration !== "0006_cloud_intents")
+      if (
+        ready.database !== "ready" ||
+        ready.migration !== "0006_cloud_intents"
+      )
         throw new Error("RELEASE_PROBE_MIGRATION");
     } else await response.body?.cancel();
     console.log(JSON.stringify({ target: kind, status: "PASS", local: true }));
