@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AmbientGraph } from "../components/marketing/AmbientGraph";
 import { Brand } from "../components/Brand";
 import { SyntheticEvidence } from "../components/marketing/SyntheticEvidence";
 import { InvestigationPipeline } from "../components/marketing/InvestigationPipeline";
@@ -74,7 +75,8 @@ export default function Landing() {
         </details>
       </header>
       <main id="content">
-        <section className="relative overflow-hidden border-b border-border-subtle bg-gradient-to-b from-surface to-[#eef3f9] py-16 lg:py-24">
+        <section className="landing-hero relative overflow-hidden border-b border-border-subtle bg-gradient-to-b from-surface to-[#eef3f9] py-16 lg:py-24">
+          <AmbientGraph />
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] opacity-35 [background-size:32px_32px]"

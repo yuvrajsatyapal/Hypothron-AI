@@ -28,25 +28,72 @@ export function AmbientGraph() {
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
         camera.position.z = 12;
-        const positions = new Float32Array(72 * 3);
-        for (let i = 0; i < 72; i++) {
-          positions[i * 3] = Math.sin(i * 2.399) * ((i % 9) + 1);
-          positions[i * 3 + 1] = Math.cos(i * 2.399) * ((i % 7) + 1);
-          positions[i * 3 + 2] = Math.sin(i * 0.7) * 2;
-        }
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute(
-          "position",
-          new THREE.BufferAttribute(positions, 3),
+        // Deterministic distribution keeps the reference network stable across visits.
+        const group = new THREE.Group();
+        scene.add(group);
+        const positions: import("three").Vector3[] = [];
+        const nodeGeometry = new THREE.SphereGeometry(0.065, 10, 8);
+        const materials = [0x087f8c, 0x7565d9, 0x38bdf8].map(
+          (color) =>
+            new THREE.MeshBasicMaterial({
+              color,
+              transparent: true,
+              opacity: 0.45,
+            }),
         );
-        const material = new THREE.PointsMaterial({
-          color: 0x087f8c,
-          size: 0.035,
-          transparent: true,
-          opacity: 0.3,
+        for (let i = 0; i < 42; i++) {
+          const theta = i * 2.399963;
+          const radius = 2 + (i % 11) * 0.48;
+          const position = new THREE.Vector3(
+            Math.sin(theta) * radius,
+            Math.cos(theta) * radius * 0.65,
+            Math.sin(i * 0.7) * 1.5,
+          );
+          const node = new THREE.Mesh(nodeGeometry, materials[i % 3]);
+          node.position.copy(position);
+          node.scale.setScalar(0.8 + (i % 4) * 0.2);
+          group.add(node);
+          positions.push(position);
+        }
+        const centerGeometry = new THREE.SphereGeometry(0.14, 16, 12);
+        const center = new THREE.Mesh(centerGeometry, materials[0]);
+        group.add(center);
+        const edges: number[] = [];
+        positions.forEach((point, i) => {
+          if (i % 4 === 0) edges.push(0, 0, 0, point.x, point.y, point.z);
+          positions.slice(i + 1).forEach((other) => {
+            if (point.distanceTo(other) < 1.9)
+              edges.push(point.x, point.y, point.z, other.x, other.y, other.z);
+          });
         });
-        const points = new THREE.Points(geometry, material);
-        scene.add(points);
+        const edgeGeometry = new THREE.BufferGeometry();
+        edgeGeometry.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(edges, 3),
+        );
+        const edgeMaterial = new THREE.LineBasicMaterial({
+          color: 0x7565d9,
+          transparent: true,
+          opacity: 0.12,
+        });
+        group.add(new THREE.LineSegments(edgeGeometry, edgeMaterial));
+        let pointerX = 0,
+          pointerY = 0;
+        const hero = element!.parentElement;
+        const move = (event: PointerEvent) => {
+          if (event.pointerType !== "mouse") return;
+          const bounds = element!.getBoundingClientRect();
+          pointerX =
+            ((event.clientX - bounds.left) / bounds.width - 0.5) * 0.15;
+          pointerY =
+            ((event.clientY - bounds.top) / bounds.height - 0.5) * 0.08;
+        };
+        const reset = () => {
+          pointerX = 0;
+          pointerY = 0;
+        };
+        hero?.addEventListener("pointermove", move);
+        hero?.addEventListener("pointerleave", reset);
         let visible = true,
           frame = 0,
           last = 0;
@@ -54,7 +101,9 @@ export function AmbientGraph() {
           frame = 0;
           if (disposed || !visible || document.hidden) return;
           if (time - last >= 50) {
-            points.rotation.y = time * 0.000015;
+            group.rotation.y = time * 0.000015 + pointerX;
+            group.rotation.x += (pointerY - group.rotation.x) * 0.08;
+            center.scale.setScalar(1 + Math.sin(time * 0.001) * 0.06);
             renderer.render(scene, camera);
             last = time;
           }
@@ -89,8 +138,13 @@ export function AmbientGraph() {
           observer.disconnect();
           size.disconnect();
           document.removeEventListener("visibilitychange", schedule);
-          geometry.dispose();
-          material.dispose();
+          hero?.removeEventListener("pointermove", move);
+          hero?.removeEventListener("pointerleave", reset);
+          nodeGeometry.dispose();
+          centerGeometry.dispose();
+          edgeGeometry.dispose();
+          edgeMaterial.dispose();
+          materials.forEach((material) => material.dispose());
           renderer.dispose();
           renderer.forceContextLoss();
           renderer.domElement.remove();

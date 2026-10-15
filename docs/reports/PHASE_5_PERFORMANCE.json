@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T12:59:09.050Z",
+  "generatedAt": "2026-10-14T12:03:46.768Z",
   "environment": {
     "platform": "darwin",
     "arch": "arm64",
@@ -14,20 +14,20 @@
     "valueMinorUnits": "10100000"
   },
   "measurements": {
-    "importAndHashMs": 130,
-    "executionUiMs": 3877,
-    "workerTiming": "3413 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
+    "importAndHashMs": 217,
+    "executionUiMs": 4931,
+    "workerTiming": "4333 ms; DuckDB v1.4.3; Pyodide 0.29.3; Pandas 2.3.3; NumPy 2.2.5",
     "trackedMemory": "Tracked DuckDB allocations: 890880 bytes; Pandas dataframe: 1038966 bytes. These measurements exclude runtime overhead and are not peak heap bounds.",
-    "saveMs": 81,
-    "exportMs": 115,
-    "bundleBytes": 322806,
-    "loadMs": 96,
-    "replayMs": 4376,
-    "importValidateMs": 115,
+    "saveMs": 86,
+    "exportMs": 89,
+    "bundleBytes": 322805,
+    "loadMs": 88,
+    "replayMs": 4851,
+    "importValidateMs": 63,
     "importSaveMs": 63,
-    "parquetImportAndCanonicalHashMs": 842,
+    "parquetImportAndCanonicalHashMs": 837,
     "parquetFixtureBytes": 557,
-    "parquetArithmeticUiMs": 3868
+    "parquetArithmeticUiMs": 4355
   },
   "limitations": [
     "One local sample, not percentile or peak-heap benchmark",

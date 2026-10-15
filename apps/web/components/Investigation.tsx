@@ -10,6 +10,7 @@ import {
 import { validateInputSet, type LocalInput } from "../lib/ingestion";
 import { compareInvestigations } from "../lib/comparison";
 import { EvidenceReport } from "./EvidenceReport";
+import { HypothesisTrace } from "./HypothesisTrace";
 import { useAccount } from "./AccountProvider";
 import { validateModelCatalogue, type ModelCatalogue } from "../lib/models";
 import {
@@ -1100,6 +1101,7 @@ export function Investigation({
           {state.pending.reason}
         </p>
       )}
+      {state && <HypothesisTrace state={state} />}
       {state?.evidence.map((e) => (
         <p key={e.jobId}>
           Hypothesis {e.hypothesisId} · {e.jobId}:{" "}

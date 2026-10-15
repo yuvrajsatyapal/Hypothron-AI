@@ -1,5 +1,7 @@
 # Hypothron AI — Frontend Experience Master Plan
 
+> **CURRENT DECISION — 14 October 2026: rejected landing removed; no new redesign authorized.** The later lens and unfinished data/investigation direction are both rejected. Marketing components, assets, animations and unused dependencies are removed; `/` redirects to the preserved `/app` analytical workspace. All prior palette, motion, references and implementation milestones below are historical proposals, not current direction. Architecture/security/technical learning and useful design history remain. See [cleanup report](UI_CLEANUP_REPORT.md).
+
 **Current decision: F1 rejected; design reset authorized on 13 October 2026.** Cleanup and documentation only. Stop before implementing a new landing page; that requires the user's explicit authorization. Analytical phase status and the blocked public-release gate are unchanged.
 
 ## Authoritative design-reset decision

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { NumericalNotebook } from "../../components/NumericalNotebook";
 import {
   WorkspaceHeader,
   WorkspaceProgress,
@@ -217,7 +218,7 @@ export default function Page() {
   }
   return (
     <>
-      <WorkspaceHeader />
+      <WorkspaceHeader result={result} filename={filename} busy={busy} />
       <main id="workspace" className="studio-main">
         <section className="intro">
           <p className="eyebrow">LOCAL ANALYTICAL WORKSPACE</p>
@@ -657,6 +658,9 @@ export default function Page() {
                   Local agreement is not server attestation or proof of
                   causality.
                 </p>
+                {executedPlan && (
+                  <NumericalNotebook result={result} plan={executedPlan} />
+                )}
                 <table>
                   <caption>
                     Exact monetary result in{" "}

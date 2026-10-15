@@ -16,6 +16,9 @@ Check the filesystem; planned entries are not implementation claims. Update this
 | .planning/plans/implementation.md | Sequential TDD implementation steps | Exists |
 | .planning/design/foundation.md | Foundation workspace layout/states/tokens | Exists |
 | apps/web/ | Next.js workspace; browser-memory datasets, approved joins and structured evidence reports | Phases 1–4 |
+| apps/web/app/app/ | Preserved analytical page, route layout and workspace CSS at `/app` | Existing functionality retained byte-for-byte during rejected landing cleanup |
+| apps/web/app/page.tsx | Server redirect from `/` to `/app`; no marketing scene | Landing removed on 2026-10-14; no new redesign |
+| docs/design/UI_CLEANUP_REPORT.md | Rejected landing inventory, preservation checks and regression evidence | Cleanup record |
 | apps/executor/ | Separate credential-free static origin; bridge + fixed analytical workers | Implemented foundation |
 | services/api/src/hypothron/ | FastAPI metadata/session/readiness routes, body limits and SQLAlchemy model; authenticated investigation routes and bounded SSE | Implemented foundation |
 | services/api/src/hypothron/agents/ | Strict role/approved metadata contracts, conditional StateGraph and ephemeral role transport | Typed graph integrated with durable request-scoped driver and consent-gated UI |
