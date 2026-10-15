@@ -357,3 +357,26 @@ async def test_genuine_role_adapter_uses_header_key_and_reservation_without_chec
         assert "test-canary-key" not in repr(
             checkpoint.checkpoint
         ) and "test-canary-key" not in repr(checkpoint.metadata)
+
+
+async def test_rate_limit_checkpoints_pause_and_only_explicit_resume_retries():
+    from langgraph.checkpoint.memory import InMemorySaver
+    from langgraph.types import Command
+
+    from hypothron.providers.http import ProviderError
+
+    calls = []
+
+    async def limited(role, context, schema):
+        calls.append((role, context["callOrdinal"]))
+        if len(calls) == 1:
+            raise ProviderError("PROVIDER_RATE_LIMIT")
+        return {"clarification": "Which metric?", "hypotheses": []}
+
+    graph = build_workflow(limited, InMemorySaver())
+    config = {"configurable": {"thread_id": "switch-test"}}
+    paused = await graph.ainvoke(initial_state(request()), config)
+    assert paused["status"] == "MODEL_APPROVAL_REQUIRED" and paused["calls"] == 1
+    assert calls == [("planner", 1)]
+    resumed = await graph.ainvoke(Command(resume={"modelApproved": True}), config)
+    assert resumed["status"] == "CLARIFYING" and calls == [("planner", 1), ("planner", 2)]

@@ -116,6 +116,11 @@ async def generate[Reply: BaseModel](
         raise ProviderError("INVALID_PROVIDER")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}", model):
         raise ProviderError("INVALID_MODEL")
+    if provider == "openrouter":
+        from hypothron.providers.catalogue import concrete
+
+        if not concrete(model):
+            raise ProviderError("INVALID_MODEL")
     if provider == "gemini" and not re.fullmatch(r"gemini-[A-Za-z0-9._-]{1,80}", model):
         raise ProviderError("INVALID_MODEL")
     if not 1 <= len(prompt.encode()) <= 16 * 1024:
@@ -132,6 +137,11 @@ async def generate[Reply: BaseModel](
         headers["Authorization"] = "Bearer " + key.get_secret_value()
         body = {
             "model": model,
+            "provider": {
+                "require_parameters": True,
+                "allow_fallbacks": False,
+                "max_price": {"prompt": 0, "completion": 0, "request": 0},
+            },
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 1024,
             "temperature": 0,
@@ -179,6 +189,9 @@ async def generate[Reply: BaseModel](
                     401: "PROVIDER_AUTH",
                     403: "PROVIDER_AUTH",
                     429: "PROVIDER_RATE_LIMIT",
+                    404: "PROVIDER_MODEL_UNAVAILABLE"
+                    if provider == "openrouter"
+                    else "PROVIDER_REJECTED",
                 }.get(response.status_code)
                 raise ProviderError(
                     code
@@ -201,6 +214,13 @@ async def generate[Reply: BaseModel](
                     if len(raw) + len(chunk) > 64 * 1024:
                         raise ProviderError("OUTPUT_LIMIT")
                     raw.extend(chunk)
+        if provider == "openrouter":
+            try:
+                identity = json.loads(raw).get("model")
+            except (ValueError, AttributeError):
+                raise ProviderError("PROVIDER_FORMAT") from None
+            if identity is not None and identity != model:
+                raise ProviderError("PROVIDER_MODEL_MISMATCH")
         text, usage = _decode(provider, bytes(raw))
         if key.get_secret_value() in text:
             raise ProviderError("PROVIDER_SECRET_ECHO")

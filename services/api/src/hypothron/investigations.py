@@ -17,6 +17,7 @@ from hypothron.agents.models import EvidenceInput, RunInput, StrictModel
 from hypothron.agents.workflow import Role, build_workflow, initial_state
 from hypothron.driver import InvestigationDriver
 from hypothron.ledger import TERMINAL, Ledger, LedgerError
+from hypothron.providers.catalogue import CatalogError
 from hypothron.providers.http import _contains_secret
 
 
@@ -36,6 +37,19 @@ class AdvanceRequest(StrictModel):
     answer: Annotated[str, Field(min_length=1, max_length=1000)] | None = None
 
 
+class DiscoveryRequest(StrictModel):
+    key: Annotated[SecretStr, Field(min_length=8, max_length=512)] | None = None
+
+
+class ModelApprovalRequest(StrictModel):
+    key: Annotated[SecretStr, Field(min_length=8, max_length=512)]
+    consent: Literal[True]
+    expectedModel: Annotated[str, Field(min_length=1, max_length=128)]
+    expectedRevision: Annotated[int, Field(ge=0, le=12)]
+    selectedModel: Annotated[str, Field(min_length=1, max_length=128)]
+    idempotencyToken: Annotated[str, Field(pattern=r"^[a-f0-9-]{36}$")]
+
+
 def public_state(state: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in state.items() if not k.startswith("__")}
 
@@ -48,6 +62,56 @@ def mount_routes(
     transport: Any = None,
 ) -> None:
     authenticated = Depends(authenticate)
+
+    @app.post("/v1/providers/openrouter/models")
+    async def models(
+        body: DiscoveryRequest, owner: dict[str, str] = authenticated
+    ) -> dict[str, Any]:
+        catalogue = app.state.model_catalog
+        values = await catalogue.list(body.key)
+        resolved = None
+        try:
+            resolved = (await catalogue.resolve(catalogue.preferred_model, body.key)).id
+        except CatalogError:
+            pass
+        return {
+            "models": [
+                {
+                    "id": m.id,
+                    "name": m.name,
+                    "contextLength": m.context_length,
+                    "maxCompletionTokens": m.max_completion_tokens,
+                    "advertisedFree": True,
+                }
+                for m in values
+            ],
+            "preferredModel": catalogue.preferred_model,
+            "resolvedModel": resolved,
+            "fallbackModels": list(catalogue.fallback_models),
+        }
+
+    @app.post("/v1/investigations/{run_id}/model-approval")
+    async def approve_model(
+        run_id: str, body: ModelApprovalRequest, owner: dict[str, str] = authenticated
+    ) -> dict[str, Any]:
+        row = await ledger.get(owner["id"], run_id)
+        if row.provider != "openrouter":
+            raise LedgerError("INVALID_PROVIDER")
+        if _contains_secret(
+            body.model_dump(mode="json", exclude={"key"}), body.key.get_secret_value()
+        ):
+            raise LedgerError("SECRET_IN_INPUT")
+        await app.state.model_catalog.validate(body.selectedModel, body.key)
+        await ledger.approve_model(
+            owner["id"],
+            run_id,
+            expected_model=body.expectedModel,
+            expected_revision=body.expectedRevision,
+            selected_model=body.selectedModel,
+            idempotency_token=body.idempotencyToken,
+        )
+        state = await driver.advance(owner["id"], run_id, body.key, transport=transport)
+        return {"id": run_id, "state": public_state(state)}
 
     @app.exception_handler(LedgerError)
     async def ledger_error(_: Request, error: LedgerError) -> JSONResponse:
@@ -72,6 +136,8 @@ def mount_routes(
             body.key.get_secret_value(),
         ):
             raise LedgerError("SECRET_IN_INPUT")
+        if body.provider == "openrouter":
+            await app.state.model_catalog.validate(body.model, body.key)
         run = await ledger.create(
             owner["id"], request, body.provider, body.model, request_id=body.request_id
         )
@@ -129,6 +195,13 @@ def mount_routes(
             "id": run_id,
             "attempts": row.attempts,
             "state": state,
+            "provider": row.provider,
+            "model": row.model,
+            "originalModel": row.original_model or row.model,
+            "modelRevision": row.model_revision,
+            "modelHistory": [
+                {k: v for k, v in event.items() if k != "tokenHash"} for event in row.model_history
+            ],
             "measurements": await ledger.measurements(owner["id"], run_id),
         }
 

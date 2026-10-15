@@ -19,12 +19,15 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from hypothron.auth import mount_auth
 from hypothron.db import SessionRecord
 from hypothron.driver import InvestigationDriver
+from hypothron.history import mount_history
 from hypothron.investigations import mount_routes
 from hypothron.ledger import Ledger
 from hypothron.limits import BodyLimit
 from hypothron.operations import configure
+from hypothron.providers.catalogue import CatalogError, ModelCatalog
 from hypothron.release_policy import ReleasePolicy, app_origin
 from hypothron.retention import purge_expired, purge_loop
 
@@ -34,7 +37,11 @@ class EmptyRequest(BaseModel):
 
 
 def create_app(
-    *, database_url: str, provider_transport: httpx.AsyncBaseTransport | None = None
+    *,
+    database_url: str,
+    provider_transport: httpx.AsyncBaseTransport | None = None,
+    model_catalog: ModelCatalog | None = None,
+    google_transport: httpx.AsyncBaseTransport | None = None,
 ) -> FastAPI:
     origin = app_origin(os.getenv("APP_ORIGIN", "http://127.0.0.1:3000"))
     engine = create_async_engine(
@@ -73,12 +80,24 @@ def create_app(
         allow_origins=[origin],
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "Content-Type"],
+        allow_credentials=True,
     )
     app.add_middleware(ReleasePolicy)
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(_: object, __: RequestValidationError) -> JSONResponse:
         return JSONResponse(status_code=422, content={"error": {"code": "INVALID_INPUT"}})
+
+    @app.exception_handler(HTTPException)
+    async def http_error(_: object, error: HTTPException) -> JSONResponse:
+        code = (
+            error.detail
+            if isinstance(error.detail, str) and error.detail.replace("_", "").isalnum()
+            else "REQUEST_REJECTED"
+        )
+        return JSONResponse(
+            status_code=error.status_code, content={"error": {"code": code}}, headers=error.headers
+        )
 
     async def unavailable(_: object, __: Exception) -> JSONResponse:
         return JSONResponse(status_code=503, content={"error": {"code": "DATABASE_UNAVAILABLE"}})
@@ -96,7 +115,7 @@ def create_app(
             async with sessions() as db:
                 revision = await db.scalar(text("SELECT version_num FROM alembic_version"))
                 await db.execute(select(SessionRecord.id).limit(1))
-            if revision != "0002":
+            if revision != "0006_cloud_intents":
                 raise ValueError("migration mismatch")
         except (SQLAlchemyError, ValueError):
             return JSONResponse(status_code=503, content={"database": "unavailable"})
@@ -115,8 +134,7 @@ def create_app(
             db.add(session)
         return {"id": session.id, "token": token}
 
-    @app.get("/v1/session")
-    async def current_session(
+    async def demo_session(
         authorization: Annotated[str | None, Header()] = None,
     ) -> dict[str, str]:
         if not authorization or not authorization.startswith("Bearer "):
@@ -133,9 +151,27 @@ def create_app(
             raise HTTPException(401, detail="UNAUTHORIZED")
         return {"id": row.id}
 
+    current_session = mount_auth(
+        app, sessions, origin, demo_session, google_transport=google_transport
+    )
+    app.get("/v1/session")(current_session)
     ledger = Ledger(sessions)
-    driver = InvestigationDriver(database_url, ledger)
+    catalogue = model_catalog or ModelCatalog(
+        preferred_model=os.getenv("OPENROUTER_MODEL", "auto"),
+        fallback_models=tuple(
+            v.strip() for v in os.getenv("OPENROUTER_FALLBACK_MODELS", "").split(",") if v.strip()
+        ),
+        ttl_seconds=int(os.getenv("OPENROUTER_DISCOVERY_TTL_SECONDS", "300")),
+    )
+    app.state.model_catalog = catalogue
+
+    @app.exception_handler(CatalogError)
+    async def catalogue_error(_: object, error: CatalogError) -> JSONResponse:
+        return JSONResponse(status_code=409, content={"error": {"code": str(error)}})
+
+    driver = InvestigationDriver(database_url, ledger, catalogue)
     mount_routes(app, ledger, driver, current_session, provider_transport)
+    mount_history(app, sessions, current_session, ledger, database_url)
     return app
 
 

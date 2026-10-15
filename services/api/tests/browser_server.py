@@ -10,10 +10,43 @@ import os
 import httpx
 
 from hypothron.api import create_app
+from hypothron.providers.catalogue import ModelCatalog
 
 
 def wire(request: httpx.Request) -> httpx.Response:
-    prompt = json.loads(request.content)["contents"][0]["parts"][0]["text"]
+    if request.method == "GET" and request.url.path == "/api/v1/models":
+        return httpx.Response(
+            200,
+            json={
+                "data": [
+                    {
+                        "id": model,
+                        "name": model,
+                        "pricing": {"prompt": "0", "completion": "0", "request": "0"},
+                        "architecture": {
+                            "input_modalities": ["text"],
+                            "output_modalities": ["text"],
+                        },
+                        "supported_parameters": [
+                            "structured_outputs",
+                            "response_format",
+                            "temperature",
+                            "max_tokens",
+                        ],
+                        "context_length": 32768,
+                        "top_provider": {"max_completion_tokens": 1024},
+                    }
+                    for model in ["test/first:free", "test/second:free"]
+                ]
+            },
+        )
+    body = json.loads(request.content)
+    openrouter = request.url.host == "openrouter.ai"
+    if openrouter and body["model"] == "test/first:free":
+        return httpx.Response(429, json={"error": {"code": 429}})
+    prompt = (
+        body["messages"][0]["content"] if openrouter else body["contents"][0]["parts"][0]["text"]
+    )
     context = json.loads(prompt.split("Approved context: ")[1])
     role = context["role"]
     if role == "planner":
@@ -51,6 +84,14 @@ def wire(request: httpx.Request) -> httpx.Response:
             "conclusion": "<img src=x onerror=alert(1)> Local evidence is client-reported and does not establish causality.",
             "citations": [e["jobId"] for e in context["evidence"]],
         }
+    if openrouter:
+        return httpx.Response(
+            200,
+            json={
+                "model": body["model"],
+                "choices": [{"finish_reason": "stop", "message": {"content": json.dumps(reply)}}],
+            },
+        )
     return httpx.Response(
         200,
         json={
@@ -62,7 +103,11 @@ def wire(request: httpx.Request) -> httpx.Response:
 
 
 app = create_app(
-    database_url=os.environ["DATABASE_URL"], provider_transport=httpx.MockTransport(wire)
+    database_url=os.environ["DATABASE_URL"],
+    provider_transport=httpx.MockTransport(wire),
+    model_catalog=ModelCatalog(
+        transport=httpx.MockTransport(wire), fallback_models=("test/first:free", "test/second:free")
+    ),
 )
 
 

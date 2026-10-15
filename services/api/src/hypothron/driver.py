@@ -16,15 +16,19 @@ from hypothron.agents.workflow import Role, RoleProvider, build_workflow, initia
 from hypothron.checkpoints import checkpoint_store
 from hypothron.ledger import Ledger, LedgerError, digest
 from hypothron.operations import correlation, emit
+from hypothron.providers.catalogue import CatalogError, ModelCatalog
 from hypothron.providers.http import ProviderError, Usage, _contains_secret
 
 SEGMENT_TIMEOUT_SECONDS = 60.0
 
 
 class InvestigationDriver:
-    def __init__(self, database_url: str, ledger: Ledger) -> None:
+    def __init__(
+        self, database_url: str, ledger: Ledger, catalogue: ModelCatalog | None = None
+    ) -> None:
         self.database_url = database_url
         self.ledger = ledger
+        self.catalogue = catalogue or ModelCatalog()
         self.slots = asyncio.Semaphore(2)
 
     async def advance(
@@ -86,6 +90,9 @@ class InvestigationDriver:
         async with self.slots:
             lease = await self.ledger.claim(owner, run_id)
             try:
+                # Approval may commit between initial read and claim. Once claimed,
+                # approval is fenced; dispatch must use the model of this lease.
+                row = await self.ledger.get(owner, run_id)
                 async with checkpoint_store(self.database_url, self.ledger, lease) as saver:
 
                     async def durable_provider(
@@ -97,7 +104,7 @@ class InvestigationDriver:
                         if type(ordinal) is not int:
                             raise ProviderError("INVALID_ATTEMPT")
                         try:
-                            cached = await self.ledger.reserve(
+                            cached = await self.ledger.cached_attempt(
                                 lease, ordinal, role, digest(context)
                             )
                         except LedgerError as error:
@@ -105,6 +112,15 @@ class InvestigationDriver:
                         if cached is not None:
                             emit("provider_cached", run_id=run_id, role=role, attempt=ordinal)
                             return cached
+                        if row.provider == "openrouter" and provider is None:
+                            try:
+                                await self.catalogue.validate(row.model, key)
+                            except (CatalogError, TimeoutError):
+                                raise ProviderError("MODEL_PREFLIGHT_FAILED") from None
+                        try:
+                            await self.ledger.reserve(lease, ordinal, role, digest(context))
+                        except LedgerError as error:
+                            raise ProviderError(str(error)) from None
                         usage: dict[str, Any] | None = None
                         elapsed: int | None = None
 
@@ -127,6 +143,11 @@ class InvestigationDriver:
                         emit("provider_dispatch", run_id=run_id, role=role, attempt=ordinal)
                         try:
                             response = await adapter(role, context, schema)
+                        except ProviderError as error:
+                            if str(error) in {"PROVIDER_RATE_LIMIT", "PROVIDER_MODEL_UNAVAILABLE"}:
+                                await self.ledger.reject_attempt(lease, ordinal, str(error))
+                            emit("provider_failed", run_id=run_id, role=role, attempt=ordinal)
+                            raise
                         except BaseException:
                             emit("provider_failed", run_id=run_id, role=role, attempt=ordinal)
                             raise
@@ -141,7 +162,12 @@ class InvestigationDriver:
                         emit("provider_completed", run_id=run_id, role=role, attempt=ordinal)
                         return response
 
-                    graph = build_workflow(durable_provider, saver, diagnostic_run_id=run_id)
+                    graph = build_workflow(
+                        durable_provider,
+                        saver,
+                        diagnostic_run_id=run_id,
+                        allow_model_switch=row.provider == "openrouter",
+                    )
                     config: RunnableConfig = {
                         "configurable": {"thread_id": run_id},
                         "recursion_limit": 48,
@@ -150,7 +176,15 @@ class InvestigationDriver:
                     input_value: Any = initial_state(row.request) if not snapshot.values else None
                     if snapshot.values and snapshot.next:
                         emit("checkpoint_resume", run_id=run_id)
-                        if snapshot.values.get("status") == "CLARIFYING":
+                        if snapshot.values.get("status") == "MODEL_APPROVAL_REQUIRED":
+                            if row.status == "MODEL_SWITCH_APPROVED":
+                                input_value = Command(resume={"modelApproved": True})
+                            else:
+                                await self.ledger.pause_model(
+                                    lease, snapshot.values["paused_role"], snapshot.values["error"]
+                                )
+                                return dict(snapshot.values)
+                        elif snapshot.values.get("status") == "CLARIFYING":
                             if answer is not None:
                                 input_value = Command(resume={"answer": answer})
                             else:
@@ -170,7 +204,10 @@ class InvestigationDriver:
                             result = await graph.ainvoke(input_value, config)
                     if result.get("pending"):
                         await self.ledger.issue(lease, result["pending"])
-                    await self.ledger.status(lease, result["status"])
+                    if result["status"] == "MODEL_APPROVAL_REQUIRED":
+                        await self.ledger.pause_model(lease, result["paused_role"], result["error"])
+                    else:
+                        await self.ledger.status(lease, result["status"])
                     return dict(result)
             except TimeoutError:
                 # Reservations remain durable. A later resume cannot repeat ambiguous billing.

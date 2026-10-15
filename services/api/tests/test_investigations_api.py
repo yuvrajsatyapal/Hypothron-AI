@@ -297,6 +297,8 @@ async def test_run_measurements_are_owned_measured_and_unknown_is_not_zero():
                     ordinal=1,
                     role="planner",
                     context_hash="a" * 64,
+                    model=run.model,
+                    model_revision=run.model_revision,
                     status="COMPLETE",
                     usage={"total_tokens": 17},
                     elapsed_ms=21,
@@ -316,6 +318,8 @@ async def test_run_measurements_are_owned_measured_and_unknown_is_not_zero():
                     ordinal=2,
                     role="analyst",
                     context_hash="b" * 64,
+                    model=run.model,
+                    model_revision=run.model_revision,
                     status="UNKNOWN",
                 )
             )

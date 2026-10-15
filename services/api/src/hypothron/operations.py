@@ -27,9 +27,20 @@ EVENTS = frozenset(
 )
 ENUMS = {
     "role": {"planner", "analyst", "report"},
-    "node": {"planner", "clarify", "analyst", "issue", "accept", "report", "correction"},
+    "node": {
+        "planner",
+        "clarify",
+        "analyst",
+        "issue",
+        "accept",
+        "report",
+        "correction",
+        "model_pause",
+    },
     "status": {
         "PLANNING",
+        "MODEL_APPROVAL_REQUIRED",
+        "MODEL_SWITCH_APPROVED",
         "ANALYZING",
         "CLARIFYING",
         "ISSUING",

@@ -55,6 +55,7 @@ class State(TypedDict, total=False):
     status: str
     error: str
     report: dict[str, Any]
+    paused_role: str
     corrections: dict[str, int]
 
 
@@ -82,6 +83,7 @@ def build_workflow(
     checkpointer: BaseCheckpointSaver[Any],
     *,
     diagnostic_run_id: str | None = None,
+    allow_model_switch: bool = True,
 ) -> CompiledStateGraph[State, None, State, State]:
     async def ask(state: State, role: Role, schema: type[BaseModel]) -> BaseModel:
         if state["calls"] >= 12:
@@ -103,7 +105,18 @@ def build_workflow(
             # Adapter owns stable public codes; never persist its request/client/exception object.
             raise RoleFailure(str(error)) from None
 
-    def failed(state: State, error: RoleFailure) -> State:
+    def failed(state: State, error: RoleFailure, role: Role) -> State:
+        if allow_model_switch and str(error) in {
+            "PROVIDER_RATE_LIMIT",
+            "PROVIDER_MODEL_UNAVAILABLE",
+            "MODEL_PREFLIGHT_FAILED",
+        }:
+            return {
+                "status": "MODEL_APPROVAL_REQUIRED",
+                "error": str(error),
+                "paused_role": role,
+                "calls": state["calls"] + (0 if str(error) == "MODEL_PREFLIGHT_FAILED" else 1),
+            }
         budget = str(error) == "BUDGET_EXHAUSTED"
         return {
             "status": "BUDGET_EXHAUSTED" if budget else "FAILED",
@@ -130,7 +143,7 @@ def build_workflow(
                 "status": "CLARIFYING" if reply.clarification else "ANALYZING",
             }
         except RoleFailure as error:
-            return failed(state, error)
+            return failed(state, error, "planner")
 
     def clarify(state: State) -> State:
         try:
@@ -175,7 +188,7 @@ def build_workflow(
                 "status": "ISSUING" if reply.action == "execute" else "REPORTING",
             }
         except RoleFailure as error:
-            return failed(state, error)
+            return failed(state, error, "analyst")
 
     def issue(state: State) -> State:
         hypothesis = next(
@@ -267,6 +280,12 @@ def build_workflow(
                 "evidence": evidence,
             }
         except RoleFailure as error:
+            if allow_model_switch and str(error) in {
+                "PROVIDER_RATE_LIMIT",
+                "PROVIDER_MODEL_UNAVAILABLE",
+                "MODEL_PREFLIGHT_FAILED",
+            }:
+                return failed(state, error, "report")
             return {
                 "calls": state["calls"] + (0 if str(error) == "BUDGET_EXHAUSTED" else 1),
                 "status": "COMPLETE",
@@ -274,12 +293,29 @@ def build_workflow(
                 "evidence": evidence,
             }
 
+    def model_pause(state: State) -> State:
+        approval = interrupt(
+            {
+                "kind": "model_approval",
+                "role": state["paused_role"],
+                "reason": state["error"],
+                "remainingBudget": 12 - state["calls"],
+            }
+        )
+        if not isinstance(approval, dict) or approval != {"modelApproved": True}:
+            return {"status": "FAILED", "error": "INVALID_MODEL_APPROVAL"}
+        return {"status": "PLANNING", "error": ""}
+
     def route_planner(state: State) -> str:
+        if state["status"] == "MODEL_APPROVAL_REQUIRED":
+            return "model_pause"
         if state["status"] in {"FAILED", "BUDGET_EXHAUSTED"}:
             return END
         return "clarify" if state["clarification"] else "analyst"
 
     def route_analyst(state: State) -> str:
+        if state["status"] == "MODEL_APPROVAL_REQUIRED":
+            return "model_pause"
         if state["status"] in {"FAILED", "BUDGET_EXHAUSTED"}:
             return END
         return "issue" if state["decision"]["action"] == "execute" else "report"
@@ -317,6 +353,7 @@ def build_workflow(
 
     nodes: list[tuple[str, Callable[[State], State | Awaitable[State]]]] = [
         ("planner", planner),
+        ("model_pause", model_pause),
         ("clarify", clarify),
         ("analyst", analyst),
         ("issue", issue),
@@ -335,5 +372,10 @@ def build_workflow(
     graph.add_conditional_edges(
         "correction", lambda s: "issue" if s["status"] == "ISSUING" else "report"
     )
-    graph.add_edge("report", END)
+    graph.add_conditional_edges(
+        "report", lambda s: "model_pause" if s["status"] == "MODEL_APPROVAL_REQUIRED" else END
+    )
+    graph.add_conditional_edges(
+        "model_pause", lambda s: END if s["status"] == "FAILED" else s["paused_role"]
+    )
     return graph.compile(checkpointer=checkpointer)

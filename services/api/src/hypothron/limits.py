@@ -10,6 +10,15 @@ class BodyLimit:
         self.maximum = maximum
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        # Cloud uploads authenticate first inside their route, then enforce a streamed
+        # 20 MiB bound. Do not prebuffer their raw bytes in metadata middleware.
+        if (
+            scope["type"] == "http"
+            and scope["method"] == "POST"
+            and scope["path"] == "/v1/account/artifacts"
+        ):
+            await self.app(scope, receive, send)
+            return
         if scope["type"] != "http" or scope["method"] not in {"POST", "PUT", "PATCH"}:
             await self.app(scope, receive, send)
             return

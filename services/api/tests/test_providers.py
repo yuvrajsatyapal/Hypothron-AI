@@ -415,3 +415,44 @@ async def test_raw_stream_limit_is_enforced_without_decompression():
             reserve_attempt=reserve,
             transport=httpx.MockTransport(respond),
         )
+
+
+async def test_openrouter_free_caps_and_identity_mismatch():
+    async def reserve():
+        pass
+
+    async def respond(request):
+        body = json.loads(request.content)
+        assert body["provider"] == {
+            "require_parameters": True,
+            "allow_fallbacks": False,
+            "max_price": {"prompt": 0, "completion": 0, "request": 0},
+        }
+        return httpx.Response(200, json=payload("openrouter") | {"model": "other/model"})
+
+    with pytest.raises(ProviderError, match="PROVIDER_MODEL_MISMATCH"):
+        await generate(
+            provider="openrouter",
+            model="vendor/model",
+            key=SecretStr("test-canary-key"),
+            prompt="approved",
+            reply_model=Decision,
+            reserve_attempt=reserve,
+            transport=httpx.MockTransport(respond),
+        )
+
+
+async def test_gemini_missing_endpoint_keeps_existing_rejection_code():
+    async def reserve():
+        pass
+
+    with pytest.raises(ProviderError, match="PROVIDER_REJECTED"):
+        await generate(
+            provider="gemini",
+            model="gemini-test",
+            key=SecretStr("test-canary-key"),
+            prompt="approved",
+            reply_model=Decision,
+            reserve_attempt=reserve,
+            transport=httpx.MockTransport(lambda req: httpx.Response(404)),
+        )

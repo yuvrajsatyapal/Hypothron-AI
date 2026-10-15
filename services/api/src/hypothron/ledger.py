@@ -65,6 +65,9 @@ class Ledger:
             request=validated,
             provider=provider,
             model=model,
+            original_model=model,
+            model_revision=0,
+            model_history=[],
             status="PLANNING",
             attempts=0,
             epoch=0,
@@ -79,6 +82,9 @@ class Ledger:
                     request=validated,
                     provider=provider,
                     model=model,
+                    original_model=model,
+                    model_revision=0,
+                    model_history=[],
                     status="PLANNING",
                     attempts=0,
                     epoch=0,
@@ -95,7 +101,7 @@ class Ledger:
                 or stored.owner != owner
                 or stored.request != validated
                 or stored.provider != provider
-                or stored.model != model
+                or stored.original_model != model
                 or stored.expires_at <= datetime.now(UTC)
             ):
                 raise LedgerError("CREATION_CONFLICT")
@@ -205,6 +211,8 @@ class Ledger:
                     raise LedgerError("ATTEMPT_CONFLICT")
                 if previous.status == "COMPLETE" and previous.response is not None:
                     return previous.response
+                if previous.status == "REJECTED" and previous.failure_code:
+                    raise LedgerError(previous.failure_code)
                 raise LedgerError("BILLING_UNKNOWN")
             if row.attempts >= 12:
                 raise LedgerError("BUDGET_EXHAUSTED")
@@ -217,6 +225,8 @@ class Ledger:
                     ordinal=ordinal,
                     role=role,
                     context_hash=context_hash,
+                    model=row.model,
+                    model_revision=row.model_revision,
                     status="RESERVED",
                 )
             )
@@ -363,3 +373,147 @@ class Ledger:
                 .limit(100)
             )
             return [{"id": r.id, "kind": r.kind, "payload": r.payload} for r in rows]
+
+    async def cached_attempt(
+        self, lease: Lease, ordinal: int, role: str, context_hash: str
+    ) -> dict[str, Any] | None:
+        """Read completed replies before catalogue I/O; reject ambiguous/rejected retries."""
+        async with self.fence(lease) as (db, row):
+            previous = await db.get(AttemptRecord, (row.id, ordinal))
+            if previous is None:
+                return None
+            if previous.role != role or previous.context_hash != context_hash:
+                raise LedgerError("ATTEMPT_CONFLICT")
+            if previous.status == "COMPLETE" and previous.response is not None:
+                return previous.response
+            if previous.status == "REJECTED" and previous.failure_code:
+                raise LedgerError(previous.failure_code)
+            raise LedgerError("BILLING_UNKNOWN")
+
+    async def reject_attempt(self, lease: Lease, ordinal: int, code: str) -> None:
+        if code not in {"PROVIDER_RATE_LIMIT", "PROVIDER_MODEL_UNAVAILABLE"}:
+            raise LedgerError("INVALID_REJECTION")
+        async with self.fence(lease) as (db, row):
+            attempt = await db.get(AttemptRecord, (row.id, ordinal))
+            if attempt is None or attempt.status != "RESERVED":
+                raise LedgerError("ATTEMPT_CONFLICT")
+            attempt.status = "REJECTED"
+            attempt.failure_code = code
+            db.add(
+                EventRecord(
+                    run_id=row.id,
+                    kind="attempt_rejected",
+                    payload={
+                        "ordinal": ordinal,
+                        "reason": code,
+                        "model": attempt.model,
+                        "revision": attempt.model_revision,
+                    },
+                )
+            )
+
+    async def pause_model(self, lease: Lease, role: str, reason: str) -> None:
+        if role not in {"planner", "analyst", "report"} or reason not in {
+            "PROVIDER_RATE_LIMIT",
+            "PROVIDER_MODEL_UNAVAILABLE",
+            "MODEL_PREFLIGHT_FAILED",
+        }:
+            raise LedgerError("INVALID_MODEL_PAUSE")
+        async with self.fence(lease) as (db, row):
+            row.status = "MODEL_APPROVAL_REQUIRED"
+            row.paused_role = role
+            row.pause_reason = reason
+            db.add(
+                EventRecord(
+                    run_id=row.id,
+                    kind="model_approval_required",
+                    payload={
+                        "role": role,
+                        "reason": reason,
+                        "model": row.model,
+                        "revision": row.model_revision,
+                    },
+                )
+            )
+
+    async def approve_model(
+        self,
+        owner: str,
+        run_id: str,
+        *,
+        expected_model: str,
+        expected_revision: int,
+        selected_model: str,
+        idempotency_token: str,
+    ) -> RunRecord:
+        """Caller validates fresh catalogue and fresh consent/key before this mutation.
+
+        The row lock serializes approval against claim/cancel; history stores only a
+        digest of the bounded idempotency token and never request credentials.
+        """
+        from hypothron.providers.catalogue import concrete
+
+        if (
+            not concrete(selected_model)
+            or not 1 <= len(idempotency_token) <= 128
+            or type(expected_revision) is not int
+        ):
+            raise LedgerError("INVALID_MODEL_APPROVAL")
+        token_hash = digest(idempotency_token)
+        async with self.sessions.begin() as db:
+            row = await self.owned(db, owner, run_id, lock=True)
+            now = datetime.now(UTC)
+            if row.lease_holder and row.lease_expires and row.lease_expires > now:
+                raise LedgerError("RUN_BUSY")
+            for event in row.model_history:
+                if event["tokenHash"] == token_hash:
+                    if (
+                        event["oldModel"] != expected_model
+                        or event["newModel"] != selected_model
+                        or event["revision"] != expected_revision + 1
+                    ):
+                        raise LedgerError("MODEL_APPROVAL_CONFLICT")
+                    return row
+            if (
+                row.status != "MODEL_APPROVAL_REQUIRED"
+                or row.provider != "openrouter"
+                or row.paused_role not in {"planner", "analyst", "report"}
+            ):
+                raise LedgerError("MODEL_APPROVAL_REQUIRED")
+            if (
+                row.model != expected_model
+                or row.model_revision != expected_revision
+                or selected_model == row.model
+            ):
+                raise LedgerError("MODEL_APPROVAL_CONFLICT")
+            if row.attempts >= 12 or row.model_revision >= 12:
+                raise LedgerError("BUDGET_EXHAUSTED")
+            unresolved = await db.scalar(
+                select(AttemptRecord.ordinal)
+                .where(AttemptRecord.run_id == row.id, AttemptRecord.status == "RESERVED")
+                .limit(1)
+            )
+            if unresolved is not None:
+                raise LedgerError("BILLING_UNKNOWN")
+            event = {
+                "oldModel": row.model,
+                "newModel": selected_model,
+                "revision": row.model_revision + 1,
+                "reason": row.pause_reason,
+                "role": row.paused_role,
+                "approvedAt": now.isoformat(),
+                "tokenHash": token_hash,
+            }
+            row.model_history = row.model_history + [event]
+            row.model = selected_model
+            row.model_revision += 1
+            row.status = "MODEL_SWITCH_APPROVED"
+            row.epoch += 1
+            db.add(
+                EventRecord(
+                    run_id=row.id,
+                    kind="model_switch_approved",
+                    payload={k: v for k, v in event.items() if k != "tokenHash"},
+                )
+            )
+            return row
