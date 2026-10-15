@@ -1,0 +1,85 @@
+name: hypothron
+x-hardened: &hardened
+  init: true
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: [/tmp:rw,noexec,nosuid,size=64m]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: '3'}
+x-origins: &origins
+  HYPOTHRON_DEPLOYMENT: '1'
+  APP_ORIGIN: ${APP_ORIGIN:?Configure APP_ORIGIN}
+  API_ORIGIN: ${API_ORIGIN:?Configure API_ORIGIN}
+  EXECUTOR_ORIGIN: ${EXECUTOR_ORIGIN:?Configure EXECUTOR_ORIGIN}
+services:
+  database:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: hypothron
+      POSTGRES_USER: hypothron_admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/database_password
+    secrets: [database_password]
+    volumes: [metadata:/var/lib/postgresql/data]
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U hypothron_admin -d hypothron']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 1g
+  migrate:
+    <<: *hardened
+    restart: 'no'
+    build: {context: ., dockerfile: services/api/Dockerfile}
+    env_file: ${MIGRATION_ENV_FILE:?Configure private MIGRATION_ENV_FILE}
+    command: [alembic, upgrade, head]
+    depends_on:
+      database: {condition: service_healthy}
+    networks: [database]
+    mem_limit: 512m
+  api:
+    <<: *hardened
+    build: {context: ., dockerfile: services/api/Dockerfile}
+    env_file: ${API_ENV_FILE:?Configure private API_ENV_FILE}
+    environment: *origins
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    ports: ['127.0.0.1:8000:8000']
+    networks: [database, api_egress]
+    mem_limit: 1g
+  web:
+    <<: *hardened
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: web
+      args: *origins
+    ports: ['127.0.0.1:3000:3000']
+    networks: [web]
+    mem_limit: 512m
+  executor:
+    <<: *hardened
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: executor
+      args: *origins
+    environment: *origins
+    ports: ['127.0.0.1:3001:3001']
+    networks: [executor]
+    mem_limit: 256m
+networks:
+  database: {internal: true}
+  api_egress: {}
+  web: {internal: true}
+  executor: {internal: true}
+volumes:
+  metadata: {}
+secrets:
+  database_password:
+    file: ${DATABASE_PASSWORD_FILE:?Configure private DATABASE_PASSWORD_FILE}

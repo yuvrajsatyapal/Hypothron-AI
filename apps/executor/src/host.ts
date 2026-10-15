@@ -1,3 +1,4 @@
+const APP_ORIGIN = process.env.HYPOTHRON_APP_ORIGIN || "http://127.0.0.1:3000";
 import parquetLock from "../../../packages/contracts/parquet-runtime.json";
 import { validateIngestion, parquetEnvelope } from "./ingestion";
 import manifest from "../../../packages/contracts/runtime-manifest.json";
@@ -17,7 +18,7 @@ const cleanup = () => {
 };
 window.addEventListener("message", async (event: MessageEvent) => {
   if (
-    event.origin !== "http://127.0.0.1:3000" ||
+    event.origin !== APP_ORIGIN ||
     event.source !== parent ||
     !event.data ||
     typeof event.data !== "object" ||
@@ -26,7 +27,7 @@ window.addEventListener("message", async (event: MessageEvent) => {
   )
     return;
   if (event.data.type === "PROBE" && event.ports.length === 0) {
-    parent.postMessage({ type: "HOST_READY" }, "http://127.0.0.1:3000");
+    parent.postMessage({ type: "HOST_READY" }, APP_ORIGIN);
     return;
   }
   if (event.data.type !== "CONNECT" || event.ports.length !== 1 || port) return;

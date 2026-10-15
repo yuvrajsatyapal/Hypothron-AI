@@ -1,3 +1,5 @@
+const EXECUTOR_ORIGIN =
+  process.env.HYPOTHRON_EXECUTOR_ORIGIN || "http://127.0.0.1:3001";
 import { convertParquet, parquetEnvelope } from "./ingestion";
 import { sqlDiagnostics } from "./advanced";
 import { loadPyodide } from "pyodide";
@@ -65,7 +67,7 @@ scope.onmessage = async (event: MessageEvent<unknown>) => {
       await conn.query("SET autoinstall_known_extensions=false");
       await conn.query("SET autoload_known_extensions=false");
       await conn.query(
-        "SET custom_extension_repository='http://127.0.0.1:3001/assets'",
+        `SET custom_extension_repository='${EXECUTOR_ORIGIN}/assets'`,
       );
       await conn.query("LOAD parquet");
       await db.registerFileBuffer(
